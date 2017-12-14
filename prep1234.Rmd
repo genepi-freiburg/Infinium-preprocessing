@@ -1,0 +1,75 @@
+
+---
+title: "EPIC Pipeline"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+start.Time = Sys.time()
+formatted.time = format(Sys.time(), "%Y-%m-%d-%Hh%Mm")
+source("../temporary/parameterfile.R")
+source("ILMN-part0-split.R")
+```
+This is a pipeline for preprocessing EPIC-Methylation data using R. 
+
+```{r child = 'prepPart1.Rmd'}
+```
+```{r child = 'prepPart2.Rmd'}
+```
+```{r child = 'prepPart3.Rmd'}
+```
+```{r child = 'prepPart4.Rmd'}
+```
+
+## Output
+
+```{r}
+analysisfilename = paste0("analysis_ready_",projectname,"_",formatted.time,".Rdata")
+qcfilename=paste0("QC_data_",projectname,"_",formatted.time,".Rdata")
+```
+
+1. The following data is included in the Rdata-file `r qcfilename`:
+\begin{description}
+	\item[ctrl.all, ctrl.complete.Red.all, ctrl.complete.Green.all, control.info] control probe data
+	\item[ctrlprobes.scores] rotated control probe intensities into the coordinates given by principal component analysis
+	\item[dp.all] detection p-values of unfiltered idat data
+	\item[TypeII.Red.All etc] list the corresponding intensity values
+	\item[TypeII.Red.All.d etc] list the corresponding intensity values where detection p-values smaller than threshold $`r detPthreshold`$ are set to missing (NA).
+	\item[sample.call] the sample call rates
+	\item[marker.call] the marker call rates
+	\item[beta.raw] the $\beta$ values calculated for autosomal probes with detection p value filter only
+	\item[beta.raw.sex] the $\beta$ values calculated for sex chromosome probes with detection p value filter only
+	\item[pcaAuto] output of function prcomp conducting PCA of \textbf{betaQN}
+	\item[sample.callY, sample.callX] sample call rates for chromosomes X and Y for quantile normalized filtered samples
+	\item[marker.call.all] marker callrate of all quantile normalized samples incl. the ones excluded by IQR-filter 
+	\item[marker.outlier.all] data frame of number of probes, detected outliers and marker callrate after filtering by IQR 
+\end{description}
+
+
+2. The data needed for further analysis is saved as `r analysisfilename`:
+\begin{description}
+	\item[pcaControls] output of function prcomp conducting the PCA of control probes 
+	\item[betaQN] $\beta$ values calculated for autosomal probes of filtered samples with quantile normalization applied 
+	\item[betaQN.sex] $\beta$ values calculated for sex chromosome probes of filtered samples with quantile normalization applied 
+	\item[betaQN.all] combines \textbf{betaQN} and \textbf{betaQN.sex} 
+	\item[betaQN.all.3IQR] modified \textbf{betaQN.all}: IQR outliers are filtered out
+	\item[mdata] transposed \textbf{betaQN} with Sample Names assigned as rownames
+	\item[mdata.3IQR] transposed \textbf{betaQN.all.3IQR} with Sample Names as rownames
+\end{description}
+
+If you run the pipeline a second time the data files will be overwritten, so please store them at a different place if you want to keep both. 
+
+```{r}
+save(ctrl.all,ctrlprobes.scores,ctrl.complete.Red.all, ctrl.complete.Green.all, control.info,dp.all, TypeII.Red.All , TypeII.Green.All , TypeI.Red.M.All , TypeI.Red.U.All , TypeI.Green.M.All , TypeI.Green.U.All, TypeII.Red.All.d , TypeII.Green.All.d , TypeI.Red.M.All.d , TypeI.Red.U.All.d , TypeI.Green.M.All.d , TypeI.Green.U.All.d , sample.call, marker.call, beta.raw, beta.raw.sex, pcaAuto, sample.callY, sample.callX,marker.call.all, marker.outlier.all,  file=paste0(outputdir,'/',qcfilename))
+
+save(pcaControls, betaQN, betaQN.sex,betaQN.all,betaQN.all.3IQR, mdata, mdata.3IQR, file=paste0(outputdir,"/",analysisfilename))
+```
+
+
+```{r child = 'MemoryMethodsCredits.Rmd'}
+```

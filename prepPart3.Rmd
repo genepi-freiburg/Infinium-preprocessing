@@ -1,0 +1,264 @@
+
+## PART 3: Quantile Normalisation
+```{r}
+###############################################################################
+
+# PART 3 (QN)
+
+# Perform Quantile Normalization based on final sample set
+# Written by Benjamin Lehne (Imperial College London) and Alexander Drong (Oxford University)
+# extended by Alexander Teumer (University Medicine Greifswald/ Erasmus MC Rotterdam)
+# last change: 05/16/2016
+
+datsamplesfinal <- read.table(file=samplesfilefinal,header=T,as.is=T,sep="\t")
+samples <- colnames(TypeI.Red.M.All)
+samples <- samples[samples %in% datsamplesfinal$Sample_ID]
+datsamples <- datsamplesfinal[datsamplesfinal$Sample_ID %in% samples,]
+```
+
+`r nrow(datsamples)` samples are included in the analysis, identified by the *samplesfilefinal* `r samplesfilefinal ` and existing sample calls:
+
+```{r}
+(as.data.frame(datsamples))$Sample_Name
+```
+
+```{r}
+#QN autosomes # has to be filtered by samples 
+category=auto
+markers=as.matrix(intersect(rownames(TypeII.Green.All.d), category))
+TypeII.Green = TypeII.Green.All.d[markers,samples]
+TypeII.Red = TypeII.Red.All.d[markers,samples]
+markers=intersect(rownames(TypeI.Green.M.All.d), category)
+TypeI.Green.M = TypeI.Green.M.All.d[markers,samples]
+TypeI.Green.U = TypeI.Green.U.All.d[markers,samples]
+markers=intersect(rownames(TypeI.Red.M.All.d), category)
+TypeI.Red.M = TypeI.Red.M.All.d[markers,samples]
+TypeI.Red.U = TypeI.Red.U.All.d[markers,samples]
+
+TypeII.Green=normalizeQuantiles(TypeII.Green)
+TypeII.Red = normalizeQuantiles(TypeII.Red)
+TypeI.Green.M = normalizeQuantiles(TypeI.Green.M)
+TypeI.Green.U = normalizeQuantiles(TypeI.Green.U)
+TypeI.Red.M = normalizeQuantiles(TypeI.Red.M)
+TypeI.Red.U = normalizeQuantiles(TypeI.Red.U)
+TypeII.betas = TypeII.Green/(TypeII.Red+TypeII.Green+100)
+TypeI.Green.betas = TypeI.Green.M/(TypeI.Green.M+TypeI.Green.U+100)
+TypeI.Red.betas = TypeI.Red.M/(TypeI.Red.M+TypeI.Red.U+100)
+beta = as.matrix(rbind(TypeII.betas,TypeI.Green.betas,TypeI.Red.betas))
+marker.callQN =rowSums(!is.na(beta))/ncol(beta) # this line is added; if problems occur, maybe delete it and rechange all lines where marker.callQN occurs to marker.call
+
+# sex chromosomes ------------------------------------------------------------------
+women <- datsamples[datsamples$Gender==1,"Sample_ID"]
+men <- datsamples[datsamples$Gender==0,"Sample_ID"]
+category=c(sexchrX,sexchrY)
+
+```
+
+Of the persons from whom samples are processed, `r length(women)` are women and `r length(men)` men.   
+
+
+
+```{r}
+#QN men
+
+markers=as.matrix(intersect(rownames(TypeII.Green.All.d), category))
+TypeII.Green_m= TypeII.Green.All.d[markers,men]
+TypeII.Red_m = TypeII.Red.All.d[markers,men]
+markers=intersect(rownames(TypeI.Green.M.All.d), category)
+TypeI.Green.M_m = TypeI.Green.M.All.d[markers,men]
+TypeI.Green.U_m = TypeI.Green.U.All.d[markers,men]
+markers=intersect(rownames(TypeI.Red.M.All.d), category)
+TypeI.Red.M_m = TypeI.Red.M.All.d[markers,men]
+TypeI.Red.U_m = TypeI.Red.U.All.d[markers,men]
+
+# only if there are at least 2 men
+if(length(men) > 1){
+TypeII.Green_m=normalizeQuantiles(TypeII.Green_m)
+TypeII.Red_m = normalizeQuantiles(TypeII.Red_m)
+TypeI.Green.M_m = normalizeQuantiles(TypeI.Green.M_m)
+TypeI.Green.U_m = normalizeQuantiles(TypeI.Green.U_m)
+TypeI.Red.M_m = normalizeQuantiles(TypeI.Red.M_m)
+TypeI.Red.U_m = normalizeQuantiles(TypeI.Red.U_m)
+} else {
+	cat("Quantile normalization for men was skipped, because it has no effect when there are less than 2 samples.")
+}
+
+TypeII.betas_m = TypeII.Green_m/(TypeII.Red_m+TypeII.Green_m+100)
+TypeI.Green.betas_m = TypeI.Green.M_m/(TypeI.Green.M_m+TypeI.Green.U_m+100)
+TypeI.Red.betas_m = TypeI.Red.M_m/(TypeI.Red.M_m+TypeI.Red.U_m+100)
+beta_m = as.matrix(rbind(TypeII.betas_m,TypeI.Green.betas_m,TypeI.Red.betas_m))
+
+#QN women
+markers=as.matrix(intersect(rownames(TypeII.Green.All.d), category))
+TypeII.Green_w= TypeII.Green.All.d[markers,women]
+TypeII.Red_w = TypeII.Red.All.d[markers,women]
+markers=intersect(rownames(TypeI.Green.M.All.d), category)
+TypeI.Green.M_w = TypeI.Green.M.All.d[markers,women]
+TypeI.Green.U_w = TypeI.Green.U.All.d[markers,women]
+markers=intersect(rownames(TypeI.Red.M.All.d), category)
+TypeI.Red.M_w = TypeI.Red.M.All.d[markers,women]
+TypeI.Red.U_w = TypeI.Red.U.All.d[markers,women]
+
+
+# only if there are at least 2 women
+# watch out if you change this; this switch appears several times in the code due to formatting reasons
+if(length(women) > 1){
+TypeII.Green_w=normalizeQuantiles(TypeII.Green_w)
+TypeII.Red_w = normalizeQuantiles(TypeII.Red_w)
+TypeI.Green.M_w = normalizeQuantiles(TypeI.Green.M_w)
+TypeI.Green.U_w = normalizeQuantiles(TypeI.Green.U_w)
+ TypeI.Red.M_w = normalizeQuantiles(TypeI.Red.M_w)
+ TypeI.Red.U_w = normalizeQuantiles(TypeI.Red.U_w)
+} else {
+	cat("Quantile normalization for women was skipped, because it has no effect when there are less than 2 samples.")
+}
+
+ TypeII.betas_w = TypeII.Green_w/(TypeII.Red_w+TypeII.Green_w+100)
+TypeI.Green.betas_w = TypeI.Green.M_w/(TypeI.Green.M_w+TypeI.Green.U_w+100)
+TypeI.Red.betas_w = TypeI.Red.M_w/(TypeI.Red.M_w+TypeI.Red.U_w+100)
+beta_w = as.matrix(rbind(TypeII.betas_w,TypeI.Green.betas_w,TypeI.Red.betas_w))
+
+beta_sex <- cbind(beta_m,beta_w) 
+marker.call_sex=rowSums(!is.na(beta_sex))/ncol(beta_sex)
+beta_all <- rbind(beta,beta_sex)
+
+###### save data (combine with sex chr)
+
+rm(TypeII.Green,TypeII.Red,TypeI.Green.M,TypeI.Green.U,TypeI.Red.M,TypeI.Red.U,TypeII.betas,TypeI.Green.betas,TypeI.Red.betas)
+rm(TypeII.Green_m,TypeII.Red_m,TypeI.Green.M_m,TypeI.Green.U_m,TypeI.Red.M_m,TypeI.Red.U_m,TypeII.betas_m,TypeI.Green.betas_m,TypeI.Red.betas_m)
+rm(TypeII.Green_w,TypeII.Red_w,TypeI.Green.M_w,TypeI.Green.U_w,TypeI.Red.M_w,TypeI.Red.U_w,TypeII.betas_w,TypeI.Green.betas_w,TypeI.Red.betas_w)
+
+# save beta QN
+# save(beta, file=paste0(outputdir,"/beta_QN.RData"))
+# save(beta_sex, file=paste0(outputdir,"/beta_QN-sex.RData"))
+# save(beta_all, file=paste0(outputdir,"/beta_QN-ALL.RData"))
+betaQN <- beta
+betaQN.sex <- beta_sex
+betaQN.all <- beta_all
+
+plot.beta.densities(betaQN,"Densities of normalized autosomal beta values per sample")
+```
+
+
+For the following PCA markers which had at least one cpg site missing were excluded.
+
+```{r}
+# pdf(paste0(outputdir,"/Step3-Plots.pdf"))
+
+#PCA of control-probe intensities
+datpca <- ctrl.all[samples,]
+pcaControls <- prcomp(na.omit(datpca))
+ctrlprobes.scores = pcaControls$x
+EV <- merge(ctrlprobes.scores,datsamples,by.x=0,by.y="Sample_ID")
+colnames(ctrlprobes.scores) = paste(colnames(ctrlprobes.scores), '_cp', sep='')
+
+plot(EV[,"PC1"],EV[,"PC2"], main=paste0("PCA - number of controls probes: ",ncol(datpca)),xlab=paste0("PC1 (",sprintf("%1.1f",(pcaControls$sdev^2/sum(pcaControls$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaControls$sdev^2/sum(pcaControls$sdev^2))[2]*100),"%)"))
+
+ctrlprobes.scores <- merge(ctrlprobes.scores,datsamples[,c("Sample_ID","Sample_Name")],by.x=0,by.y="Sample_ID")
+write.csv(ctrlprobes.scores,file=paste0(outputdir,"/PC_controls-finalSample","_",projectname,"-",formatted.time,".csv"),row.names=F)
+
+# sex-check
+sample.callY=colSums(!is.na(beta_sex[sexchrY,]))/nrow(beta_sex[sexchrY,])
+sample.callX=colSums(!is.na(beta_sex[sexchrX,]))/nrow(beta_sex[sexchrX,])
+
+# by PCA
+```
+  
+
+The following plot is a PCA on **variables**: It presents the importance of samples when differentiating between the CpG sites in the best way possible. 
+
+```{r}
+# chr X+Y
+betaPCA <- beta_sex[c(sexchrX,sexchrY),]
+pcaSex <- prcomp(na.omit(betaPCA))
+EV <- pcaSex$rotation
+EV <- merge(EV,datsamples,by.x=0,by.y="Sample_ID")
+plot(EV[,"PC1"],EV[,"PC2"],col=EV$Gender+2, main=paste0("number of X+Y probes: ",nrow(betaPCA)),xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"))
+legend("top", c("male","female"), col=c(2,3), pch = 1, cex=1.4)
+
+resSexCheck <- data.frame(Sample_ID=EV$Row.names,Sex=EV$Gender,EV1=EV[,"PC1"],EV2=EV[,"PC2"])
+
+#plot(EV[,"PC1"],EV[,"PC2"],col=as.numeric(as.factor(paste(EV$Sample_Group)))+2, main=paste0("number of X+Y probes: ",nrow(betaPCA)),xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"))
+```
+  
+
+
+The next plot presents a PCA on **samples**, as it is more common. It shows the variance of the samples on the PC axes. 
+
+```{r}
+pcaSex <- prcomp(t(na.omit(betaPCA)))
+EV <- pcaSex$x
+EV <- merge(EV,datsamples,by.x=0,by.y="Sample_ID")
+plot(EV[,"PC1"],EV[,"PC2"],col=EV$Gender+2, main=paste0("number of X+Y probes: ",nrow(betaPCA)),xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"))
+legend("top", c("male","female"), col=c(2,3), pch = 1, cex=1.4)
+
+resSexCheck <- cbind(resSexCheck,data.frame(PC1=EV[,"PC1"],PC2=EV[,"PC2"]))
+write.csv(resSexCheck,file = paste0(outputdir,"/results-PCAsex-QN","_",projectname,"-",formatted.time,".csv"),row.names=F)
+
+# plot sex call rates
+YcallMen <- sample.callY[names(sample.callY) %in% men]
+YcallWomen <- sample.callY[names(sample.callY) %in% women]
+#par(mfrow=c(2,1))
+
+if(length(men) > 1){
+hist(YcallMen,breaks=50)
+}
+```
+  
+
+
+
+```{r}
+if(length(women) > 1){
+hist(YcallWomen,breaks=50)
+
+marker.callYwomen=rowSums(!is.na(beta_sex[sexchrY,colnames(beta_sex) %in% women]))/ncol(beta_sex[sexchrY,colnames(beta_sex) %in% women])
+}
+```
+  
+
+
+
+```{r}
+if(length(women) > 1){
+#par(mfrow=c(1,1))
+hist(marker.callYwomen,breaks=50)
+}
+```
+
+  
+
+```{r}
+# PCA (autosomes)
+betaPCA <- beta
+pcaAuto <- prcomp(na.omit(betaPCA))
+EV <- pcaAuto$rotation
+EV <- merge(EV,datsamples,by.x=0,by.y="Sample_ID")
+par(mfrow=c(1,1))
+plot(EV[,"PC1"],EV[,"PC2"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x)),xlab=paste0("EV1 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[2]*100),"%)"))
+
+plot(EV[,"PC3"],EV[,"PC4"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x)),xlab=paste0("EV3 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[3]*100),"%)"),ylab=paste0("EV4 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[4]*100),"%)"))
+
+# test only
+#plot(EV[,"PC1"],EV[,"PC2"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x)),xlab=paste0("EV1 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[2]*100),"%)"),col=as.numeric(as.factor(paste(EV$Sample_Group,EV$Sample_Plate)))+2)
+#plot(EV[,"PC3"],EV[,"PC4"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x)),xlab=paste0("EV3 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[3]*100),"%)"),ylab=paste0("EV4 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[4]*100),"%)"),col=as.numeric(as.factor(EV$Sample_Group))+2)
+#legend("topleft", c("pilot 1","pilot 2"), col=c(4,3), pch = 1)
+```
+
+
+```{r}
+# EVals
+par(mfrow=c(1,1))
+plot((pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1:10],main="Explained Variance by autosomes",ylab="% variance",xlab="PC#",ylim=c(0,1.05))
+text((y=pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1:10],x=1:10+0.1,labels=sprintf("%1.3f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2)))[1:10],adj=c(0.5,-1))
+
+# # save pca
+# save(pcaControls, pcaAuto, file=paste0(outputdir,"/pca_QN.RData"))
+# save(sample.callY, sample.callX, file=paste0(outputdir,"/callRates-sex.RData"))
+
+marker.call_all <- data.frame(callrate=c(marker.callQN,marker.call_sex)) # marker callrate of all samples incl. excluded ones
+marker.call.all = marker.call_all
+# marker.call_all <- data.frame(callrate=c(marker.call,marker.call_sex)) # marker callrate of all samples incl. excluded ones
+
+```
+

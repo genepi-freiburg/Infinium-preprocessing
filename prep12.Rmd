@@ -1,0 +1,74 @@
+
+---
+title: "EPIC Pipeline"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+start.Time = Sys.time()
+formatted.time = format(Sys.time(), "%Y-%m-%d-%Hh%Mm")
+source("../temporary/parameterfile.R")
+ source("ILMN-part0-split.R")
+```
+This is a pipeline for preprocessing EPIC-Methylation data using R. 
+
+```{r child = 'prepPart1.Rmd'}
+```
+```{r child = 'prepPart2.Rmd'}
+```
+
+## Output
+
+```{r}
+analysisfilename = paste0("analysis_ready_",projectname,"_",formatted.time,".Rdata")
+qcfilename=paste0("QC_data_",projectname,"_",formatted.time,".Rdata")
+```
+
+1. The following data is included in the Rdata-file `r qcfilename`:
+\begin{description}
+	\item[ctrl.all, ctrl.complete.Red.all, ctrl.complete.Green.all, control.info] control probe data
+	\item[ctrlprobes.scores] rotated control probe intensities into the coordinates given by principal component analysis
+	\item[dp.all] detection p-values of unfiltered idat data
+	\item[TypeII.Red.All etc] list the corresponding intensity values
+	\item[TypeII.Red.All.d etc] list the corresponding intensity values where detection p-values smaller than threshold $`r detPthreshold`$ are set to missing (NA).
+	\item[sample.call] the sample call rates
+	\item[marker.call] the marker call rates
+	\item[beta.raw] the $\beta$ values calculated for autosomal probes with detection p value filter only
+	\item[beta.raw.sex] the $\beta$ values calculated for sex chromosome probes with detection p value filter only
+\end{description}
+
+
+```{r}
+save(ctrl.all, ctrlprobes.scores,ctrl.complete.Red.all, ctrl.complete.Green.all,control.info,dp.all, TypeII.Red.All ,TypeII.Green.All , TypeI.Red.M.All ,TypeI.Red.U.All , TypeI.Green.M.All ,TypeI.Green.U.All, TypeII.Red.All.d ,TypeII.Green.All.d , TypeI.Red.M.All.d ,TypeI.Red.U.All.d , TypeI.Green.M.All.d , TypeI.Green.U.All.d , sample.call, marker.call, beta.raw, beta.raw.sex, file=paste0(outputdir,'/',qcfilename))
+
+```
+
+```{r}
+if(InterQuartileRangeCalculation == TRUE){
+	cat("The inter quartile calculations cannot be done without quantile normalisation.\n")
+	cat("Please change the parameter QuantileNormalize in the parameterfile.")
+}
+```
+
+## Remarks for further processing
+
+For quantile normalization, please
+
+  * If not already done, prepare a file *samplesfilefinal* with the same structure as *samplesfile* where outlier are removed. 
+
+  * If needed, readjust the parameters. 
+
+The file *samples.filtered.csv* provides information about the detected outlier and the reason of detection.  
+Remember to also switch *QuantileNormalisation=TRUE* in the *parameterfile* to prepare the data for analysis. 
+If you want to have the Quality Control without the filtered samples in the second run, please exclude them from *samplesfile* as well and not only from *samplesfilefinal*. In that case, you can just name the same file for both parameters. 
+
+
+
+
+```{r child = 'MemoryMethodsCredits.Rmd'}
+```

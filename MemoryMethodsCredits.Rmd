@@ -1,0 +1,20 @@
+
+
+## Memory load and processing time
+
+The maximum memory load in this run was $`r (gc())[1,6] + (gc())[2,6]  `$ Mb .
+It took `r format(Sys.time() - start.Time)` of processing time.
+
+
+## Methods
+
+We will draft an example methods part for papers.
+(in the processing)
+
+## Credits
+
+The code for this pipeline was written by Benjamin Lehne (Imperial College London) and Alexander Drong (Oxford University), extended by Alexander Teumer (University Medicine Greifswald/ Erasmus MC Rotterdam) and combined into the pipeline by Pascal Schlosser and Franziska Grundner-Culemann in 2017. 
+
+See *A coherent approach for analysis of the Illumina HumanMethylation450 Bead Chip improves quality and performance in epigenome-wide association studies* by Lehne et. al., Genome Biology (2015)
+for the basic idea. The method was then extended to EPIC arrays. 
+Please cite this article in your publication. 
