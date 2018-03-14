@@ -154,6 +154,10 @@ colnames(ctrlprobes.scores) = paste(colnames(ctrlprobes.scores), '_cp', sep='')
 
 plot(EV[,"PC1"],EV[,"PC2"], main=paste0("PCA - number of controls probes: ",ncol(datpca)),xlab=paste0("PC1 (",sprintf("%1.1f",(pcaControls$sdev^2/sum(pcaControls$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaControls$sdev^2/sum(pcaControls$sdev^2))[2]*100),"%)"))
 
+par(mfrow=c(1,1))
+plot((pcaControls$sdev^2/sum(pcaControls$sdev^2))[1:10],main="Explained Variance by control probe PCs",ylab="% variance",xlab="PC#",ylim=c(0,1.05))
+text((y=pcaControls$sdev^2/sum(pcaControls$sdev^2))[1:10],x=1:10+0.1,labels=sprintf("%1.3f",(pcaControls$sdev^2/sum(pcaControls$sdev^2)))[1:10],adj=c(0.5,-1))
+
 ctrlprobes.scores <- merge(ctrlprobes.scores,datsamples[,c("Sample_ID","Sample_Name")],by.x=0,by.y="Sample_ID")
 write.csv(ctrlprobes.scores,file=paste0(outputdir,"/PC_controls-finalSample","_",projectname,"-",formatted.time,".csv"),row.names=F)
 

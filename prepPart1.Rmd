@@ -306,7 +306,7 @@ samples=colnames(TypeI.Red.M.All)
 ```
 
 * The probes are divided by chromosome type: autosomal probes, chromosome X probes and chromosome Y probes.
-$`r length(which(dpvec<detPthreshold))`$   ($`r round(length(which(dpvec<detPthreshold))/length(dpvec), digits = 3)`$ \%)   measurements are excluded because their detection p-value is strictly smaller than $`r detPthreshold`$. 
+$`r length(which(dpvec>detPthreshold))`$   ($`r round(length(which(dpvec>detPthreshold))/length(dpvec), digits = 3)`$ \%)   measurements are excluded because their detection p-value is bigger than $`r detPthreshold`$. Only values with a detection p-value strictly smaller the threshold are kept.
 To skip this filtering, set the parameter *detPthreshold* to a value **strictly** bigger than 1 in the *parameterfile.R*.
 
 * The data is divided into automomal chromosomes and gametes to calculate call rates and separate sets of beta values.
