@@ -242,19 +242,14 @@ EV <- merge(EV,datsamples,by.x=0,by.y="Sample_ID")
 
 # plot first males, then females: find female outlier
 idx = which(EV$Gender%in%c(1)) # 1 is female
-plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col=2, main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"])))
-points(EV[idx,"PC1"],EV[idx,"PC2"],col=3)
-legend("top", pch = c(1,1), col = c(3,2), legend = c("women","men"))
+plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"])))
+points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
+legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 
 # then plot first females, then males: find male-outlier
-plot(EV[idx,"PC1"],EV[idx,"PC2"],col=3, main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"])))
-points(EV[-idx,"PC1"],EV[-idx,"PC2"],col=2)
-legend("top", pch = c(1,1), col = c(3,2), legend = c("women","men"))
-
-
-## old: plot both simultaneously
-# plot(EV[,"PC1"],EV[,"PC2"],col=EV$Gender+2, main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"))
-# legend("top", pch = c(1,1), col = c(3,2), legend = c("women","men"))
+plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"])))
+points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
+legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 
 ```
 
@@ -270,14 +265,14 @@ EV <- merge(EV,datsamples,by.x=0,by.y="Sample_ID")
 
 # plot first males, then females: find female outlier
 idx = which(EV$Gender%in%c(1)) # 1 is female
-plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col=2, main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"])))
-points(EV[idx,"PC1"],EV[idx,"PC2"],col=3)
-legend("top", pch = c(1,1), col = c(3,2), legend = c("women","men"))
+plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"])))
+points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
+legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 
 # then plot first females, then males: find male-outlier
-plot(EV[idx,"PC1"],EV[idx,"PC2"],col=3, main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"])))
-points(EV[-idx,"PC1"],EV[-idx,"PC2"],col=2)
-legend("top", pch = c(1,1), col = c(3,2), legend = c("women","men"))
+plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"])))
+points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
+legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 
 resSexCheck <- cbind(resSexCheck,data.frame(PC1=EV[,"PC1"],PC2=EV[,"PC2"]))
 write.csv(resSexCheck,file = paste0(outputdir,"/results-PCAsex_raw","_",projectname,"-",formatted.time,".csv"),row.names=F,quote=F)
