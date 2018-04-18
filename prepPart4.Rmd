@@ -78,15 +78,15 @@ noCall with filter 3IQR | `r length(beta_all_3IQR[which(is.na(beta_all_3IQR))])`
  ids <- ids[match(colnames(beta_all),ids$Sample_ID),]
  
  # QN data
- mdata <- beta_all
- colnames(mdata) <- ids$Sample_Name
- mdata <- t(mdata)
+ # mdata <- beta_all
+ # colnames(mdata) <- ids$Sample_Name
+ # mdata <- t(mdata)
 # # save(mdata, file=paste0(outputdir,"/mdata_QN.RData"))
  
  # QN-3IQR data
- mdata.3IQR <- beta_all_3IQR
- colnames(mdata.3IQR) <- ids$Sample_Name
- mdata.3IQR <- t(mdata.3IQR)
+ # mdata.3IQR <- beta_all_3IQR
+ # colnames(mdata.3IQR) <- ids$Sample_Name
+ # mdata.3IQR <- t(mdata.3IQR)
 # # save(mdata.3IQR, file=paste0(outputdir,"/mdata_QN_3IQR.RData"))
 
 
