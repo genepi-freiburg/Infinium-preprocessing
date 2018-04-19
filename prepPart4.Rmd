@@ -1,5 +1,5 @@
 
-## PART 4: Calculating Inter Quartile Ranges 
+## PART 4: Calculating Inter-Quartile Ranges 
 
 The inter-quartile range of a set of values is the difference between its 0.75-quartile and its 0.25-quartile. 
 In the following, these quartiles are calculated for all autosomal beta values per probe and beta values whose difference to the median is greater than 3 times the inter-quartile range are marked as outliers and set to missing (NA) in betaQN.all.3IQR.

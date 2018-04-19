@@ -131,8 +131,10 @@ rm(TypeII.Green_w,TypeII.Red_w,TypeI.Green.M_w,TypeI.Green.U_w,TypeI.Red.M_w,Typ
 plot.beta.densities(betaQN,"Densities of normalized autosomal beta values per sample")
 ```
 
+### PART 4: Control Probe Adjustment
 
-For the following PCA markers which had at least one cpg site missing were excluded.
+Control probes track for technical bias between batches. To adjust for these in the analysis while minimizing the number of variables due to convergence reasons, we calculate Principal Components and show how much variance they explain. 
+Markers which had at least one cpg site missing were excluded for the following PCA. 
 
 ```{r}
 #PCA of control-probe intensities

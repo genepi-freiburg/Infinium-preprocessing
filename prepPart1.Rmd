@@ -1,4 +1,4 @@
-## PART 1: Read data and parameters
+## PART 1: Preparation and general Quality Control
 
 ```{r, message = FALSE}
 #####################
@@ -186,11 +186,12 @@ setwd(cwd)
 
 ```
 
+### Read data and parameters
+
 We are working with data from directory `r idatdir` which contains $`r length(filenames) `$ idat files.
 The annotationfile used is 
-
 `r annotationfile` 
-- if problems occur with annotation, please have a look at [Illumina downloads](https://support.illumina.com/array/downloads.html)    *Infimum Methylation EPIC Product files*. 
+ - if problems occur with annotation, please have a look at [Illumina downloads](https://support.illumina.com/array/downloads.html)    *Infimum Methylation EPIC Product files*. 
 
 
 Output is directed to `r outputdir`. We use samples listed in `r samplesfile` for quality control. 
@@ -216,52 +217,26 @@ if(QuantileNormalize == TRUE && length(samplesfilefinal)==0){
 if(QuantileNormalize == TRUE){cat(paste("The samples listed in", samplesfilefinal,"are used for quantile normalization \n and calculation of outliers regarding inter-quartile-range."))}
 ```
 
+When reading the data using the minfi-package we apply Illumina Background correction.
+Whithin this process we also 
+* extract control-probe information. 
+* calculate detection p-values.
+* estimate the white blood cell distribution assuming whole blood samples using minfi.
+* separate the data by channel (red / green) and Infinium I / II type.
+We use this detection p-values and control probe information for high-level quality control and the white blood cell estimations for further processing as phenodata.
 
-* PCA is conducted to get controlprobe scores. 
+### White Blood Cell estimation
 
-```{r}
-#PCA of control-probe intensities
-pca <- prcomp(na.omit(ctrl.all))
-ctrlprobes.scores = pca$x
-colnames(ctrlprobes.scores) = paste(colnames(ctrlprobes.scores), '_cp', sep='')
+The estimation of White Blood Cells results in a data.frame est.wbc.minfi for further use as part of the phenodata:
 
-# ### extended savings 
- control.info <- data.frame(control)
-
-### EOF for 1_intensities
+```{r} 
+head(est.wbc.minfi)
 ```
 
-* Detection p-values are calculated and illustrated in the following plots. Low p-values indicate that the signal is unlikely to be background noise. 
+### Data preparation
 
-```{r}
-# test
-dpvec <- dp.all
-dim(dpvec) <- c(nrow(dp.all)*ncol(dp.all),1)
-
-# plot detection P
-dpvecplot <- dpvec
-dpvecplot[which(dpvecplot==0)] <- 1E-20
-hist(-log10(dpvec),breaks=30, main = "detection p-values")
-```
-
-
-
-
-
-```{r}
-hist(-log10(dpvecplot),breaks=30, main = "detection p-values: zero values set to 1E-20")
-rm(dpvecplot)
-```
-\pagebreak
-
-
-The following table summarizes how many detection p-values are smaller than the threshold $`r detPthreshold `$ given in the *parameterfile*, or 0.01: 
-
- threshold           | count                                       | percentage
----------------------|---------------------------------------------|-----------------------------------------------------
-$`r detPthreshold `$ | $`r length(which(dpvec<detPthreshold))`$    | $`r length(which(dpvec<detPthreshold))/length(dpvec)`$
-0.01                 | $`r length(which(dpvec<0.01))`$             | $`r length(which(dpvec<0.01))/length(dpvec)`$
-
+The probes are divided by chromosome type: autosomal probes, chromosome X probes and chromosome Y probes.
+For this step we need the annotationfile.
 
 ```{r}
 anno=read.csv(annotationfile,as.is=TRUE, skip = 7) 
@@ -285,29 +260,8 @@ anno=read.csv(annotationfile,as.is=TRUE, skip = 7)
  sexchrY=as.matrix(sexchrY)
 ```
   
-
-```{r}
-#set detection p-value threshold
-thres=detPthreshold
-d=dp.all[rownames(TypeII.Green.All),colnames(TypeII.Green.All)]
-TypeII.Green.All.d = ifelse(d<thres,TypeII.Green.All,NA)
-TypeII.Red.All.d = ifelse(d<thres,TypeII.Red.All,NA)
-d=dp.all[rownames(TypeI.Green.M.All),colnames(TypeI.Green.M.All)]
-TypeI.Green.M.All.d = ifelse(d<thres,TypeI.Green.M.All,NA)
-TypeI.Green.U.All.d = ifelse(d<thres,TypeI.Green.U.All,NA)
-d=dp.all[rownames(TypeI.Red.M.All),colnames(TypeI.Red.M.All)]
-TypeI.Red.M.All.d = ifelse(d<thres,TypeI.Red.M.All,NA)
-TypeI.Red.U.All.d = ifelse(d<thres,TypeI.Red.U.All,NA)
-#rm(dp.all,d)
-
-samples=colnames(TypeI.Red.M.All)
-```
-
-* The probes are divided by chromosome type: autosomal probes, chromosome X probes and chromosome Y probes.
-$`r length(which(dpvec>detPthreshold))`$   ($`r round(length(which(dpvec>detPthreshold))/length(dpvec), digits = 3)`$ \%)   measurements are excluded because their detection p-value is bigger than $`r detPthreshold`$. Only values with a detection p-value strictly smaller the threshold are kept.
-To skip this filtering, set the parameter *detPthreshold* to a value **strictly** bigger than 1 in the *parameterfile.R*.
-
-* The data is divided into automomal chromosomes and gametes to calculate call rates and separate sets of beta values.
+We calculate raw beta values for both autosomal and sex chromosome data.
+In our further calculations beta value data always is processed separately for autosomes and gametes. 
 
 ```{r}
 
@@ -324,13 +278,11 @@ markers=intersect(rownames(TypeI.Red.M.All.d), category)
 TypeI.Red.M = TypeI.Red.M.All.d[markers,samples]
 TypeI.Red.U = TypeI.Red.U.All.d[markers,samples]
 
-#raw betas and callrate
+#raw betas
 TypeII.betas = TypeII.Green/(TypeII.Red+TypeII.Green+100)
 TypeI.Green.betas = TypeI.Green.M/(TypeI.Green.M+TypeI.Green.U+100)
 TypeI.Red.betas = TypeI.Red.M/(TypeI.Red.M+TypeI.Red.U+100)
 beta.raw = as.matrix(rbind(TypeII.betas,TypeI.Green.betas,TypeI.Red.betas))
-sample.call=colSums(!is.na(beta.raw.raw))/nrow(beta.raw)
-marker.call=rowSums(!is.na(beta.raw))/ncol(beta.raw)
 
 # sex chromosomes ------------------------------------------------------------------
 
@@ -358,4 +310,41 @@ beta values:   | autosomes           |  sex chromosomes
 dimension:     | $`r dim(beta.raw)`$ | $`r dim(beta.raw.sex)`$
 
 
+
+```{r}
+# calculate sample and marker calls without filter -- TODO - needed?used?
+sample.call=colSums(!is.na(beta.raw))/nrow(beta.raw)
+marker.call=rowSums(!is.na(beta.raw))/ncol(beta.raw)
+```
+
+
+```{r}
+plot.beta.densities = function(beta, title){
+	densities = apply(beta,2,function(x){ density(x, na.rm = TRUE) } )
+	xmax = max(sapply(densities, function(d){max(d$x)}))
+	xmin = min(sapply(densities, function(d){min(d$x)}))
+	ymax = max(sapply(densities, function(d){max(d$y)}))
+
+	plot(NA, xlim = c(xmin,xmax), ylim = c(0,ymax), main = title, ylab = "")
+	colors = rainbow(10)
+	for(i in 1:ncol(beta)){
+		lines(densities[[i]], col = colors[i%%10 + 1])
+	}
+
+}
+plot.beta.densities(beta.raw,"Densities of raw autosomal beta values per sample")
+```
+  
+
+* By conducting a PCA on the control-probe information we obtain controlprobe scores. 
+
+```{r}
+#PCA of control-probe intensities
+pca <- prcomp(na.omit(ctrl.all))
+ctrlprobes.scores = pca$x
+colnames(ctrlprobes.scores) = paste(colnames(ctrlprobes.scores), '_cp', sep='')
+
+# ### extended savings 
+ control.info <- data.frame(control)
+```
 

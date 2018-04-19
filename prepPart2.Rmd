@@ -1,11 +1,67 @@
 ## PART 2 : lowlevel QC
 
+
 The quality control consists of three parts: 
 
-1. There is call-rate filtering with threshold $`r callrate.thres`$
+1. High level quality control includes detection p-value filter, restriction the the samples listed in the samplesfile and call rate filtering.
 2. The second part is based on control probes. Details are given in the [ILMN HD methylation assay protocol guide (15019519)](https://support.illumina.com/downloads/infinium_hd_methylation_assay_protocol_guide_(15019519_b).html).
 3. The data is checked for sex mismatch. 
 
+
+### High-level quality control
+
+* Detection p-values are illustrated in the following plots. Low p-values indicate that the signal is unlikely to be background noise. 
+
+```{r}
+# test
+dpvec <- dp.all
+dim(dpvec) <- c(nrow(dp.all)*ncol(dp.all),1)
+
+# plot detection P
+dpvecplot <- dpvec
+dpvecplot[which(dpvecplot==0)] <- 1E-20
+hist(-log10(dpvec),breaks=30, main = "detection p-values")
+```
+
+
+
+```{r}
+hist(-log10(dpvecplot),breaks=30, main = "detection p-values: zero values set to 1E-20")
+rm(dpvecplot)
+```
+\pagebreak
+
+
+The following table summarizes how many detection p-values are smaller than the threshold $`r detPthreshold `$ given in the *parameterfile*, or 0.01: 
+
+ threshold           | count                                       | percentage
+---------------------|---------------------------------------------|-----------------------------------------------------
+$`r detPthreshold `$ | $`r length(which(dpvec<detPthreshold))`$    | $`r length(which(dpvec<detPthreshold))/length(dpvec)`$
+0.01                 | $`r length(which(dpvec<0.01))`$             | $`r length(which(dpvec<0.01))/length(dpvec)`$
+
+
+```{r}
+#set detection p-value threshold
+thres=detPthreshold
+d=dp.all[rownames(TypeII.Green.All),colnames(TypeII.Green.All)]
+TypeII.Green.All.d = ifelse(d<thres,TypeII.Green.All,NA)
+TypeII.Red.All.d = ifelse(d<thres,TypeII.Red.All,NA)
+d=dp.all[rownames(TypeI.Green.M.All),colnames(TypeI.Green.M.All)]
+TypeI.Green.M.All.d = ifelse(d<thres,TypeI.Green.M.All,NA)
+TypeI.Green.U.All.d = ifelse(d<thres,TypeI.Green.U.All,NA)
+d=dp.all[rownames(TypeI.Red.M.All),colnames(TypeI.Red.M.All)]
+TypeI.Red.M.All.d = ifelse(d<thres,TypeI.Red.M.All,NA)
+TypeI.Red.U.All.d = ifelse(d<thres,TypeI.Red.U.All,NA)
+#rm(dp.all,d)
+
+samples=colnames(TypeI.Red.M.All)
+```
+
+$`r length(which(dpvec>detPthreshold))`$   ($`r round(length(which(dpvec>detPthreshold))/length(dpvec), digits = 3)`$ \%)   measurements are excluded because their detection p-value is bigger than $`r detPthreshold`$. Only values with a detection p-value strictly smaller the threshold are kept.
+To skip this filtering, set the parameter *detPthreshold* to a value **strictly** bigger than 1 in the *parameterfile.R*.
+
+
+* Identified by the samplefile, $`r length(samplesinclude)`$ samples are included in the analysis.
 
 ```{r}
 datsamples <- read.table(file=samplesfile,header=T,as.is=T,sep="\t")
@@ -15,14 +71,15 @@ sample.call <- sample.call[samplesinclude]
 ctrl_complete.Green.all <- ctrl_complete.Green.all[,samplesinclude]
 ctrl_complete.Red.all <- ctrl_complete.Red.all[,samplesinclude]
 beta.raw.sex <- beta.raw.sex[,samplesinclude]
-
+beta.raw <- beta.raw[,samplesinclude]
 ```
-
-$`r length(samplesinclude)`$ samples are included in the analysis, identified by the samplefile and existing sample calls:
-
 ```{r}
 datsamples$Sample_Name[datsamples$Sample_ID%in%samplesinclude]
 ```
+
+
+
+* There is call-rate filtering with threshold $`r callrate.thres`$.
 
 ```{r}
 # call-rate filtering
@@ -34,6 +91,36 @@ if (length(bufout)>0) samples.filtered <- data.frame(sample=bufout,x=NA,y=NA,fil
   
 
 * $`r length(bufout)`$ samples were tagged for exclusion because the call-rate was below the threshold $`r callrate.thres`$.
+
+
+```{r}
+# plot sample call rates
+hist(sample.call,breaks=100, main = "sample call rates")
+```
+
+```{r}
+# plot sample call rates
+hist(sample.call,breaks=100, main = "sample call rates zoomed", xlim = c(0.85,1))
+```
+  
+
+$`r max(0,length(sample.call[which(sample.call<=0.98)]))`$ of all sample call rates are lower than 0.98,  
+ and $`r length(sample.call[which(sample.call<=callrate.thres)])`$ are lower than the threshold $`r callrate.thres`$.
+
+
+We have a look at the marker call rates as well:
+```{r}
+hist(marker.call,breaks=100, main = "marker call rates")
+```
+  
+
+$`r max(0,length(marker.call[which(marker.call<=0.98)]))`$ of all marker call rates are lower than 0.98,  
+ and $`r length(marker.call[which(marker.call<=0.95)])`$ are lower than the threshold 0.95.
+
+
+The results of the sample call rate filter are included in the export file **samples_filtered.csv**.
+
+### Low-level Quality Control
 
 
 ```{r}
@@ -220,6 +307,8 @@ if(nrow(samples.filtered) > 0){
 }
 ```
 
+### Sex mismatch
+
 Gamete methylation can be used to check sex mismatches. First, we see the loadings of the PCA on markers in the space of samples. The second plot shows the principle components of the PCA on the samples in the space of samples.
 
 ```{r}
@@ -272,49 +361,5 @@ resSexCheck <- cbind(resSexCheck,data.frame(PC1=EV[,"PC1"],PC2=EV[,"PC2"]))
 write.csv(resSexCheck,file = paste0(outputdir,"/results-PCAsex_raw","_",projectname,"-",formatted.time,".csv"),row.names=F,quote=F)
 ```
 
-
-```{r}
-# plot sample call rates
-hist(sample.call,breaks=100, main = "sample call rates")
-```
-
-```{r}
-# plot sample call rates
-hist(sample.call,breaks=100, main = "sample call rates zoomed", xlim = c(0.85,1))
-```
-  
-
-$`r max(0,length(sample.call[which(sample.call<=0.98)]))`$ of all sample call rates are lower than 0.98,  
- and $`r length(sample.call[which(sample.call<=callrate.thres)])`$ are lower than the threshold $`r callrate.thres`$.
-
-```{r}
-hist(marker.call,breaks=100, main = "marker call rates")
-```
-  
-
-$`r max(0,length(marker.call[which(marker.call<=0.98)]))`$ of all marker call rates are lower than 0.98,  
- and $`r length(marker.call[which(marker.call<=0.95)])`$ are lower than the threshold 0.95.
-
-
-
 The previous calculations provide all information needed to filter the samples and make a tab-separated file *samplesfilefinal* for further use. 
 For this analysis, `r samplesfilefinal` was used as list of samples for the final preprocessing steps. 
-
-```{r}
-plot.beta.densities = function(beta, title){
-	densities = apply(beta,2,function(x){ density(x, na.rm = TRUE) } )
-	xmax = max(sapply(densities, function(d){max(d$x)}))
-	xmin = min(sapply(densities, function(d){min(d$x)}))
-	ymax = max(sapply(densities, function(d){max(d$y)}))
-
-	plot(NA, xlim = c(xmin,xmax), ylim = c(0,ymax), main = title, ylab = "")
-	colors = rainbow(10)
-	for(i in 1:ncol(beta)){
-		lines(densities[[i]], col = colors[i%%10 + 1])
-	}
-
-}
-plot.beta.densities(beta.raw,"Densities of raw autosomal beta values per sample")
-```
-  
-
