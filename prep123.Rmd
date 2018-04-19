@@ -54,14 +54,14 @@ qcfilename=paste0("QC_data_",projectname,"_",formatted.time,".Rdata")
 	\item[betaQN] $\beta$ values calculated for autosomal probes of filtered samples with quantile normalization applied 
 	\item[betaQN.sex] $\beta$ values calculated for sex chromosome probes of filtered samples with quantile normalization applied 
 	\item[betaQN.all] combines \textbf{betaQN} and \textbf{betaQN.sex} 
-	\item[est.minfi] the white-blood-cell estimations by minfi method based on RGsets
+	\item[est.wbc.minfi] the white-blood-cell estimations by minfi method based on RGsets
 \end{description}
 
 
 ```{r}
 save(ctrl.all,ctrlprobes.scores,ctrl.complete.Red.all, ctrl.complete.Green.all, control.info,dp.all, TypeII.Red.All , TypeII.Green.All , TypeI.Red.M.All , TypeI.Red.U.All , TypeI.Green.M.All , TypeI.Green.U.All, TypeII.Red.All.d , TypeII.Green.All.d , TypeI.Red.M.All.d , TypeI.Red.U.All.d , TypeI.Green.M.All.d , TypeI.Green.U.All.d , sample.call, marker.call, beta.raw, beta.raw.sex, pcaAuto, sample.callY, sample.callX,marker.call.all, file=paste0(outputdir,'/',qcfilename))
 
-save(pcaControls, betaQN, betaQN.sex,betaQN.all, est.minfi, file=paste0(outputdir,"/",analysisfilename))
+save(pcaControls, betaQN, betaQN.sex,betaQN.all, est.wbc.minfi, file=paste0(outputdir,"/",analysisfilename))
 ```
 
 ```{r child = 'MemoryMethodsCredits.Rmd'}

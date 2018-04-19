@@ -40,12 +40,14 @@ qcfilename=paste0("QC_data_",projectname,"_",formatted.time,".Rdata")
 	\item[marker.call] the marker call rates
 	\item[beta.raw] the $\beta$ values calculated for autosomal probes with detection p value filter only
 	\item[beta.raw.sex] the $\beta$ values calculated for sex chromosome probes with detection p value filter only
-	\item[est.minfi] the white-blood-cell estimations by minfi method based on RGsets
+	\item[est.wbc.minfi] the white-blood-cell estimations by minfi method based on RGsets
 \end{description}
 
 
 ```{r}
-save(ctrl.all, ctrlprobes.scores,ctrl.complete.Red.all, ctrl.complete.Green.all,control.info,dp.all, TypeII.Red.All ,TypeII.Green.All , TypeI.Red.M.All ,TypeI.Red.U.All , TypeI.Green.M.All ,TypeI.Green.U.All, TypeII.Red.All.d ,TypeII.Green.All.d , TypeI.Red.M.All.d ,TypeI.Red.U.All.d , TypeI.Green.M.All.d , TypeI.Green.U.All.d , sample.call, marker.call, beta.raw, beta.raw.sex, est.minfi, file=paste0(outputdir,'/',qcfilename))
+save(ctrl.all, ctrlprobes.scores,ctrl.complete.Red.all, ctrl.complete.Green.all,control.info,dp.all, TypeII.Red.All ,TypeII.Green.All , TypeI.Red.M.All ,TypeI.Red.U.All , TypeI.Green.M.All ,TypeI.Green.U.All, TypeII.Red.All.d ,TypeII.Green.All.d , TypeI.Red.M.All.d ,TypeI.Red.U.All.d , TypeI.Green.M.All.d , TypeI.Green.U.All.d , sample.call, marker.call, beta.raw, beta.raw.sex, est.wbc.minfi, file=paste0(outputdir,'/',qcfilename))
+e par(mfrow=c(2,1))
+# par(mfrow=c(2,1))
 
 ```
 
