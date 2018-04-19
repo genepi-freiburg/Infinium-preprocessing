@@ -44,7 +44,7 @@ TypeI.Red.U = normalizeQuantiles(TypeI.Red.U)
 TypeII.betas = TypeII.Green/(TypeII.Red+TypeII.Green+100)
 TypeI.Green.betas = TypeI.Green.M/(TypeI.Green.M+TypeI.Green.U+100)
 TypeI.Red.betas = TypeI.Red.M/(TypeI.Red.M+TypeI.Red.U+100)
-beta = as.matrix(rbind(TypeII.betas,TypeI.Green.betas,TypeI.Red.betas))
+betaQN = as.matrix(rbind(TypeII.betas,TypeI.Green.betas,TypeI.Red.betas))
 marker.callQN =rowSums(!is.na(beta))/ncol(beta) # this line is added; if problems occur, maybe delete it and rechange all lines where marker.callQN occurs to marker.call
 
 # sex chromosomes ------------------------------------------------------------------
@@ -118,23 +118,15 @@ TypeI.Green.betas_w = TypeI.Green.M_w/(TypeI.Green.M_w+TypeI.Green.U_w+100)
 TypeI.Red.betas_w = TypeI.Red.M_w/(TypeI.Red.M_w+TypeI.Red.U_w+100)
 beta_w = as.matrix(rbind(TypeII.betas_w,TypeI.Green.betas_w,TypeI.Red.betas_w))
 
-beta_sex <- cbind(beta_m,beta_w) 
-marker.call_sex=rowSums(!is.na(beta_sex))/ncol(beta_sex)
-beta_all <- rbind(beta,beta_sex)
+betaQN.sex <- cbind(beta_m,beta_w) 
+marker.call_sex=rowSums(!is.na(betaQN.sex))/ncol(betaQN.sex)
+betaQN.all <- rbind(betaQN,betaQN.sex)
 
 ###### save data (combine with sex chr)
 
 rm(TypeII.Green,TypeII.Red,TypeI.Green.M,TypeI.Green.U,TypeI.Red.M,TypeI.Red.U,TypeII.betas,TypeI.Green.betas,TypeI.Red.betas)
 rm(TypeII.Green_m,TypeII.Red_m,TypeI.Green.M_m,TypeI.Green.U_m,TypeI.Red.M_m,TypeI.Red.U_m,TypeII.betas_m,TypeI.Green.betas_m,TypeI.Red.betas_m)
 rm(TypeII.Green_w,TypeII.Red_w,TypeI.Green.M_w,TypeI.Green.U_w,TypeI.Red.M_w,TypeI.Red.U_w,TypeII.betas_w,TypeI.Green.betas_w,TypeI.Red.betas_w)
-
-# save beta QN
-# save(beta, file=paste0(outputdir,"/beta_QN.RData"))
-# save(beta_sex, file=paste0(outputdir,"/beta_QN-sex.RData"))
-# save(beta_all, file=paste0(outputdir,"/beta_QN-ALL.RData"))
-betaQN <- beta
-betaQN.sex <- beta_sex
-betaQN.all <- beta_all
 
 plot.beta.densities(betaQN,"Densities of normalized autosomal beta values per sample")
 ```
@@ -162,8 +154,8 @@ ctrlprobes.scores <- merge(ctrlprobes.scores,datsamples[,c("Sample_ID","Sample_N
 write.csv(ctrlprobes.scores,file=paste0(outputdir,"/PC_controls-finalSample","_",projectname,"-",formatted.time,".csv"),row.names=F)
 
 # sex-check
-sample.callY=colSums(!is.na(beta_sex[sexchrY,]))/nrow(beta_sex[sexchrY,])
-sample.callX=colSums(!is.na(beta_sex[sexchrX,]))/nrow(beta_sex[sexchrX,])
+sample.callY=colSums(!is.na(betaQN.sex[sexchrY,]))/nrow(betaQN.sex[sexchrY,])
+sample.callX=colSums(!is.na(betaQN.sex[sexchrX,]))/nrow(betaQN.sex[sexchrX,])
 
 # by PCA
 ```
@@ -173,7 +165,7 @@ The following plot is a PCA on **variables**: It presents the importance of samp
 
 ```{r}
 # chr X+Y
-betaPCA <- beta_sex[c(sexchrX,sexchrY),]
+betaPCA <- betaQN.sex[c(sexchrX,sexchrY),]
 pcaSex <- prcomp(na.omit(betaPCA))
 EV <- pcaSex$rotation
 EV <- merge(EV,datsamples,by.x=0,by.y="Sample_ID")
@@ -181,8 +173,6 @@ plot(EV[,"PC1"],EV[,"PC2"],col=EV$Gender+2, main=paste0("number of X+Y probes: "
 legend("top", c("male","female"), col=c(2,3), pch = 1, cex=1.4)
 
 resSexCheck <- data.frame(Sample_ID=EV$Row.names,Sex=EV$Gender,EV1=EV[,"PC1"],EV2=EV[,"PC2"])
-
-#plot(EV[,"PC1"],EV[,"PC2"],col=as.numeric(as.factor(paste(EV$Sample_Group)))+2, main=paste0("number of X+Y probes: ",nrow(betaPCA)),xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"))
 ```
   
 
@@ -216,7 +206,7 @@ hist(YcallMen,breaks=50)
 if(length(women) > 1){
 hist(YcallWomen,breaks=50)
 
-marker.callYwomen=rowSums(!is.na(beta_sex[sexchrY,colnames(beta_sex) %in% women]))/ncol(beta_sex[sexchrY,colnames(beta_sex) %in% women])
+marker.callYwomen=rowSums(!is.na(betaQN.sex[sexchrY,colnames(betaQN.sex) %in% women]))/ncol(betaQN.sex[sexchrY,colnames(betaQN.sex) %in% women])
 }
 ```
   
@@ -225,7 +215,7 @@ marker.callYwomen=rowSums(!is.na(beta_sex[sexchrY,colnames(beta_sex) %in% women]
 
 ```{r}
 if(length(women) > 1){
-#par(mfrow=c(1,1))
+par(mfrow=c(1,1))
 hist(marker.callYwomen,breaks=50)
 }
 ```
@@ -242,11 +232,6 @@ par(mfrow=c(1,1))
 plot(EV[,"PC1"],EV[,"PC2"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x)),xlab=paste0("EV1 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[2]*100),"%)"))
 
 plot(EV[,"PC3"],EV[,"PC4"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x)),xlab=paste0("EV3 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[3]*100),"%)"),ylab=paste0("EV4 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[4]*100),"%)"))
-
-# test only
-#plot(EV[,"PC1"],EV[,"PC2"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x)),xlab=paste0("EV1 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[2]*100),"%)"),col=as.numeric(as.factor(paste(EV$Sample_Group,EV$Sample_Plate)))+2)
-#plot(EV[,"PC3"],EV[,"PC4"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x)),xlab=paste0("EV3 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[3]*100),"%)"),ylab=paste0("EV4 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[4]*100),"%)"),col=as.numeric(as.factor(EV$Sample_Group))+2)
-#legend("topleft", c("pilot 1","pilot 2"), col=c(4,3), pch = 1)
 ```
 
 
@@ -256,13 +241,6 @@ par(mfrow=c(1,1))
 plot((pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1:10],main="Explained Variance by autosomes",ylab="% variance",xlab="PC#",ylim=c(0,1.05))
 text((y=pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1:10],x=1:10+0.1,labels=sprintf("%1.3f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2)))[1:10],adj=c(0.5,-1))
 
-# # save pca
-# save(pcaControls, pcaAuto, file=paste0(outputdir,"/pca_QN.RData"))
-# save(sample.callY, sample.callX, file=paste0(outputdir,"/callRates-sex.RData"))
-
-marker.call_all <- data.frame(callrate=c(marker.callQN,marker.call_sex)) # marker callrate of all samples incl. excluded ones
-marker.call.all = marker.call_all
-# marker.call_all <- data.frame(callrate=c(marker.call,marker.call_sex)) # marker callrate of all samples incl. excluded ones
-
+marker.call.all <- data.frame(callrate=c(marker.callQN,marker.call_sex)) # marker callrate of all samples incl. excluded ones
 ```
 

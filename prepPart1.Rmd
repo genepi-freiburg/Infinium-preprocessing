@@ -77,7 +77,7 @@ for(i in 1:nrow(filenames)) {
 	### until next ### different: control defined 
 	control=getProbeInfo(RGset, type = "Control") # needed also for lowlevel QC
 
-	       #BSC1 control probes - 450k: 16:18 ### 1:18 sind für 45ok die Zeilen control$Type=="BISULFITE CONVERSION I" & (control$Color %in% c("Green","LimeGreen","Lime")) 
+	#BSC1 control probes - 450k: 16:18 ### 1:18 sind für 45ok die Zeilen control$Type=="BISULFITE CONVERSION I" & (control$Color %in% c("Green","LimeGreen","Lime")) 
         BSCI.Green.Name = control[control$Type=="BISULFITE CONVERSION I" & (control$Color %in% c("Green","LimeGreen","Lime")),]$ExtendedType
         BSCI.Green <- matrix(NA_real_, ncol = ncol(RGset), nrow = length(BSCI.Green.Name), dimnames = list(BSCI.Green.Name, sampleNames(RGset)))
         BSCI.Green[BSCI.Green.Name,] <- getGreen(RGset)[control[control$Type=="BISULFITE CONVERSION I" & (control$Color %in% c("Green","LimeGreen","Lime")),]$Address,]
@@ -133,10 +133,10 @@ for(i in 1:nrow(filenames)) {
 
         # added for lowlevel QC
         # controls probes for red and green channel
-        ctrl_complete.Red <- matrix(NA_real_, ncol = ncol(RGset), nrow = nrow(control_ok.Red), dimnames = list(control_ok.Red[,4], sampleNames(RGset)))
-        ctrl_complete.Red <- getRed(RGset)[control_ok.Red[,1],]
-        ctrl_complete.Green <- matrix(NA_real_, ncol = ncol(RGset), nrow = nrow(control_ok.Green), dimnames = list(control_ok.Green[,4], sampleNames(RGset)))
-        ctrl_complete.Green <- getGreen(RGset)[control_ok.Green[,1],]
+        ctrl.complete.Red <- matrix(NA_real_, ncol = ncol(RGset), nrow = nrow(control_ok.Red), dimnames = list(control_ok.Red[,4], sampleNames(RGset)))
+        ctrl.complete.Red <- getRed(RGset)[control_ok.Red[,1],]
+        ctrl.complete.Green <- matrix(NA_real_, ncol = ncol(RGset), nrow = nrow(control_ok.Green), dimnames = list(control_ok.Green[,4], sampleNames(RGset)))
+        ctrl.complete.Green <- getGreen(RGset)[control_ok.Green[,1],]
 	
 	#combine ctrl probe intensities ### shorter 
         ctrl = rbind(as.matrix(BSCI.Green), as.matrix(BSCI.Red), as.matrix(BSCII.Red), (ctlext.Red), (ctlext.Green),as.matrix(normC.Green),as.matrix(normG.Green), as.matrix(normA.Red),as.matrix(normT.Red))
@@ -155,8 +155,8 @@ for(i in 1:nrow(filenames)) {
 	TypeI.Green.U.All <- cbind(TypeI.Green.U.All,TypeI.Green.U)
 	ctrl.all <- rbind(ctrl.all, t(ctrl))
 	## added for lowlevel QC by AT 
-	ctrl_complete.Red.all <- cbind(ctrl_complete.Red.all, ctrl_complete.Red) # added for lowlevel QC
-        ctrl_complete.Green.all <- cbind(ctrl_complete.Green.all, ctrl_complete.Green) # added for lowlevel QC
+	ctrl.complete.Red.all <- cbind(ctrl.complete.Red.all, ctrl.complete.Red) # added for lowlevel QC
+        ctrl.complete.Green.all <- cbind(ctrl.complete.Green.all, ctrl.complete.Green) # added for lowlevel QC
 	dp.all <- cbind(dp.all, dp)
 	}
 	else {
@@ -167,8 +167,8 @@ for(i in 1:nrow(filenames)) {
 	TypeI.Green.M.All <- TypeI.Green.M 
 	TypeI.Green.U.All <- TypeI.Green.U     
 	ctrl.all <- t(ctrl)
-	ctrl_complete.Red.all <- ctrl_complete.Red # added for lowlevel QC
-        ctrl_complete.Green.all <- ctrl_complete.Green # added for lowlevel QC
+	ctrl.complete.Red.all <- ctrl.complete.Red # added for lowlevel QC
+        ctrl.complete.Green.all <- ctrl.complete.Green # added for lowlevel QC
         dp.all <- dp
 	}
 	
@@ -226,12 +226,7 @@ ctrlprobes.scores = pca$x
 colnames(ctrlprobes.scores) = paste(colnames(ctrlprobes.scores), '_cp', sep='')
 
 # ### extended savings 
- control_info <- data.frame(control)
-# save(ctrl.all,ctrlprobes.scores,ctrl_complete.Red.all,ctrl_complete.Green.all,control_info, file = paste0(outputdir,"/ctrlprobes.RData"))
-ctrl.complete.Red.all <- ctrl_complete.Red.all
-ctrl.complete.Green.all <- ctrl_complete.Green.all
-control.info <- control_info
-# save(dp.all, file = paste0(outputdir,"/detectionPvalue.RData"))
+ control.info <- data.frame(control)
 
 ### EOF for 1_intensities
 ```
@@ -243,12 +238,9 @@ control.info <- control_info
 dpvec <- dp.all
 dim(dpvec) <- c(nrow(dp.all)*ncol(dp.all),1)
 
-# pdf(paste0(outputdir,"/detectionP.pdf"))
-
 # plot detection P
 dpvecplot <- dpvec
 dpvecplot[which(dpvecplot==0)] <- 1E-20
-# par(mfrow=c(2,1))
 hist(-log10(dpvec),breaks=30, main = "detection p-values")
 ```
 
@@ -259,8 +251,6 @@ hist(-log10(dpvec),breaks=30, main = "detection p-values")
 ```{r}
 hist(-log10(dpvecplot),breaks=30, main = "detection p-values: zero values set to 1E-20")
 rm(dpvecplot)
-
- #dev.off()
 ```
 \pagebreak
 
@@ -310,8 +300,6 @@ TypeI.Red.M.All.d = ifelse(d<thres,TypeI.Red.M.All,NA)
 TypeI.Red.U.All.d = ifelse(d<thres,TypeI.Red.U.All,NA)
 #rm(dp.all,d)
 
-#save(TypeII.Red.All ,TypeII.Green.All ,TypeI.Red.M.All ,TypeI.Red.U.All ,TypeI.Green.M.All ,TypeI.Green.U.All, TypeII.Red.All.d ,TypeII.Green.All.d ,TypeI.Red.M.All.d ,TypeI.Red.U.All.d ,TypeI.Green.M.All.d ,TypeI.Green.U.All.d , file=paste0(outputdir,"/intensities.RData"))
-
 samples=colnames(TypeI.Red.M.All)
 ```
 
@@ -340,13 +328,9 @@ TypeI.Red.U = TypeI.Red.U.All.d[markers,samples]
 TypeII.betas = TypeII.Green/(TypeII.Red+TypeII.Green+100)
 TypeI.Green.betas = TypeI.Green.M/(TypeI.Green.M+TypeI.Green.U+100)
 TypeI.Red.betas = TypeI.Red.M/(TypeI.Red.M+TypeI.Red.U+100)
-beta = as.matrix(rbind(TypeII.betas,TypeI.Green.betas,TypeI.Red.betas))
-sample.call=colSums(!is.na(beta))/nrow(beta)
-marker.call=rowSums(!is.na(beta))/ncol(beta)
-
-#save(sample.call, marker.call, file=paste0(outputdir,'/callRates.RData'))
-#save(beta, file=paste0(outputdir,'/beta_raw.RData'))
-beta.raw = beta
+beta.raw = as.matrix(rbind(TypeII.betas,TypeI.Green.betas,TypeI.Red.betas))
+sample.call=colSums(!is.na(beta.raw.raw))/nrow(beta.raw)
+marker.call=rowSums(!is.na(beta.raw))/ncol(beta.raw)
 
 # sex chromosomes ------------------------------------------------------------------
 
@@ -365,9 +349,7 @@ TypeI.Red.U = TypeI.Red.U.All.d[markers,samples]
 TypeII.betas = TypeII.Green/(TypeII.Red+TypeII.Green+100)
 TypeI.Green.betas = TypeI.Green.M/(TypeI.Green.M+TypeI.Green.U+100)
 TypeI.Red.betas = TypeI.Red.M/(TypeI.Red.M+TypeI.Red.U+100)
-beta_sex = as.matrix(rbind(TypeII.betas,TypeI.Green.betas,TypeI.Red.betas))
-#save(beta_sex, file=paste0(outputdir,'/beta_raw_sex.RData'))
-beta.raw.sex <- beta_sex
+beta.raw.sex = as.matrix(rbind(TypeII.betas,TypeI.Green.betas,TypeI.Red.betas))
  
 ```
 

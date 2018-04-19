@@ -2,119 +2,69 @@
 ## PART 4: Calculating Inter Quartile Ranges 
 
 The inter-quartile range of a set of values is the difference between its 0.75-quartile and its 0.25-quartile. 
-In the following, these quartiles are calculated for all autosomal beta values per probe and beta values whose difference to the median is greater than 3 times the inter-quartile range are marked as outliers and set to missing (NA) in beta.QN.all.3IQR.
+In the following, these quartiles are calculated for all autosomal beta values per probe and beta values whose difference to the median is greater than 3 times the inter-quartile range are marked as outliers and set to missing (NA) in betaQN.all.3IQR.
 
 ```{r}
   # outliers
   IQRrange <- 1.5
-  beta_all_3IQR <- beta_all
-  probe_IQR <- t(apply(beta_all,1,function(x) {quantile(x,probs=c(0.25,0.75,0.5),na.rm=T)}))
+  betaQN.all.3IQR <- betaQN.all
+  probe_IQR <- t(apply(betaQN.all,1,function(x) {quantile(x,probs=c(0.25,0.75,0.5),na.rm=T)}))
   probe_IQR <- data.frame(probe_IQR)
   probe_IQR$IQR <- probe_IQR[,2]-probe_IQR[,1]
   probe_IQR$rangeMin3IQR <- probe_IQR[,3]-3*probe_IQR$IQR # 3 IQR from median
   probe_IQR$rangeMax3IQR <- probe_IQR[,3]+3*probe_IQR$IQR # 3 IQR from median
   
-  marker.outlier_all <- matrix(data=NA,ncol=3,nrow=nrow(beta_all_3IQR))
+  marker.outlier.all <- matrix(data=NA,ncol=3,nrow=nrow(betaQN.all.3IQR))
   cnt <- 0
-  ## THIS TAKES VERY LONG !!! nrow(beta_all_3IQR)
-   for (i in rownames(beta_all_3IQR)) {
+  ## THIS TAKES VERY LONG !!! nrow(betaQN.all.3IQR)
+   for (i in rownames(betaQN.all.3IQR)) {
        cnt <- cnt+1
        rangeMin <- probe_IQR[i,"rangeMin"]
        rangeMax <- probe_IQR[i,"rangeMax"]
        rangeMin3IQR <- probe_IQR[i,"rangeMin3IQR"]
        rangeMax3IQR <- probe_IQR[i,"rangeMax3IQR"]
    
-       vals <- beta_all_3IQR[i,]
+       vals <- betaQN.all.3IQR[i,]
    
        nprobes<-length(which(!is.na(vals)))
        outlier3_IQR_vals <- which(vals<rangeMin3IQR | vals>rangeMax3IQR)
        outlier3_IQR<-length(outlier3_IQR_vals)
        
-       beta_all_3IQR[i,outlier3_IQR_vals]<-NA
-       marker.outlier_all[cnt,] <- c(i,nprobes,outlier3_IQR)
+       betaQN.all.3IQR[i,outlier3_IQR_vals]<-NA
+       marker.outlier.all[cnt,] <- c(i,nprobes,outlier3_IQR)
    
        #if (cnt %% 5000 == 0) { print(cnt) } #DEBUG
    }
-   colnames(marker.outlier_all) <- c("name","nprobes","outlier3_IQR")
-   marker.outlier_all <- as.data.frame(marker.outlier_all,stringsAsFactors=F)
-   marker.outlier_all$nprobes<-as.numeric(marker.outlier_all$nprobes)
-   marker.outlier_all$outlier3_IQR<-as.numeric(marker.outlier_all$outlier3_IQR)
-   marker.outlier_all$callrate<-marker.outlier_all$nprobes/length(samples)
-   
-#   save(beta_all_3IQR, file=paste0(outputdir,"/beta_QN_3IQR-ALL.RData"))
-betaQN.all.3IQR <- beta_all_3IQR
-#   save(marker.call_all, marker.outlier_all, file=paste0(outputdir,"/markercallRates_outlierInfo-ALL.RData"))
-marker.call.all = marker.call_all
-marker.outlier.all = marker.outlier_all
-#write.csv(marker.outlier_all,file=paste0(outputdir,"/marker.outlier_all.csv"),quote=F,row.names=F)
+   colnames(marker.outlier.all) <- c("name","nprobes","outlier3_IQR")
+   marker.outlier.all <- as.data.frame(marker.outlier.all,stringsAsFactors=F)
+   marker.outlier.all$nprobes<-as.numeric(marker.outlier.all$nprobes)
+   marker.outlier.all$outlier3_IQR<-as.numeric(marker.outlier.all$outlier3_IQR)
+   marker.outlier.all$callrate<-marker.outlier.all$nprobes/length(samples)
 ```
 
 
 part                    | number of probes                                        | percentage 
 ------------------------|---------------------------------------------------------|-------------------------------------------------------------------------------------------
-total                   | `r (nrow(beta_all)*ncol(beta_all))`                     | 100\%
-noCall                  | `r length(beta_all[which(is.na(beta_all))])`            |`r length(beta_all[which(is.na(beta_all))])/((nrow(beta_all)*ncol(beta_all))) `
-noCall with filter 3IQR | `r length(beta_all_3IQR[which(is.na(beta_all_3IQR))])`  | `r length(beta_all_3IQR[which(is.na(beta_all_3IQR))])/((nrow(beta_all)*ncol(beta_all))) `
+total                   | `r (nrow(betaQN.all)*ncol(betaQN.all))`                     | 100\%
+noCall                  | `r length(betaQN.all[which(is.na(betaQN.all))])`            |`r length(betaQN.all[which(is.na(betaQN.all))])/((nrow(betaQN.all)*ncol(betaQN.all))) `
+noCall with filter 3IQR | `r length(betaQN.all.3IQR[which(is.na(betaQN.all.3IQR))])`  | `r length(betaQN.all.3IQR[which(is.na(betaQN.all.3IQR))])/((nrow(betaQN.all)*ncol(betaQN.all))) `
 
 ```{r}   
-   hist(marker.outlier_all$outlier3_IQR,breaks=50,main="#Probes Outlier 3 IQR",xlab="#outliers per probe",ylab="#probes")
+   hist(marker.outlier.all$outlier3_IQR,breaks=50,main="#Probes Outlier 3 IQR",xlab="#outliers per probe",ylab="#probes")
 ```
   
 
 ```{r}
-   hist(marker.outlier_all$nprobes,breaks=50,main="#Calls per Probe (QN Dataset)",xlab="#calls per probe",ylab="#probes")
+   hist(marker.outlier.all$nprobes,breaks=50,main="#Calls per Probe (QN Dataset)",xlab="#calls per probe",ylab="#probes")
 ```
   
 
 ```{r}
-   hist(marker.outlier_all$callrate,breaks=50,main="#Callrate per Probe (QN Dataset)",xlab="callrate",ylab="#probes")
+   hist(marker.outlier.all$callrate,breaks=50,main="#Callrate per Probe (QN Dataset)",xlab="callrate",ylab="#probes")
    
-   
-   # dev.off()
-
  # reformat output for analysis pipeline
  # convert array IDs to sample IDs
  ids <- datsamples[,c("Sample_ID","Sample_Name")]
- ids <- ids[match(colnames(beta_all),ids$Sample_ID),]
- 
- # QN data
- # mdata <- beta_all
- # colnames(mdata) <- ids$Sample_Name
- # mdata <- t(mdata)
-# # save(mdata, file=paste0(outputdir,"/mdata_QN.RData"))
- 
- # QN-3IQR data
- # mdata.3IQR <- beta_all_3IQR
- # colnames(mdata.3IQR) <- ids$Sample_Name
- # mdata.3IQR <- t(mdata.3IQR)
-# # save(mdata.3IQR, file=paste0(outputdir,"/mdata_QN_3IQR.RData"))
-
-
-#### savings
-### extended savings 
-# save(ctrl.all,ctrlprobes.scores,ctrl_complete.Red.all,ctrl_complete.Green.all,control_info, file = paste0(outputdir,"/ctrlprobes.RData"))
-# save(dp.all, file = paste0(outputdir,"/detectionPvalue.RData"))
-# 
-# save(TypeII.Red.All ,TypeII.Green.All ,TypeI.Red.M.All ,TypeI.Red.U.All ,TypeI.Green.M.All ,TypeI.Green.U.All, TypeII.Red.All.d ,TypeII.Green.All.d ,TypeI.Red.M.All.d ,TypeI.Red.U.All.d ,TypeI.Green.M.All.d ,TypeI.Green.U.All.d , file=paste0(outputdir,"/intensities.RData"))
-# 
-# save(sample.call, marker.call, file=paste0(outputdir,'/callRates.RData'))
-# save(beta, file=paste0(outputdir,'/beta_raw.RData'))
-# save(beta_sex, file=paste0(outputdir,'/beta_raw-sex.RData'))
-# 
-# # save pca
-# save(pcaControls, pcaAuto, file=paste0(outputdir,"/pca_QN.RData"))
-# save(sample.callY, sample.callX, file=paste0(outputdir,"/callRates-sex.RData"))
-
-# save beta QN
-# save(beta, file=paste0(outputdir,"/beta_QN.RData"))
-# save(beta_sex, file=paste0(outputdir,"/beta_QN-sex.RData"))
-# save(beta_all, file=paste0(outputdir,"/beta_QN-ALL.RData"))
-
-# # save(mdata, file=paste0(outputdir,"/mdata_QN.RData"))
-# # save(mdata, file=paste0(outputdir,"/mdata_QN_3IQR.RData"))
-
-# save(ctrl.all,ctrlprobes.scores,ctrl.complete.Red.all,ctrl.complete.Green.all,control.info,dp.all, TypeII.Red.All ,TypeII.Green.All ,TypeI.Red.M.All ,TypeI.Red.U.All ,TypeI.Green.M.All ,TypeI.Green.U.All, TypeII.Red.All.d ,TypeII.Green.All.d ,TypeI.Red.M.All.d ,TypeI.Red.U.All.d ,TypeI.Green.M.All.d ,TypeI.Green.U.All.d , sample.call, marker.call, beta.raw, beta.raw.sex, pcaAuto, sample.callY, sample.callX,marker.call.all, marker.outlier.all,  file=paste0(outputdir,'/',qcfilename))
-
-# save(pcaControls, betaQN, betaQN.sex,betaQN.all,betaQN.all.3IQR, mdata, mdata.QN.3IQR, file=paste0(outputdir,"/",analysisfilename))
+ ids <- ids[match(colnames(betaQN.all),ids$Sample_ID),]
 
 ```
