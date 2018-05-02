@@ -45,7 +45,7 @@ TypeII.betas = TypeII.Green/(TypeII.Red+TypeII.Green+100)
 TypeI.Green.betas = TypeI.Green.M/(TypeI.Green.M+TypeI.Green.U+100)
 TypeI.Red.betas = TypeI.Red.M/(TypeI.Red.M+TypeI.Red.U+100)
 betaQN = as.matrix(rbind(TypeII.betas,TypeI.Green.betas,TypeI.Red.betas))
-marker.callQN =rowSums(!is.na(beta))/ncol(beta) # this line is added; if problems occur, maybe delete it and rechange all lines where marker.callQN occurs to marker.call
+marker.callQN =rowSums(!is.na(betaQN))/ncol(betaQN) # this line is added; if problems occur, maybe delete it and rechange all lines where marker.callQN occurs to marker.call
 
 # sex chromosomes ------------------------------------------------------------------
 women <- datsamples[datsamples$Gender==1,"Sample_ID"]
@@ -224,7 +224,7 @@ hist(marker.callYwomen,breaks=50)
 
 ```{r}
 # PCA (autosomes)
-betaPCA <- beta
+betaPCA <- betaQN
 pcaAuto <- prcomp(na.omit(betaPCA))
 EV <- pcaAuto$rotation
 EV <- merge(EV,datsamples,by.x=0,by.y="Sample_ID")
