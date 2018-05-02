@@ -9,7 +9,7 @@
  setwd(idatdir)
  # cwd
  # getwd()
- filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$"),ignore.case=T),ignore.case=T))
+ filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
 
 dim(filenames) <- c(length(filenames)/2,2)
 
@@ -174,6 +174,7 @@ for(i in 1:nrow(filenames)) {
 	# added 18.04.18 by FGC: minfi WBC estimation based on RGsets only 
 	
 	est_wbc <- estimateCellCounts(RGset, compositeCellType = "Blood", cellTypes = c("CD8T","CD4T", "NK","Bcell","Mono","Gran"))
+	                              #,referencePlatform=arraytype)
 	if(exists("est.wbc.minfi")){
 		est.wbc.minfi = rbind(est_wbc, est_wbc)
 	} else {
@@ -389,7 +390,6 @@ plot.beta.densities = function(beta, title){
 }
 plot.beta.densities(beta.raw,"Densities of raw autosomal beta values per sample")
 ```
-* Identified by the samplefile, $`r length(samplesinclude)`$ samples are included in the analysis.
 
 ```{r}
 datsamples <- read.table(file=samplesfile,header=T,as.is=T,sep="\t")
@@ -404,6 +404,7 @@ beta.raw <- beta.raw[,samplesinclude]
 datsamples$Sample_Name[datsamples$Sample_ID%in%samplesinclude]
 ```
 
+* Identified by the samplefile, $`r length(samplesinclude)`$ samples are included in the analysis.
 
 * There is call-rate filtering with threshold $`r callrate.thres`$.
 

@@ -1,7 +1,7 @@
 
 ---
 title: "EPIC Pipeline"
-date: "27 November, 2017"
+date: "02 May, 2018"
 output:
   pdf_document:
     toc: true
@@ -12,18 +12,27 @@ output:
 This is a pipeline for preprocessing EPIC-Methylation data using R. 
 
 
-## PART 1: Read data and parameters
+## PART 1: Data and parameters
 
 
+```
+## Warning: package 'FlowSorted.Blood.450k' was built under R version 3.4.2
+```
+
+```
+## Warning: package 'IlluminaHumanMethylation450kanno.ilmn12.hg19' was built
+## under R version 3.4.2
+```
+
+### Read data and parameters
 
 We are working with data from directory /data/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/Panther which contains $168$ idat files.
 The annotationfile used is 
+../annotationfileB4_2017-09-15.csv 
+ - if problems occur with annotation, please have a look at [Illumina downloads](https://support.illumina.com/array/downloads.html)    *Infimum Methylation EPIC Product files*. 
 
-/dsk/home/grundner/Methylation-Pipeline/additionalFiles/annotationfileB4_2017-09-15.csv 
-- if problems occur with annotation, please have a look at [Illumina downloads](https://support.illumina.com/array/downloads.html)    *Infimum Methylation EPIC Product files*. 
 
-
-Output is directed to /data/epigenetics/01_EWAS/03_psychiatric/00_test/. We use samples listed in /data/epigenetics/01_EWAS/03_psychiatric/00_test/samplesfile for quality control. 
+Output is directed to /data/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/final_preprocessing/outfiles. We use samples listed in /data/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/final_preprocessing/samplesfile for quality control. 
 
 As given in *parameterfile.R*, the following parameters were used: 
 
@@ -33,27 +42,65 @@ arraytype                     | IlluminaHumanMethylationEPIC
 detPthreshold                 | $10^{-16}$
 callrate.thres                | $0.93$
 filterOutlierCtrlQC           | TRUE
-QuantileNormalize             | FALSE
-InterQuartileRangeCalculation | FALSE
+QuantileNormalize             | TRUE
+InterQuartileRangeCalculation | TRUE
 
-Further we interpret the value **1** for the gender in the samplesfile as **female** and the value **0** as **male**. 
-
-
+Further we interpret the values for the gender in the samplesfile as **1=female** and **0=male**. 
 
 
-* PCA is conducted to get controlprobe scores. 
+```
+## The samples listed in /data/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/final_preprocessing/samplesfile are used for quantile normalization 
+##  and calculation of outliers regarding inter-quartile-range.
+```
+
+When reading the data using the minfi-package we apply Illumina Background correction.
+Whithin this process we also 
+* extract control-probe information. 
+* calculate detection p-values.
+* estimate the white blood cell distribution assuming whole blood samples using minfi.
+* separate the data by channel (red / green) and Infinium I / II type.
+We use this detection p-values and control probe information for high-level quality control and the white blood cell estimations for further processing as phenodata.
+
+### White Blood Cell estimation
+
+The estimation of White Blood Cells results in a data.frame est.wbc.minfi for further use as part of the phenodata:
+
+
+```
+##                           CD8T      CD4T         NK      Bcell       Mono
+## 200973410156_R04C01 0.06490090 0.1499835 0.05996261 0.04184936 0.08146823
+## 200991630056_R08C01 0.05878367 0.1925992 0.16911248 0.09410759 0.07100620
+## 200973410156_R04C01 0.06490090 0.1499835 0.05996261 0.04184936 0.08146823
+## 200991630056_R08C01 0.05878367 0.1925992 0.16911248 0.09410759 0.07100620
+##                          Gran
+## 200973410156_R04C01 0.6178534
+## 200991630056_R08C01 0.4409292
+## 200973410156_R04C01 0.6178534
+## 200991630056_R08C01 0.4409292
+```
+
+### Data preparation
+
+The probes are divided by chromosome type: autosomal probes, chromosome X probes and chromosome Y probes.
+For this step we need the annotationfile.
 
 
 
-* Detection p-values are calculated and illustrated in the following plots. Low p-values indicate that the signal is unlikely to be background noise. 
-
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-10-1.pdf)<!-- --> 
+### High-level quality control
 
 
+High level quality control includes detection p-value filter, restriction the the samples listed in the samplesfile and call rate filtering.
+
+We calculate raw beta values for both autosomal and sex chromosome data.
+In our further calculations beta value data always is processed separately for autosomes and gametes. 
+
+* Detection p-values are illustrated in the following plots. Low p-values indicate that the signal is unlikely to be background noise. 
+
+![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-11-1.pdf)<!-- --> 
 
 
 
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-11-1.pdf)<!-- --> 
+![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-12-1.pdf)<!-- --> 
 \pagebreak
 
 
@@ -61,109 +108,81 @@ The following table summarizes how many detection p-values are smaller than the 
 
  threshold           | count                                       | percentage
 ---------------------|---------------------------------------------|-----------------------------------------------------
-$10^{-16}$ | $143282913$    | $0.9838937$
-0.01                 | $144881923$             | $0.9948738$
+$10^{-16}$ | $6874510$    | $0.9913222$
+0.01                 | $6923997$             | $0.9984583$
 
 
 
-  
 
-
-
-* The probes are divided by chromosome type: autosomal probes, chromosome X probes and chromosome Y probes.
-$143282913$   ($0.984$ \%)   measurements are excluded because their detection p-value is strictly smaller than $10^{-16}$. 
+$60178$   ($0.009$ \%)   measurements are excluded because their detection p-value is bigger than $10^{-16}$. Only values with a detection p-value strictly smaller the threshold are kept.
 To skip this filtering, set the parameter *detPthreshold* to a value **strictly** bigger than 1 in the *parameterfile.R*.
 
-* The data is divided into automomal chromosomes and gametes to calculate call rates and separate sets of beta values.
 
 
 
 beta values:   | autosomes           |  sex chromosomes 
 ---------------|---------------------|----------------------------
-dimension:     | $846232, 168$ | $19627, 168$
+dimension:     | $846232, 8$ | $19627, 8$
 
 
 
 
-## PART 2 : lowlevel QC
-
-The quality control consists of three parts: 
-
-1. There is call-rate filtering with threshold $0.93$
-2. The second part is based on control probes. Details are given in the [ILMN HD methylation assay protocol guide (15019519)](https://support.illumina.com/downloads/infinium_hd_methylation_assay_protocol_guide_(15019519_b).html).
-3. The data is checked for sex mismatch. 
 
 
-
-
-$168$ samples are included in the analysis, identified by the samplefile and existing sample calls:
+![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-16-1.pdf)<!-- --> 
 
 
 ```
-##   [1] "200973410156_R01C01" "200991630056_R05C01" "200973410156_R02C01"
-##   [4] "200991630056_R06C01" "200973410156_R03C01" "200991630056_R07C01"
-##   [7] "200973410156_R04C01" "200991630056_R08C01" "200973410156_R05C01"
-##  [10] "200991630098_R01C01" "200973410156_R06C01" "200991630098_R02C01"
-##  [13] "200973410156_R07C01" "200991630098_R03C01" "200973410156_R08C01"
-##  [16] "200991630098_R04C01" "200991620112_R01C01" "200991630098_R05C01"
-##  [19] "200991620112_R02C01" "200991630098_R06C01" "200991620112_R03C01"
-##  [22] "200991630098_R07C01" "200991620112_R04C01" "200991630098_R08C01"
-##  [25] "200991620112_R05C01" "200991630129_R01C01" "200991620112_R06C01"
-##  [28] "200991630129_R02C01" "200991620112_R07C01" "200991630129_R03C01"
-##  [31] "200991620112_R08C01" "200991630129_R04C01" "200991620113_R01C01"
-##  [34] "200991630129_R05C01" "200991620113_R02C01" "200991630129_R06C01"
-##  [37] "200991620113_R03C01" "200991630129_R07C01" "200991620113_R04C01"
-##  [40] "200991630129_R08C01" "200991620113_R05C01" "201096090132_R01C01"
-##  [43] "200991620113_R06C01" "201096090132_R02C01" "200991620113_R07C01"
-##  [46] "201096090132_R03C01" "200991620113_R08C01" "201096090132_R04C01"
-##  [49] "200991620130_R01C01" "201096090132_R05C01" "200991620130_R02C01"
-##  [52] "201096090132_R06C01" "200991620130_R03C01" "201096090132_R07C01"
-##  [55] "200991620130_R04C01" "201096090132_R08C01" "200991620130_R05C01"
-##  [58] "201096090135_R01C01" "200991620130_R06C01" "201096090135_R02C01"
-##  [61] "200991620130_R07C01" "201096090135_R03C01" "200991620130_R08C01"
-##  [64] "201096090135_R04C01" "200991620131_R01C01" "201096090135_R05C01"
-##  [67] "200991620131_R02C01" "201096090135_R06C01" "200991620131_R03C01"
-##  [70] "201096090135_R07C01" "200991620131_R04C01" "201096090135_R08C01"
-##  [73] "200991620131_R05C01" "201096090147_R01C01" "200991620131_R06C01"
-##  [76] "201096090147_R02C01" "200991620131_R07C01" "201096090147_R03C01"
-##  [79] "200991620131_R08C01" "201096090147_R04C01" "200991630005_R01C01"
-##  [82] "201096090147_R05C01" "200991630005_R02C01" "201096090147_R06C01"
-##  [85] "200991630005_R03C01" "201096090147_R07C01" "200991630005_R04C01"
-##  [88] "201096090147_R08C01" "200991630005_R05C01" "201096090164_R01C01"
-##  [91] "200991630005_R06C01" "201096090164_R02C01" "200991630005_R07C01"
-##  [94] "201096090164_R03C01" "200991630005_R08C01" "201096090164_R04C01"
-##  [97] "200991630037_R01C01" "201096090164_R05C01" "200991630037_R02C01"
-## [100] "201096090164_R06C01" "200991630037_R03C01" "201096090164_R07C01"
-## [103] "200991630037_R04C01" "201096090164_R08C01" "200991630037_R05C01"
-## [106] "201096090184_R01C01" "200991630037_R06C01" "201096090184_R02C01"
-## [109] "200991630037_R07C01" "201096090184_R03C01" "200991630037_R08C01"
-## [112] "201096090184_R04C01" "200991630038_R01C01" "201096090184_R05C01"
-## [115] "200991630038_R02C01" "201096090184_R06C01" "200991630038_R03C01"
-## [118] "201096090184_R07C01" "200991630038_R04C01" "201096090184_R08C01"
-## [121] "200991630038_R05C01" "201105900014_R01C01" "200991630038_R06C01"
-## [124] "201105900014_R02C01" "200991630038_R07C01" "201105900014_R03C01"
-## [127] "200991630038_R08C01" "201105900014_R04C01" "200991630039_R01C01"
-## [130] "201105900014_R05C01" "200991630039_R02C01" "201105900014_R06C01"
-## [133] "200991630039_R03C01" "201105900014_R07C01" "200991630039_R04C01"
-## [136] "201105900014_R08C01" "200991630039_R05C01" "201105900153_R01C01"
-## [139] "200991630039_R06C01" "201105900153_R02C01" "200991630039_R07C01"
-## [142] "201105900153_R03C01" "200991630039_R08C01" "201105900153_R04C01"
-## [145] "200991630048_R01C01" "201105900153_R05C01" "200991630048_R02C01"
-## [148] "201105900153_R06C01" "200991630048_R03C01" "201105900153_R07C01"
-## [151] "200991630048_R04C01" "201105900153_R08C01" "200991630048_R05C01"
-## [154] "201105900157_R01C01" "200991630048_R06C01" "201105900157_R02C01"
-## [157] "200991630048_R07C01" "201105900157_R03C01" "200991630048_R08C01"
-## [160] "201105900157_R04C01" "200991630056_R01C01" "201105900157_R05C01"
-## [163] "200991630056_R02C01" "201105900157_R06C01" "200991630056_R03C01"
-## [166] "201105900157_R07C01" "200991630056_R04C01" "201105900157_R08C01"
+## [1] "DOMKO026A" "DOMPA051A" "DOMPA051C" "DOMKO035A" "DOMPA059A" "DOMPA059C"
+## [7] "DOMPA061A" "DOMPA061C"
 ```
+
+* Identified by the samplefile, $8$ samples are included in the analysis.
+
+* There is call-rate filtering with threshold $0.93$.
 
 
   
 
-* $2$ samples were tagged for exclusion because the call-rate was below the threshold $0.93$.
+* $0$ samples were tagged for exclusion because the call-rate was below the threshold $0.93$.
 
 
+![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-19-1.pdf)<!-- --> 
+
+![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-20-1.pdf)<!-- --> 
+  
+
+$0$ of all sample call rates are lower than 0.98,  
+ and $0$ are lower than the threshold $0.93$.
+
+
+We have a look at the marker call rates as well:
+![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-21-1.pdf)<!-- --> 
+  
+
+$1.7379\times 10^{4}$ of all marker call rates are lower than 0.98,  
+ and $17379$ are lower than the threshold 0.95.
+
+
+The results of the sample call rate filter are included in the export file **samples_filtered.csv** which also documents the following control-probe based quality control.
+
+
+
+## PART 2: Low-Level Quality Control
+
+
+The quality control consists of two parts: 
+
+1. The second part is based on control probes. Details are given in the [ILMN HD methylation assay protocol guide (15019519)](https://support.illumina.com/downloads/infinium_hd_methylation_assay_protocol_guide_(15019519_b).html).
+2. The data is checked for sex mismatch. 
+
+
+
+* By conducting a PCA on the control-probe information we obtain controlprobe scores. 
+
+
+
+* Then we look at the controls.
 
 
 The first 3 rows of control probes information from QC contain the following information:
@@ -194,110 +213,38 @@ The first 3 rows of control probes information from QC contain the following inf
 
 In the following control probes are checked. For a more detailed descriptin see e.g. the [ILMN HD methylation assay protocol guide (15019519)](https://support.illumina.com/downloads/infinium_hd_methylation_assay_protocol_guide_(15019519_b).html) or the [Illumina BeadArray Controls Reporter Software Guide ](https://support.illumina.com/downloads/beadarray-controls-reporter-software-guide-1000000004009.html),pages 6-8. Probes are evaluated by MA plots. BS-I and BS-II control probes check the DNA bisulfite conversion step.
 
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-20-1.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-20-2.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-20-3.pdf)<!-- --> 
+![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-25-1.pdf)<!-- --> ![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-25-2.pdf)<!-- --> ![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-25-3.pdf)<!-- --> 
 
 We also check the Hybridisation of the amplified DNA to the array:
 
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-21-1.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-21-2.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-21-3.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-21-4.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-21-5.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-21-6.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-21-7.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-21-8.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-21-9.pdf)<!-- --> 
+![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-26-1.pdf)<!-- --> ![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-26-2.pdf)<!-- --> ![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-26-3.pdf)<!-- --> ![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-26-4.pdf)<!-- --> ![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-26-5.pdf)<!-- --> ![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-26-6.pdf)<!-- --> ![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-26-7.pdf)<!-- --> ![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-26-8.pdf)<!-- --> ![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-26-9.pdf)<!-- --> 
 
 
 The following table lists the detected outliers identified by the quality control and can be found 
-in the file /data/epigenetics/01_EWAS/03_psychiatric/00_test//samples-filtered.csv in a slightly expanded version. 
+in the file /data/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/final_preprocessing/outfiles/samples-filtered.csv in a slightly expanded version. 
 
 
 ```
-##    Sample_Name                                                    filter
-## 2    DOMPA023A                                              BS I-C (red)
-## 4    DOMPA023A                                                     BS II
-## 1    DOMPA023A                                             callrate 0.93
-## 7    DOMPA023A                                                Extensions
-## 6    DOMPA023A                                            Specificity II
-## 5    DOMPA023A                                       Specificity I (red)
-## 3    DOMPA023A Staining Green_Red (cross-check with Extension outliers!)
-## 10   DOMPA023C                                              BS I-C (red)
-## 9    DOMPA023C                                                     BS II
-## 8    DOMPA023C                                             callrate 0.93
-## 14   DOMPA023C                                                Extensions
-## 11   DOMPA023C                                            Specificity II
-## 12   DOMPA023C                                       Specificity I (red)
-## 15   DOMPA023C Staining Green_Red (cross-check with Extension outliers!)
-## 13   DOMPA023C       Staining Red (cross-check with Extension outliers!)
-## 16   DOMPA019C     Staining Green (cross-check with Extension outliers!)
-## 17   DOMPA042A     Staining Green (cross-check with Extension outliers!)
-##                 sample         x           y Sample_Well   Sample_Plate
-## 2  200991630039_R01C01  9.747682 -0.23300906         A09 WG5121691-MSA4
-## 4  200991630039_R01C01  9.235645  1.62295734         A09 WG5121691-MSA4
-## 1  200991630039_R01C01        NA          NA         A09 WG5121691-MSA4
-## 7  200991630039_R01C01 11.811705  4.47611611         A09 WG5121691-MSA4
-## 6  200991630039_R01C01  8.487885  2.21412413         A09 WG5121691-MSA4
-## 5  200991630039_R01C01  8.048585  0.23766650         A09 WG5121691-MSA4
-## 3  200991630039_R01C01 11.589709 -3.36263249         A09 WG5121691-MSA4
-## 10 200991630039_R02C01  9.347114  0.68110733         B09 WG5121691-MSA4
-## 9  200991630039_R02C01  9.332549  2.12918236         B09 WG5121691-MSA4
-## 8  200991630039_R02C01        NA          NA         B09 WG5121691-MSA4
-## 14 200991630039_R02C01 12.452721  3.80298725         B09 WG5121691-MSA4
-## 11 200991630039_R02C01  7.934482  0.04717677         B09 WG5121691-MSA4
-## 12 200991630039_R02C01  9.593513  0.47558903         B09 WG5121691-MSA4
-## 15 200991630039_R02C01 11.620774 -4.16323017         B09 WG5121691-MSA4
-## 13 200991630039_R02C01  9.734948 -0.39157848         B09 WG5121691-MSA4
-## 16 201096090135_R05C01  8.345934 12.04798114         E07 WG5121691-MSA4
-## 17 201105900157_R06C01  8.175125 12.35021254         F03 WG5121692-MSA4
-##    Sample_Group Pool_ID Gender  callrate
-## 2            65      NA      1 0.2664328
-## 4            65      NA      1 0.2664328
-## 1            65      NA      1 0.2664328
-## 7            65      NA      1 0.2664328
-## 6            65      NA      1 0.2664328
-## 5            65      NA      1 0.2664328
-## 3            65      NA      1 0.2664328
-## 10           66      NA      1 0.3620485
-## 9            66      NA      1 0.3620485
-## 8            66      NA      1 0.3620485
-## 14           66      NA      1 0.3620485
-## 11           66      NA      1 0.3620485
-## 12           66      NA      1 0.3620485
-## 15           66      NA      1 0.3620485
-## 13           66      NA      1 0.3620485
-## 16           53      NA      0 0.9939969
-## 17          118      NA      1 0.9981979
+## No samples were filtered.
 ```
+
+### Sex mismatch
 
 Gamete methylation can be used to check sex mismatches. First, we see the loadings of the PCA on markers in the space of samples. The second plot shows the principle components of the PCA on the samples in the space of samples.
 
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-23-1.pdf)<!-- --> 
+![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-28-1.pdf)<!-- --> ![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-28-2.pdf)<!-- --> 
 
 
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-24-1.pdf)<!-- --> 
-
-
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-25-1.pdf)<!-- --> 
-
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-26-1.pdf)<!-- --> 
-  
-
-$6$ of all sample call rates are lower than 0.98,  
- and $2$ are lower than the threshold $0.93$.
-
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-27-1.pdf)<!-- --> 
-  
-
-$4.5519\times 10^{4}$ of all marker call rates are lower than 0.98,  
- and $23127$ are lower than the threshold 0.95.
-
-
+![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-29-1.pdf)<!-- --> ![](/dsk/data1/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/tmptest/2018-05-02-10h42m-Panther-QC_files/figure-latex/unnamed-chunk-29-2.pdf)<!-- --> 
 
 The previous calculations provide all information needed to filter the samples and make a tab-separated file *samplesfilefinal* for further use. 
-For this analysis, /data/epigenetics/01_EWAS/03_psychiatric/00_test/samplesfilefinal was used as list of samples for the final preprocessing steps. 
-
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/00_test/2017-11-27-12h38m-Panther-QC_files/figure-latex/unnamed-chunk-28-1.pdf)<!-- --> 
-  
-
+For this analysis, /data/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/final_preprocessing/samplesfile was used as list of samples for the final preprocessing steps. 
 
 ## Output
 
 
 
-1. The following data is included in the Rdata-file QC_data_Panther_2017-11-27-12h38m.Rdata:
+1. The following data is included in the Rdata-file QC_data_Panther_2018-05-02-10h42m.Rdata:
 \begin{description}
 	\item[ctrl.all, ctrl.complete.Red.all, ctrl.complete.Green.all, control.info] control probe data
 	\item[ctrlprobes.scores] rotated control probe intensities into the coordinates given by principal component analysis
@@ -308,6 +255,7 @@ For this analysis, /data/epigenetics/01_EWAS/03_psychiatric/00_test/samplesfilef
 	\item[marker.call] the marker call rates
 	\item[beta.raw] the $\beta$ values calculated for autosomal probes with detection p value filter only
 	\item[beta.raw.sex] the $\beta$ values calculated for sex chromosome probes with detection p value filter only
+	\item[est.wbc.minfi] the white-blood-cell estimations by minfi method based on RGsets
 \end{description}
 
 
@@ -315,39 +263,4 @@ For this analysis, /data/epigenetics/01_EWAS/03_psychiatric/00_test/samplesfilef
 
 
 
-## Remarks for further processing
 
-For quantile normalization, please
-
-  * If not already done, prepare a file *samplesfilefinal* with the same structure as *samplesfile* where outlier are removed. 
-
-  * If needed, readjust the parameters. 
-
-The file *samples.filtered.csv* provides information about the detected outlier and the reason of detection.  
-Remember to also switch *QuantileNormalisation=TRUE* in the *parameterfile* to prepare the data for analysis. 
-If you want to have the Quality Control without the filtered samples in the second run, please exclude them from *samplesfile* as well and not only from *samplesfilefinal*. In that case, you can just name the same file for both parameters. 
-
-
-
-
-
-
-
-## Memory load and processing time
-
-The maximum memory load in this run was $1.93774\times 10^{4}$ Mb .
-It took 33.27742 mins of processing time.
-
-
-## Methods
-
-We will draft an example methods part for papers.
-(in the processing)
-
-## Credits
-
-The code for this pipeline was written by Benjamin Lehne (Imperial College London) and Alexander Drong (Oxford University), extended by Alexander Teumer (University Medicine Greifswald/ Erasmus MC Rotterdam) and combined into the pipeline by Pascal Schlosser and Franziska Grundner-Culemann in 2017. 
-
-See *A coherent approach for analysis of the Illumina HumanMethylation450 Bead Chip improves quality and performance in epigenome-wide association studies* by Lehne et. al., Genome Biology (2015)
-for the basic idea. The method was then extended to EPIC arrays. 
-Please cite this article in your publication. 
