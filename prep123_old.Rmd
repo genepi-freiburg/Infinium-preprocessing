@@ -2,8 +2,6 @@
 ---
 title: "EPIC Pipeline"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-params:
-  parameterfile:
 output:
   pdf_document:
     toc: true
@@ -14,7 +12,7 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 start.Time = Sys.time()
 formatted.time = format(Sys.time(), "%Y-%m-%d-%Hh%Mm")
-source(params$parameterfile)
+source("../temporary/parameterfile.R")
 source("ILMN-part0-split.R")
 ```
 This is a pipeline for preprocessing EPIC-Methylation data using R. 
