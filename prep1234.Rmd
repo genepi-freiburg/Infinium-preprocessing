@@ -1,9 +1,8 @@
-
 ---
 title: "EPIC Pipeline"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 params:
-  parameterfile:
+  parameterfile: ""
 output:
   pdf_document:
     toc: true
@@ -14,7 +13,6 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 start.Time = Sys.time()
 formatted.time = format(Sys.time(), "%Y-%m-%d-%Hh%Mm")
-#source("../temporary/parameterfile.R")
 source(params$parameterfile)
 source("ILMN-part0-split.R")
 ```

@@ -1,9 +1,8 @@
-
 ---
 title: "EPIC Pipeline"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 params:
-  parameterfile:
+  parameterfile: ""
 output:
   pdf_document:
     toc: true

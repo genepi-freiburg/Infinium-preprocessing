@@ -28,55 +28,55 @@ colnames(ctrlprobes.scores) = paste(colnames(ctrlprobes.scores), '_cp', sep='')
 # bisulfate conversion: a non-CpG sequence with only one C at the target site will be converter to T by BS conversion. Therefore, converted control probes should be expressed (for each red/green channel) and unconverted not.
 # BS-I
 cprobes <- control.info[control.info$Type=="BISULFITE CONVERSION I" & (control.info$Color %in% c("Green","LimeGreen","Lime")),"Address"] # select converted green
-controlQC <- data.frame(Cgreen=colMeans(ctrl_complete.Green.all[cprobes,]))
+controlQC <- data.frame(Cgreen=colMeans(ctrl.complete.Green.all[cprobes,]))
 cprobes <- control.info[control.info$Type=="BISULFITE CONVERSION I" & (control.info$Color %in% c("Purple","Red","Tomato")),"Address"] # select converted red
-controlQC <- cbind(controlQC,data.frame(Cred=colMeans(ctrl_complete.Red.all[cprobes,])))
+controlQC <- cbind(controlQC,data.frame(Cred=colMeans(ctrl.complete.Red.all[cprobes,])))
 cprobes <- control.info[control.info$Type=="BISULFITE CONVERSION I" & (control.info$Color %in% c("Blue","SkyBlue","Cyan")),"Address"] # select unconverted green
-controlQC <- cbind(controlQC,data.frame(Ugreen=colMeans(ctrl_complete.Green.all[cprobes,])))
+controlQC <- cbind(controlQC,data.frame(Ugreen=colMeans(ctrl.complete.Green.all[cprobes,])))
 cprobes <- control.info[control.info$Type=="BISULFITE CONVERSION I" & (control.info$Color %in% c("Orange","Gold","Yellow")),"Address"] # select unconverted red
-controlQC <- cbind(controlQC,data.frame(Ured=colMeans(ctrl_complete.Red.all[cprobes,])))
+controlQC <- cbind(controlQC,data.frame(Ured=colMeans(ctrl.complete.Red.all[cprobes,])))
 
 # BS-II (red intensity, green should be background level)
 cprobes <- control.info[control.info$Type=="BISULFITE CONVERSION II","Address"] # select converted red
-controlQC <- cbind(controlQC,data.frame(BSIIgreen=colMeans(ctrl_complete.Green.all[cprobes,])))
-controlQC <- cbind(controlQC,data.frame(BSIIred=colMeans(ctrl_complete.Red.all[cprobes,])))
+controlQC <- cbind(controlQC,data.frame(BSIIgreen=colMeans(ctrl.complete.Green.all[cprobes,])))
+controlQC <- cbind(controlQC,data.frame(BSIIred=colMeans(ctrl.complete.Red.all[cprobes,])))
 
 # hybridization + target removal: green channel only
 cprobes <- control.info[grep("Hyb (High)",control.info$ExtendedType,value=F,fixed=T),"Address"] # select hyb high
-controlQC <- cbind(controlQC,data.frame(HybH=ctrl_complete.Green.all[cprobes,]))
+controlQC <- cbind(controlQC,data.frame(HybH=ctrl.complete.Green.all[cprobes,]))
 cprobes <- control.info[grep("Hyb (Low)",control.info$ExtendedType,value=F,fixed=T),"Address"] # select hyb low
-controlQC <- cbind(controlQC,data.frame(HybL=ctrl_complete.Green.all[cprobes,]))
+controlQC <- cbind(controlQC,data.frame(HybL=ctrl.complete.Green.all[cprobes,]))
 cprobes <- control.info[grep("Target Removal",control.info$ExtendedType,value=F,fixed=T),"Address"] # select target removals
-controlQC <- cbind(controlQC,data.frame(TR=colMeans(ctrl_complete.Green.all[cprobes,])))
+controlQC <- cbind(controlQC,data.frame(TR=colMeans(ctrl.complete.Green.all[cprobes,])))
 
 # specificity I
 cprobes <- control.info[grep("GT Mismatch . \\(PM\\)",control.info$ExtendedType,value=F),"Address"] # select spec I signal
-controlQC <- cbind(controlQC,data.frame(SpecIPMred=colMeans(ctrl_complete.Red.all[cprobes,]))) # specific match (red)
-controlQC <- cbind(controlQC,data.frame(SpecIPMgreen=colMeans(ctrl_complete.Green.all[cprobes,]))) # specific match (green)
+controlQC <- cbind(controlQC,data.frame(SpecIPMred=colMeans(ctrl.complete.Red.all[cprobes,]))) # specific match (red)
+controlQC <- cbind(controlQC,data.frame(SpecIPMgreen=colMeans(ctrl.complete.Green.all[cprobes,]))) # specific match (green)
 cprobes <- control.info[grep("GT Mismatch . \\(MM\\)",control.info$ExtendedType,value=F),"Address"] # select spec I signal
-controlQC <- cbind(controlQC,data.frame(SpecIMMred=colMeans(ctrl_complete.Red.all[cprobes,]))) # specific match bg (red)
-controlQC <- cbind(controlQC,data.frame(SpecIMMgreen=colMeans(ctrl_complete.Green.all[cprobes,]))) # specific match bg (green)
+controlQC <- cbind(controlQC,data.frame(SpecIMMred=colMeans(ctrl.complete.Red.all[cprobes,]))) # specific match bg (red)
+controlQC <- cbind(controlQC,data.frame(SpecIMMgreen=colMeans(ctrl.complete.Green.all[cprobes,]))) # specific match bg (green)
 
 # specificity II
 cprobes <- control.info[grep("Specificity ",control.info$ExtendedType,value=F),"Address"] # select spec II
-controlQC <- cbind(controlQC,data.frame(SpecIIspec=colMeans(ctrl_complete.Red.all[cprobes,]))) # specific match (red)
-controlQC <- cbind(controlQC,data.frame(SpecIIunspec=colMeans(ctrl_complete.Green.all[cprobes,]))) # unspecific match (green)
+controlQC <- cbind(controlQC,data.frame(SpecIIspec=colMeans(ctrl.complete.Red.all[cprobes,]))) # specific match (red)
+controlQC <- cbind(controlQC,data.frame(SpecIIunspec=colMeans(ctrl.complete.Green.all[cprobes,]))) # unspecific match (green)
 
 # extension
 cprobes <- control.info[grep("Extension \\([CG]\\)",control.info$ExtendedType,value=F),"Address"] # select C,G (green)
-controlQC <- cbind(controlQC,data.frame(ExtCG=colMeans(ctrl_complete.Green.all[cprobes,])))
+controlQC <- cbind(controlQC,data.frame(ExtCG=colMeans(ctrl.complete.Green.all[cprobes,])))
 cprobes <- control.info[grep("Extension \\([AT]\\)",control.info$ExtendedType,value=F),"Address"] # select A,T (red)
-controlQC <- cbind(controlQC,data.frame(ExtAT=colMeans(ctrl_complete.Red.all[cprobes,])))
+controlQC <- cbind(controlQC,data.frame(ExtAT=colMeans(ctrl.complete.Red.all[cprobes,])))
 
 # staining red (DNP)/green (Biotin)
 cprobes <- control.info[grep("DNP (High)",control.info$ExtendedType,value=F,fixed=T),"Address"] # select staining red
-controlQC <- cbind(controlQC,data.frame(StainingRedH=ctrl_complete.Red.all[cprobes,]))
+controlQC <- cbind(controlQC,data.frame(StainingRedH=ctrl.complete.Red.all[cprobes,]))
 cprobes <- control.info[grep("Biotin (High)",control.info$ExtendedType,value=F,fixed=T),"Address"] # select staining green
-controlQC <- cbind(controlQC,data.frame(StainingGreenH=ctrl_complete.Green.all[cprobes,]))
+controlQC <- cbind(controlQC,data.frame(StainingGreenH=ctrl.complete.Green.all[cprobes,]))
 cprobes <- control.info[grep("DNP (Bkg)",control.info$ExtendedType,value=F,fixed=T),"Address"] # select staining red background
-controlQC <- cbind(controlQC,data.frame(StainingRedB=ctrl_complete.Red.all[cprobes,]))
+controlQC <- cbind(controlQC,data.frame(StainingRedB=ctrl.complete.Red.all[cprobes,]))
 cprobes <- control.info[grep("Biotin (Bkg)",control.info$ExtendedType,value=F,fixed=T),"Address"] # select staining green background
-controlQC <- cbind(controlQC,data.frame(StainingGreenB=ctrl_complete.Green.all[cprobes,]))
+controlQC <- cbind(controlQC,data.frame(StainingGreenB=ctrl.complete.Green.all[cprobes,]))
 
 ```
 

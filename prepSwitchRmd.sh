@@ -9,14 +9,15 @@ getwd()
  source("parameterfile.R")
  library(rmarkdown)
  codepath="/data/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/code/"
+ parameterpath = paste0(getwd(),"/parameterfile.R")
 
   if(QuantileNormalize == FALSE){
-  	 rmarkdown::render(paste0(codepath,"prep12.Rmd"),  output_file = paste0(format(Sys.time(),format = "%Y-%m-%d-%Hh%Mm"),"-",projectname,"-QC",".pdf"), clean = FALSE, output_dir = getwd() )
+  	 rmarkdown::render(paste0(codepath,"prep12.Rmd"),  output_file = paste0(format(Sys.time(),format = "%Y-%m-%d-%Hh%Mm"),"-",projectname,"-QC",".pdf"), clean = FALSE, output_dir = getwd() , params = list(parameterfile = parameterpath) )
    } else {
 	if(InterQuartileRangeCalculation){
-  	 rmarkdown::render(paste0(codepath,"prep1234.Rmd"), output_file = paste0(format(Sys.time(),format = "%Y-%m-%d-%Hh%Mm"),"-",projectname,".pdf"),clean = FALSE, output_dir = getwd() )
+  	 rmarkdown::render(paste0(codepath,"prep1234.Rmd"), output_file = paste0(format(Sys.time(),format = "%Y-%m-%d-%Hh%Mm"),"-",projectname,".pdf"),clean = FALSE, output_dir = getwd() , params = list(parameterfile = parameterpath) )
 	} else {
-  	 rmarkdown::render(paste0(codepath,"prep123.Rmd"), output_file = paste0(format(Sys.time(),format = "%Y-%m-%d-%Hh%Mm"),"-",projectname,".pdf"), clean = FALSE, output_dir = getwd())
+  	 rmarkdown::render(paste0(codepath,"prep123.Rmd"), output_file = paste0(format(Sys.time(),format = "%Y-%m-%d-%Hh%Mm"),"-",projectname,".pdf"), clean = FALSE, output_dir = getwd(), params = list(parameterfile = parameterpath) )
 	}
    } 
 
