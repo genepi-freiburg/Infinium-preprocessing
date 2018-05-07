@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = FALSE)
 start.Time = Sys.time()
 formatted.time = format(Sys.time(), "%Y-%m-%d-%Hh%Mm")
 source(params$parameterfile)
- source("ILMN-part0-split.R")
+source("ILMN-part0-split.R")
 ```
 This is a pipeline for preprocessing EPIC-Methylation data using R. 
 

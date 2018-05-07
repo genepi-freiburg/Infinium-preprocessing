@@ -436,6 +436,8 @@ $`r max(0,length(sample.call[which(sample.call<=0.98)]))`$ of all sample call ra
 
 
 We have a look at the marker call rates as well:
+
+
 ```{r}
 hist(marker.call,breaks=100, main = "marker call rates")
 ```

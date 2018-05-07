@@ -60,8 +60,6 @@ qcfilename=paste0("QC_data_",projectname,"_",formatted.time,".Rdata")
 	\item[est.wbc.minfi] the white-blood-cell estimations by minfi method based on RGsets
 	\item[betaQN.all] combines \textbf{betaQN} and \textbf{betaQN.sex} 
 	\item[betaQN.all.3IQR] modified \textbf{betaQN.all}: IQR outliers are filtered out
-#	\item[mdata] transposed \textbf{betaQN} with Sample Names assigned as rownames
-#	\item[mdata.3IQR] transposed \textbf{betaQN.all.3IQR} with Sample Names as rownames
 \end{description}
 
 If you run the pipeline a second time the data files will be overwritten, so please store them at a different place if you want to keep both. 
