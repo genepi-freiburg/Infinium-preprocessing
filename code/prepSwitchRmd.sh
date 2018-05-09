@@ -1,6 +1,5 @@
 #!/bin/bash
 
-cp parameterfile.R /data/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/temporary/parameterfile.R
 
 time R-3.4.1 --vanilla << "EOF"
 .libPaths()
@@ -8,7 +7,7 @@ getwd()
 
  source("parameterfile.R")
  library(rmarkdown)
- codepath="/data/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/code/"
+ codepath="/data/programs/pipelines/CPACOR-EPIC_pipeline/code/"
  parameterpath = paste0(getwd(),"/parameterfile.R")
 
   if(QuantileNormalize == FALSE){
