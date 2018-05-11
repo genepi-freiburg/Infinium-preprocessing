@@ -1,6 +1,6 @@
 ## PART 1: Data and parameters
 
-```{r, message = FALSE}
+```{r, message = FALSE, echo = FALSE}
 #####################
 
  #read data
@@ -44,7 +44,7 @@ detectionP.local <- function (rgSet, type = "m+u")
     detP
 }
 
-for(i in 1:4){ #nrow(filenames)) {
+for(i in 1:nrow(filenames)) {
 	### 1 line here different
 	RGset <- read.metharray(filenames[i,], verbose=TRUE) # formerly: read.450k()
 	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 

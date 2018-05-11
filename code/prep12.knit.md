@@ -105,11 +105,11 @@ In our further calculations beta value data always is processed separately for a
 
 * Detection p-values are illustrated in the following plots. Low p-values indicate that the signal is unlikely to be background noise. 
 
-![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-12h14m-GCKD-QC_files/figure-latex/unnamed-chunk-11-1.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-11-1.pdf)<!-- --> 
 
 
 
-![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-12h14m-GCKD-QC_files/figure-latex/unnamed-chunk-12-1.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-12-1.pdf)<!-- --> 
 \pagebreak
 
 
@@ -138,11 +138,16 @@ dimension:     | $846232, 8$ | $19627, 8$
 
 
 
-![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-12h14m-GCKD-QC_files/figure-latex/unnamed-chunk-16-1.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-16-1.pdf)<!-- --> 
 
 
 ```
-## character(0)
+## 
+## The sample names of the included samples:
+```
+
+```
+## [1] "65"  "66"  "67"  "68"  "103" "104" "113" "114"
 ```
 
 * Identified by the samplefile, $8$ samples are included in the analysis.
@@ -155,9 +160,9 @@ dimension:     | $846232, 8$ | $19627, 8$
 * $0$ samples were tagged for exclusion because the call-rate was below the threshold $0.95$.
 
 
-![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-12h14m-GCKD-QC_files/figure-latex/unnamed-chunk-19-1.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-19-1.pdf)<!-- --> 
 
-![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-12h14m-GCKD-QC_files/figure-latex/unnamed-chunk-20-1.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-20-1.pdf)<!-- --> 
   
 
 $0$ of all sample call rates are lower than 0.98,  
@@ -167,7 +172,7 @@ $0$ of all sample call rates are lower than 0.98,
 We have a look at the marker call rates as well:
 
 
-![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-12h14m-GCKD-QC_files/figure-latex/unnamed-chunk-21-1.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-21-1.pdf)<!-- --> 
   
 
 $6909$ of all marker call rates are lower than 0.98,  
@@ -178,6 +183,112 @@ The results of the sample call rate filter are included in the export file **sam
 
 
 
+## PART 2: Low-Level Quality Control
+
+
+The quality control consists of two parts: 
+
+1. The second part is based on control probes. Details are given in the [ILMN HD methylation assay protocol guide (15019519)](https://support.illumina.com/downloads/infinium_hd_methylation_assay_protocol_guide_(15019519_b).html).
+2. The data is checked for sex mismatch. 
+
+
+
+* By conducting a PCA on the control-probe information we obtain controlprobe scores. 
+
+
+
+* Then we look at the controls.
+
+
+The first 3 rows of control probes information from QC contain the following information:
+
+
+```
+##                      Cgreen     Cred Ugreen      Ured BSIIgreen  BSIIred
+## 202073180001_R01C01 11491.5 16270.00  560.0  969.3333    902.50 13690.50
+## 202073210049_R07C01 14630.0 14602.00  336.5  610.3333    760.50 12374.00
+## 202073180001_R02C01 12672.5 16131.67  632.5 1172.6667    809.75 13564.75
+##                      HybH HybL    TR SpecIPMred SpecIPMgreen SpecIMMred
+## 202073180001_R01C01 22111 6753  92.0   6135.000     2959.167   325.3333
+## 202073210049_R07C01 31751 9046 165.5   5285.667     3222.333   300.1667
+## 202073180001_R02C01 25303 8001 132.0   6165.333     3305.333   410.5000
+##                     SpecIMMgreen SpecIIspec SpecIIunspec   ExtCG   ExtAT
+## 202073180001_R01C01     94.00000   14972.67          357 23495.5 25846.0
+## 202073210049_R07C01     95.33333   14202.33          238 35372.0 31550.5
+## 202073180001_R02C01    151.16667   15074.33          327 28527.0 28393.5
+##                     StainingRedH StainingGreenH StainingRedB
+## 202073180001_R01C01        24519          15805           75
+## 202073210049_R07C01        27816          23587          352
+## 202073180001_R02C01        23917          18047          155
+##                     StainingGreenB
+## 202073180001_R01C01              0
+## 202073210049_R07C01            162
+## 202073180001_R02C01              0
+```
+
+In the following control probes are checked. For a more detailed descriptin see e.g. the [ILMN HD methylation assay protocol guide (15019519)](https://support.illumina.com/downloads/infinium_hd_methylation_assay_protocol_guide_(15019519_b).html) or the [Illumina BeadArray Controls Reporter Software Guide ](https://support.illumina.com/downloads/beadarray-controls-reporter-software-guide-1000000004009.html),pages 6-8. Probes are evaluated by MA plots. BS-I and BS-II control probes check the DNA bisulfite conversion step.
+
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-25-1.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-25-2.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-25-3.pdf)<!-- --> 
+
+We also check the Hybridisation of the amplified DNA to the array:
+
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-26-1.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-26-2.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-26-3.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-26-4.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-26-5.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-26-6.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-26-7.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-26-8.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-26-9.pdf)<!-- --> 
+
+
+The following table lists the detected outliers identified by the quality control and can be found 
+in the file /data/studies/00_GCKD/00_data/02_methylation/02_clean_data/EPIC_batch1/samples-filtered.csv in a slightly expanded version. 
+
+
+```
+## No samples were filtered.
+```
+
+### Sex mismatch
+
+Gamete methylation can be used to check sex mismatches. First, we see the loadings of the PCA on markers in the space of samples. The second plot shows the principle components of the PCA on the samples in the space of samples.
+
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-28-1.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-28-2.pdf)<!-- --> 
+
+
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-29-1.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-29-2.pdf)<!-- --> 
+
+The previous calculations provide all information needed to filter the samples and make a tab-separated file *samplesfilefinal* for further use. 
+For this analysis, /data/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/01_input/samplesfile_GCKD_EPICs.txt was used as list of samples for the final preprocessing steps. 
+
+## Output
+
+
+
+1. The following data is included in the Rdata-file QC_data_GCKD_2018-05-11-13h38m.Rdata:
+\begin{description}
+	\item[ctrl.all, ctrl.complete.Red.all, ctrl.complete.Green.all, control.info] control probe data
+	\item[ctrlprobes.scores] rotated control probe intensities into the coordinates given by principal component analysis
+	\item[dp.all] detection p-values of unfiltered idat data
+	\item[TypeII.Red.All etc] list the corresponding intensity values
+	\item[TypeII.Red.All.d etc] list the corresponding intensity values where detection p-values smaller than threshold $10^{-16}$ are set to missing (NA).
+	\item[sample.call] the sample call rates
+	\item[marker.call] the marker call rates
+	\item[beta.raw] the $\beta$ values calculated for autosomal probes with detection p value filter only
+	\item[beta.raw.sex] the $\beta$ values calculated for sex chromosome probes with detection p value filter only
+	\item[est.wbc.minfi] the white-blood-cell estimations by minfi method based on RGsets
+\end{description}
+
+
+
+
+
+
+## Remarks for further processing
+
+For quantile normalization, please
+
+  * If not already done, prepare a file *samplesfilefinal* with the same structure as *samplesfile* where outlier are removed. 
+
+  * If needed, readjust the parameters. 
+
+The file *samples.filtered.csv* provides information about the detected outlier and the reason of detection.  
+Remember to also switch *QuantileNormalisation=TRUE* in the *parameterfile* to prepare the data for analysis. 
+If you want to have the Quality Control without the filtered samples in the second run, please exclude them from *samplesfile* as well and not only from *samplesfilefinal*. In that case, you can just name the same file for both parameters. 
 
 
 
@@ -185,4 +296,21 @@ The results of the sample call rate filter are included in the export file **sam
 
 
 
+## Memory load and processing time
 
+The maximum memory load in this run was $5721.6$ Mb .
+It took 8.439909 mins of processing time.
+
+
+## Methods
+
+We will draft an example methods part for papers.
+(in the processing)
+
+## Credits
+
+The code for this pipeline was written by Benjamin Lehne (Imperial College London) and Alexander Drong (Oxford University), extended by Alexander Teumer (University Medicine Greifswald/ Erasmus MC Rotterdam) and combined into the pipeline by Pascal Schlosser and Franziska Grundner-Culemann in 2017. 
+
+See *A coherent approach for analysis of the Illumina HumanMethylation450 Bead Chip improves quality and performance in epigenome-wide association studies* by Lehne et. al., Genome Biology (2015)
+for the basic idea. The method was then extended to EPIC arrays. 
+Please cite this article in your publication. 

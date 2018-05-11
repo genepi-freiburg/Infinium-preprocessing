@@ -1,6 +1,6 @@
 ---
 title: "EPIC Pipeline"
-date: "04 May, 2018"
+date: "11 May, 2018"
 params:
   parameterfile: ""
 output:
@@ -25,15 +25,27 @@ This is a pipeline for preprocessing EPIC-Methylation data using R.
 ## under R version 3.4.2
 ```
 
+```
+## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
+## = cutoff): An inconsistency was encountered while determining sex. One
+## possibility is that only one sex is present. We recommend further checks,
+## for example with the plotSex function.
+
+## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
+## = cutoff): An inconsistency was encountered while determining sex. One
+## possibility is that only one sex is present. We recommend further checks,
+## for example with the plotSex function.
+```
+
 ### Read data and parameters
 
-We are working with data from directory /data/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/Panther which contains $168$ idat files.
+We are working with data from directory /data/studies/00_GCKD/00_data/02_methylation/00_raw_data/EPIC_batch1/ScanData which contains $580$ idat files.
 The annotationfile used is 
 ../annotationfileB4_2017-09-15.csv 
  - if problems occur with annotation, please have a look at [Illumina downloads](https://support.illumina.com/array/downloads.html)    *Infimum Methylation EPIC Product files*. 
 
 
-Output is directed to /data/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12. We use samples listed in /data/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/samplesfile for quality control. 
+Output is directed to /data/studies/00_GCKD/00_data/02_methylation/02_clean_data/EPIC_batch1. We use samples listed in /data/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/01_input/samplesfile_GCKD_EPICs.txt for quality control. 
 
 As given in *parameterfile.R*, the following parameters were used: 
 
@@ -41,7 +53,7 @@ parameter                     | value
 ------------------------------|-------------------------------------
 arraytype                     | IlluminaHumanMethylationEPIC
 detPthreshold                 | $10^{-16}$
-callrate.thres                | $0.93$
+callrate.thres                | $0.95$
 filterOutlierCtrlQC           | TRUE
 QuantileNormalize             | FALSE
 InterQuartileRangeCalculation | FALSE
@@ -64,16 +76,16 @@ The estimation of White Blood Cells results in a data.frame est.wbc.minfi for fu
 
 
 ```
-##                           CD8T      CD4T         NK      Bcell       Mono
-## 200973410156_R06C01 0.03446522 0.1520899 0.01548518 0.05507277 0.09313706
-## 200991630098_R02C01 0.10913211 0.1561803 0.05517052 0.07396361 0.08238988
-## 200973410156_R06C01 0.03446522 0.1520899 0.01548518 0.05507277 0.09313706
-## 200991630098_R02C01 0.10913211 0.1561803 0.05517052 0.07396361 0.08238988
+##                           CD8T       CD4T         NK      Bcell       Mono
+## 202073180001_R04C01 0.00000000 0.09840692 0.06115654 0.02190734 0.07584636
+## 202073210056_R02C01 0.05481449 0.29085979 0.07174163 0.05103847 0.05802004
+## 202073180001_R04C01 0.00000000 0.09840692 0.06115654 0.02190734 0.07584636
+## 202073210056_R02C01 0.05481449 0.29085979 0.07174163 0.05103847 0.05802004
 ##                          Gran
-## 200973410156_R06C01 0.6661964
-## 200991630098_R02C01 0.5556940
-## 200973410156_R06C01 0.6661964
-## 200991630098_R02C01 0.5556940
+## 202073180001_R04C01 0.7514133
+## 202073210056_R02C01 0.4874777
+## 202073180001_R04C01 0.7514133
+## 202073210056_R02C01 0.4874777
 ```
 
 ### Data preparation
@@ -93,11 +105,11 @@ In our further calculations beta value data always is processed separately for a
 
 * Detection p-values are illustrated in the following plots. Low p-values indicate that the signal is unlikely to be background noise. 
 
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-11-1.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-11-1.pdf)<!-- --> 
 
 
 
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-12-1.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-12-1.pdf)<!-- --> 
 \pagebreak
 
 
@@ -105,13 +117,13 @@ The following table summarizes how many detection p-values are smaller than the 
 
  threshold           | count                                       | percentage
 ---------------------|---------------------------------------------|-----------------------------------------------------
-$10^{-16}$ | $10254557$    | $0.9858225$
-0.01                 | $10377019$             | $0.9975954$
+$10^{-16}$ | $6907558$    | $0.9969446$
+0.01                 | $6921923$             | $0.9990179$
 
 
 
 
-$147475$   ($0.014$ \%)   measurements are excluded because their detection p-value is bigger than $10^{-16}$. Only values with a detection p-value strictly smaller the threshold are kept.
+$21170$   ($0.003$ \%)   measurements are excluded because their detection p-value is bigger than $10^{-16}$. Only values with a detection p-value strictly smaller the threshold are kept.
 To skip this filtering, set the parameter *detPthreshold* to a value **strictly** bigger than 1 in the *parameterfile.R*.
 
 
@@ -119,47 +131,52 @@ To skip this filtering, set the parameter *detPthreshold* to a value **strictly*
 
 beta values:   | autosomes           |  sex chromosomes 
 ---------------|---------------------|----------------------------
-dimension:     | $846232, 12$ | $19627, 12$
+dimension:     | $846232, 8$ | $19627, 8$
 
 
 
 
 
 
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-16-1.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-16-1.pdf)<!-- --> 
 
 
 ```
-##  [1] "DOMKO026A" "DOMPA051A" "DOMPA051C" "DOMKO035A" "DOMKO041A"
-##  [6] "DOMPA056A" "DOMPA059A" "DOMPA059C" "DOMPA061A" "DOMPA061C"
-## [11] "DOMKO016A" "DOMKO017A"
+## 
+## The sample names of the included samples:
 ```
 
-* Identified by the samplefile, $12$ samples are included in the analysis.
+```
+## [1] "65"  "66"  "67"  "68"  "103" "104" "113" "114"
+```
 
-* There is call-rate filtering with threshold $0.93$.
+* Identified by the samplefile, $8$ samples are included in the analysis.
+
+* There is call-rate filtering with threshold $0.95$.
 
 
   
 
-* $0$ samples were tagged for exclusion because the call-rate was below the threshold $0.93$.
+* $0$ samples were tagged for exclusion because the call-rate was below the threshold $0.95$.
 
 
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-19-1.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-19-1.pdf)<!-- --> 
 
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-20-1.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-20-1.pdf)<!-- --> 
   
 
-$1$ of all sample call rates are lower than 0.98,  
- and $0$ are lower than the threshold $0.93$.
+$0$ of all sample call rates are lower than 0.98,  
+ and $0$ are lower than the threshold $0.95$.
 
 
 We have a look at the marker call rates as well:
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-21-1.pdf)<!-- --> 
+
+
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-21-1.pdf)<!-- --> 
   
 
-$5.175\times 10^{4}$ of all marker call rates are lower than 0.98,  
- and $51750$ are lower than the threshold 0.95.
+$6909$ of all marker call rates are lower than 0.98,  
+ and $6909$ are lower than the threshold 0.95.
 
 
 The results of the sample call rate filter are included in the export file **samples_filtered.csv** which also documents the following control-probe based quality control.
@@ -187,39 +204,39 @@ The first 3 rows of control probes information from QC contain the following inf
 
 
 ```
-##                      Cgreen     Cred Ugreen     Ured BSIIgreen BSIIred
-## 200973410156_R01C01 11128.5 15990.33  396.0 746.6667    621.75 11406.0
-## 200991630056_R05C01 10047.5 13852.00  392.5 678.6667    513.00 10194.0
-## 200973410156_R02C01 12927.0 18171.67  457.0 853.3333    717.00 13790.5
-##                      HybH HybL  TR SpecIPMred SpecIPMgreen SpecIMMred
-## 200973410156_R01C01 24111 7669 137   6029.167     2332.333   333.8333
-## 200991630056_R05C01 21875 6616 107   4994.333     2349.000   308.0000
-## 200973410156_R02C01 27046 8295 192   6751.500     2963.167   407.8333
-##                     SpecIMMgreen SpecIIspec SpecIIunspec   ExtCG ExtAT
-## 200973410156_R01C01     80.83333   15850.67     260.3333 25819.0 33705
-## 200991630056_R05C01     86.83333   12859.67     212.0000 24346.5 36603
-## 200973410156_R02C01    124.66667   17133.33     307.0000 30377.5 40598
+##                      Cgreen     Cred Ugreen      Ured BSIIgreen  BSIIred
+## 202073180001_R01C01 11491.5 16270.00  560.0  969.3333    902.50 13690.50
+## 202073210049_R07C01 14630.0 14602.00  336.5  610.3333    760.50 12374.00
+## 202073180001_R02C01 12672.5 16131.67  632.5 1172.6667    809.75 13564.75
+##                      HybH HybL    TR SpecIPMred SpecIPMgreen SpecIMMred
+## 202073180001_R01C01 22111 6753  92.0   6135.000     2959.167   325.3333
+## 202073210049_R07C01 31751 9046 165.5   5285.667     3222.333   300.1667
+## 202073180001_R02C01 25303 8001 132.0   6165.333     3305.333   410.5000
+##                     SpecIMMgreen SpecIIspec SpecIIunspec   ExtCG   ExtAT
+## 202073180001_R01C01     94.00000   14972.67          357 23495.5 25846.0
+## 202073210049_R07C01     95.33333   14202.33          238 35372.0 31550.5
+## 202073180001_R02C01    151.16667   15074.33          327 28527.0 28393.5
 ##                     StainingRedH StainingGreenH StainingRedB
-## 200973410156_R01C01        32045          20467          463
-## 200991630056_R05C01        27154          17398          583
-## 200973410156_R02C01        39497          22626          559
+## 202073180001_R01C01        24519          15805           75
+## 202073210049_R07C01        27816          23587          352
+## 202073180001_R02C01        23917          18047          155
 ##                     StainingGreenB
-## 200973410156_R01C01            197
-## 200991630056_R05C01            115
-## 200973410156_R02C01            156
+## 202073180001_R01C01              0
+## 202073210049_R07C01            162
+## 202073180001_R02C01              0
 ```
 
 In the following control probes are checked. For a more detailed descriptin see e.g. the [ILMN HD methylation assay protocol guide (15019519)](https://support.illumina.com/downloads/infinium_hd_methylation_assay_protocol_guide_(15019519_b).html) or the [Illumina BeadArray Controls Reporter Software Guide ](https://support.illumina.com/downloads/beadarray-controls-reporter-software-guide-1000000004009.html),pages 6-8. Probes are evaluated by MA plots. BS-I and BS-II control probes check the DNA bisulfite conversion step.
 
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-25-1.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-25-2.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-25-3.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-25-1.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-25-2.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-25-3.pdf)<!-- --> 
 
 We also check the Hybridisation of the amplified DNA to the array:
 
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-26-1.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-26-2.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-26-3.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-26-4.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-26-5.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-26-6.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-26-7.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-26-8.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-26-9.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-26-1.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-26-2.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-26-3.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-26-4.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-26-5.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-26-6.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-26-7.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-26-8.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-26-9.pdf)<!-- --> 
 
 
 The following table lists the detected outliers identified by the quality control and can be found 
-in the file /data/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/samples-filtered.csv in a slightly expanded version. 
+in the file /data/studies/00_GCKD/00_data/02_methylation/02_clean_data/EPIC_batch1/samples-filtered.csv in a slightly expanded version. 
 
 
 ```
@@ -230,19 +247,19 @@ in the file /data/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/sampl
 
 Gamete methylation can be used to check sex mismatches. First, we see the loadings of the PCA on markers in the space of samples. The second plot shows the principle components of the PCA on the samples in the space of samples.
 
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-28-1.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-28-2.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-28-1.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-28-2.pdf)<!-- --> 
 
 
-![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-29-1.pdf)<!-- --> ![](/dsk/data1/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/epictest12/2018-05-04-11h54m-Panther-QC_files/figure-latex/unnamed-chunk-29-2.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-29-1.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-11-13h38m-GCKD-QC_files/figure-latex/unnamed-chunk-29-2.pdf)<!-- --> 
 
 The previous calculations provide all information needed to filter the samples and make a tab-separated file *samplesfilefinal* for further use. 
-For this analysis, /data/epigenetics/01_EWAS/03_psychiatric/01_PANTHER/final_preprocessing/samplesfile was used as list of samples for the final preprocessing steps. 
+For this analysis, /data/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/01_input/samplesfile_GCKD_EPICs.txt was used as list of samples for the final preprocessing steps. 
 
 ## Output
 
 
 
-1. The following data is included in the Rdata-file QC_data_Panther_2018-05-04-11h54m.Rdata:
+1. The following data is included in the Rdata-file QC_data_GCKD_2018-05-11-13h38m.Rdata:
 \begin{description}
 	\item[ctrl.all, ctrl.complete.Red.all, ctrl.complete.Green.all, control.info] control probe data
 	\item[ctrlprobes.scores] rotated control probe intensities into the coordinates given by principal component analysis
@@ -281,8 +298,8 @@ If you want to have the Quality Control without the filtered samples in the seco
 
 ## Memory load and processing time
 
-The maximum memory load in this run was $6228.8$ Mb .
-It took 11.81829 mins of processing time.
+The maximum memory load in this run was $5721.6$ Mb .
+It took 8.439909 mins of processing time.
 
 
 ## Methods
