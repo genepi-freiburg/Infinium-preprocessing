@@ -44,7 +44,7 @@ detectionP.local <- function (rgSet, type = "m+u")
     detP
 }
 
-for(i in 1:nrow(filenames)) {
+for(i in 1:4){ #nrow(filenames)) {
 	### 1 line here different
 	RGset <- read.metharray(filenames[i,], verbose=TRUE) # formerly: read.450k()
 	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
@@ -278,7 +278,9 @@ dim(dpvec) <- c(nrow(dp.all)*ncol(dp.all),1)
 # plot detection P
 dpvecplot <- dpvec
 dpvecplot[which(dpvecplot==0)] <- 1E-20
-hist(-log10(dpvec),breaks=30, main = "detection p-values")
+if(sum(dpvec>0)>0){
+	hist(-log10(dpvec),breaks=30, main = "detection p-values")
+}
 ```
 
 
@@ -392,7 +394,8 @@ plot.beta.densities(beta.raw,"Densities of raw autosomal beta values per sample"
 ```
 
 ```{r}
-datsamples <- read.table(file=samplesfile,header=T,as.is=T,sep="\t")
+datsamples <- read.table(file=samplesfile,header=T,as.is=T,sep="\t", colClasses = "character")
+datsamples$Gender = as.numeric(datsamples$Gender)
 # remove samples not in samplesfile
 if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamples))){stop("samplesfile must provide Sentrix_ID and Sentrix_Position.")}
 samplesinclude <- intersect(names(sample.call),paste(datsamples$Sentrix_ID,datsamples$Sentrix_Position,sep = "_"))
