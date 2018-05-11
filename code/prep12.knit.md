@@ -1,7 +1,8 @@
-
 ---
 title: "EPIC Pipeline"
-date: "04 May, 2018"
+date: "11 May, 2018"
+params:
+  parameterfile: ""
 output:
   pdf_document:
     toc: true

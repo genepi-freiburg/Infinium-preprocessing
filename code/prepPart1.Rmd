@@ -405,7 +405,10 @@ ctrl.complete.Red.all <- ctrl.complete.Red.all[,samplesinclude]
 beta.raw.sex <- beta.raw.sex[,samplesinclude]
 beta.raw <- beta.raw[,samplesinclude]
 
-datsamples$Sample_Name[datsamples$Sample_ID%in%samplesinclude]
+if(length(samplesinclude)<101){
+	cat("\nThe sample names of the included samples:\n")
+	datsamples$Sample_Name[paste(datsamples$Sentrix_ID,datsamples$Sentrix_Position,sep = "_")%in%samplesinclude]
+}
 ```
 
 * Identified by the samplefile, $`r length(samplesinclude)`$ samples are included in the analysis.
