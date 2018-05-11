@@ -398,7 +398,8 @@ datsamples <- read.table(file=samplesfile,header=T,as.is=T,sep="\t", colClasses 
 datsamples$Gender = as.numeric(datsamples$Gender)
 # remove samples not in samplesfile
 if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamples))){stop("samplesfile must provide Sentrix_ID and Sentrix_Position.")}
-samplesinclude <- intersect(names(sample.call),paste(datsamples$Sentrix_ID,datsamples$Sentrix_Position,sep = "_"))
+datsamples$Sentrix_Code = paste(datsamples$Sentrix_ID,datsamples$Sentrix_Position,sep = "_")
+samplesinclude <- intersect(names(sample.call),datsamples$Sentrix_Code)
 sample.call <- sample.call[samplesinclude]
 ctrl.complete.Green.all <- ctrl.complete.Green.all[,samplesinclude]
 ctrl.complete.Red.all <- ctrl.complete.Red.all[,samplesinclude]
@@ -407,7 +408,7 @@ beta.raw <- beta.raw[,samplesinclude]
 
 if(length(samplesinclude)<101){
 	cat("\nThe sample names of the included samples:\n")
-	datsamples$Sample_Name[paste(datsamples$Sentrix_ID,datsamples$Sentrix_Position,sep = "_")%in%samplesinclude]
+	datsamples$Sample_Name[datsamples$Sentrix_Code %in%samplesinclude]
 }
 ```
 

@@ -64,7 +64,7 @@ noCall with filter 3IQR | `r length(betaQN.all.3IQR[which(is.na(betaQN.all.3IQR)
    
  # reformat output for analysis pipeline
  # convert array IDs to sample IDs
- ids <- datsamples[,c("Sample_ID","Sample_Name")]
- ids <- ids[match(colnames(betaQN.all),ids$Sample_ID),]
+ ids <- datsamples[,c("Sentrix_Code","Sample_Name")]
+ ids <- ids[match(colnames(betaQN.all),ids$Sentrix_Code),]
 
 ```
