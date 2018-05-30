@@ -12,6 +12,7 @@ require(limma)
 
 require(matrixStats)
 require(DescTools)
+library(ggplot2)
 
 if (arraytype=="IlluminaHumanMethylationEPIC") {
 	annotationfile="../annotationfileB4_2017-09-15.csv"

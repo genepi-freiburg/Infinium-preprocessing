@@ -44,7 +44,8 @@ detectionP.local <- function (rgSet, type = "m+u")
     detP
 }
 
-for(i in 1:nrow(filenames)) {
+for(i in 1:2){ #nrow(filenames)){
+	print(i)
 	### 1 line here different
 	RGset <- read.metharray(filenames[i,], verbose=TRUE) # formerly: read.450k()
 	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
@@ -190,11 +191,17 @@ setwd(cwd)
 
 We are working with data from directory `r idatdir` which contains $`r length(filenames) `$ idat files.
 The annotationfile used is 
+\newline
 `r annotationfile` 
+\newline
  - if problems occur with annotation, please have a look at [Illumina downloads](https://support.illumina.com/array/downloads.html)    *Infimum Methylation EPIC Product files*. 
 
 
-Output is directed to `r outputdir`. We use samples listed in `r samplesfile` for quality control. 
+Output is directed to 
+\newline `r outputdir`.\newline
+ We use samples listed in 
+ \newline`r samplesfile`\newline
+  for quality control. 
 
 As given in *parameterfile.R*, the following parameters were used: 
 
@@ -219,10 +226,12 @@ if(QuantileNormalize == TRUE){cat(paste("The samples listed in", samplesfilefina
 
 When reading the data using the minfi-package we apply Illumina Background correction.
 Whithin this process we also 
+
 * extract control-probe information. 
 * calculate detection p-values.
 * estimate the white blood cell distribution assuming whole blood samples using minfi.
 * separate the data by channel (red / green) and Infinium I / II type.
+
 We use this detection p-values and control probe information for high-level quality control and the white blood cell estimations for further processing as phenodata.
 
 ### White Blood Cell estimation
@@ -435,9 +444,13 @@ hist(sample.call,breaks=100, main = "sample call rates")
 
 ```{r}
 # plot sample call rates
-hist(sample.call,breaks=100, main = "sample call rates zoomed", xlim = c(0.85,1))
+hist(sample.call,breaks=100, main = "sample call rates zoomed x-axis", xlim = c(0.85,1))
 ```
-  
+
+```{r}
+# plot sample call rates
+hist(sample.call,breaks=100, main = "sample call rates zoomed y-axis", ylim = c(0,30))
+```
 
 $`r max(0,length(sample.call[which(sample.call<=0.98)]))`$ of all sample call rates are lower than 0.98,  
  and $`r length(sample.call[which(sample.call<=callrate.thres)])`$ are lower than the threshold $`r callrate.thres`$.
@@ -449,12 +462,14 @@ We have a look at the marker call rates as well:
 ```{r}
 hist(marker.call,breaks=100, main = "marker call rates")
 ```
-  
+
+
+```{r}
+hist(marker.call,breaks=100, main = "marker call rates zoomed y-axis", ylim = c(0,500))
+```  
 
 $`r max(0,length(marker.call[which(marker.call<=0.98)]))`$ of all marker call rates are lower than 0.98,  
  and $`r length(marker.call[which(marker.call<=0.95)])`$ are lower than the threshold 0.95.
 
 
 The results of the sample call rate filter are included in the export file **samples_filtered.csv** which also documents the following control-probe based quality control.
-
-

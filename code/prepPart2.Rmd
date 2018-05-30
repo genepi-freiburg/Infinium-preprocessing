@@ -186,7 +186,11 @@ write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",proje
 
 
 The following table lists the detected outliers identified by the quality control and can be found 
-in the file `r paste0(outputdir,"/samples-filtered.csv")` in a slightly expanded version. 
+in the file 
+\newline 
+`r paste0(outputdir,"/samples-filtered.csv")`
+\newline
+ in a slightly expanded version. 
 
 ```{r}
 if(nrow(samples.filtered) > 0){
@@ -200,6 +204,7 @@ if(nrow(samples.filtered) > 0){
 	# print
 	print(reduced.samples.filtered[,c(posName,posFilter)])
 	print(reduced.samples.filtered[,-c(posName,posFilter)])
+	plot.beta.densities(beta.raw[,unique(samples.filtered$sample)],"Densities of raw autosomal beta values of filtered samples")
 } else {
 	cat("No samples were filtered.")
 }
