@@ -44,7 +44,7 @@ detectionP.local <- function (rgSet, type = "m+u")
     detP
 }
 
-for(i in 1:2){ #nrow(filenames)){
+for(i in 1:nrow(filenames)){
 	print(i)
 	### 1 line here different
 	RGset <- read.metharray(filenames[i,], verbose=TRUE) # formerly: read.450k()
