@@ -1,6 +1,6 @@
 ---
 title: "EPIC Pipeline"
-date: "14 May, 2018"
+date: "30 May, 2018"
 params:
   parameterfile: ""
 output:
@@ -17,6 +17,10 @@ This is a pipeline for preprocessing EPIC-Methylation data using R.
 
 
 ```
+## [1] 1
+```
+
+```
 ## Warning: package 'FlowSorted.Blood.450k' was built under R version 3.4.2
 ```
 
@@ -26,426 +30,1138 @@ This is a pipeline for preprocessing EPIC-Methylation data using R.
 ```
 
 ```
+## [1] 2
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 3
+## [1] 4
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 5
+## [1] 6
+## [1] 7
+## [1] 8
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 9
+## [1] 10
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 11
+## [1] 12
+## [1] 13
+## [1] 14
+## [1] 15
+## [1] 16
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 17
+## [1] 18
+## [1] 19
+## [1] 20
+## [1] 21
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 22
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 23
+## [1] 24
+## [1] 25
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 26
+## [1] 27
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 28
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 29
+## [1] 30
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 31
+## [1] 32
+## [1] 33
+## [1] 34
+## [1] 35
+## [1] 36
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 37
+## [1] 38
+## [1] 39
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 40
+## [1] 41
+## [1] 42
+## [1] 43
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 44
+## [1] 45
+## [1] 46
+## [1] 47
+## [1] 48
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 49
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 50
+## [1] 51
+## [1] 52
+## [1] 53
+## [1] 54
+## [1] 55
+## [1] 56
+## [1] 57
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 58
+## [1] 59
+## [1] 60
+## [1] 61
+## [1] 62
+## [1] 63
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 64
+## [1] 65
+## [1] 66
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 67
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 68
+## [1] 69
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 70
+## [1] 71
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 72
+## [1] 73
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 74
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 75
+## [1] 76
+## [1] 77
+## [1] 78
+## [1] 79
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 80
+## [1] 81
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 82
+## [1] 83
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 84
+## [1] 85
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 86
+## [1] 87
+## [1] 88
+## [1] 89
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 90
+## [1] 91
+## [1] 92
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 93
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 94
+## [1] 95
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 96
+## [1] 97
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 98
+## [1] 99
+## [1] 100
+## [1] 101
+## [1] 102
+## [1] 103
+## [1] 104
+## [1] 105
+## [1] 106
+## [1] 107
+## [1] 108
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 109
+## [1] 110
+## [1] 111
+## [1] 112
+## [1] 113
+## [1] 114
+## [1] 115
+## [1] 116
+## [1] 117
+## [1] 118
+## [1] 119
+## [1] 120
+## [1] 121
+## [1] 122
+## [1] 123
+## [1] 124
+## [1] 125
+## [1] 126
+## [1] 127
+## [1] 128
+## [1] 129
+## [1] 130
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 131
+## [1] 132
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 133
+## [1] 134
+## [1] 135
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 136
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 137
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 138
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 139
+## [1] 140
+## [1] 141
+## [1] 142
+## [1] 143
+## [1] 144
+## [1] 145
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 146
+## [1] 147
+## [1] 148
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 149
+## [1] 150
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 151
+## [1] 152
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 153
+## [1] 154
+## [1] 155
+## [1] 156
+## [1] 157
+## [1] 158
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 159
+## [1] 160
+## [1] 161
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 162
+## [1] 163
+## [1] 164
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 165
+## [1] 166
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 167
+## [1] 168
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 169
+## [1] 170
+## [1] 171
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 172
+## [1] 173
+## [1] 174
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 175
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 176
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 177
+## [1] 178
+## [1] 179
+## [1] 180
+## [1] 181
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 182
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 183
+## [1] 184
+## [1] 185
+## [1] 186
+## [1] 187
+## [1] 188
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 189
+## [1] 190
+## [1] 191
+## [1] 192
+## [1] 193
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 194
+## [1] 195
+## [1] 196
+## [1] 197
+## [1] 198
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 199
+## [1] 200
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 201
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 202
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 203
+## [1] 204
+## [1] 205
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 206
+## [1] 207
+## [1] 208
+## [1] 209
+## [1] 210
+## [1] 211
+## [1] 212
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 213
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 214
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 215
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 216
+## [1] 217
+## [1] 218
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 219
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 220
+## [1] 221
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 222
+## [1] 223
+## [1] 224
+## [1] 225
+## [1] 226
+## [1] 227
+## [1] 228
+## [1] 229
+## [1] 230
+## [1] 231
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 232
+## [1] 233
+## [1] 234
+## [1] 235
+## [1] 236
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 237
+## [1] 238
+## [1] 239
+## [1] 240
+## [1] 241
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 242
+## [1] 243
+## [1] 244
+## [1] 245
+## [1] 246
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 247
+## [1] 248
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 249
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 250
+## [1] 251
+## [1] 252
+## [1] 253
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 254
+## [1] 255
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 256
+## [1] 257
+## [1] 258
+## [1] 259
+## [1] 260
+## [1] 261
+## [1] 262
+## [1] 263
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 264
+## [1] 265
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 266
+## [1] 267
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 268
+## [1] 269
+## [1] 270
+## [1] 271
+## [1] 272
+## [1] 273
+## [1] 274
+## [1] 275
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 276
+## [1] 277
+## [1] 278
+## [1] 279
+## [1] 280
+## [1] 281
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 282
+## [1] 283
+## [1] 284
+## [1] 285
+## [1] 286
+## [1] 287
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
 
+```
+## [1] 288
+## [1] 289
+```
+
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
 ## for example with the plotSex function.
+```
+
+```
+## [1] 290
+```
 
+```
 ## Warning in .getSex(CN = CN, xIndex = xIndex, yIndex = yIndex, cutoff
 ## = cutoff): An inconsistency was encountered while determining sex. One
 ## possibility is that only one sex is present. We recommend further checks,
@@ -520,11 +1236,11 @@ In our further calculations beta value data always is processed separately for a
 
 * Detection p-values are illustrated in the following plots. Low p-values indicate that the signal is unlikely to be background noise. 
 
-![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-11-1.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-11-1.pdf)<!-- --> 
 
 
 
-![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-12-1.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-12-1.pdf)<!-- --> 
 \pagebreak
 
 
@@ -553,7 +1269,7 @@ dimension:     | $846232, 580$ | $19627, 580$
 
 
 
-![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-16-1.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-16-1.pdf)<!-- --> 
 
 
 
@@ -567,10 +1283,11 @@ dimension:     | $846232, 580$ | $19627, 580$
 * $9$ samples were tagged for exclusion because the call-rate was below the threshold $0.95$.
 
 
-![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-19-1.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-19-1.pdf)<!-- --> 
 
-![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-20-1.pdf)<!-- --> 
-  
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-20-1.pdf)<!-- --> 
+
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-21-1.pdf)<!-- --> 
 
 $57$ of all sample call rates are lower than 0.98,  
  and $9$ are lower than the threshold $0.95$.
@@ -579,16 +1296,16 @@ $57$ of all sample call rates are lower than 0.98,
 We have a look at the marker call rates as well:
 
 
-![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-21-1.pdf)<!-- --> 
-  
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-22-1.pdf)<!-- --> 
+
+
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-23-1.pdf)<!-- --> 
 
 $4.3415\times 10^{4}$ of all marker call rates are lower than 0.98,  
  and $28274$ are lower than the threshold 0.95.
 
 
 The results of the sample call rate filter are included in the export file **samples_filtered.csv** which also documents the following control-probe based quality control.
-
-
 
 ## PART 2: Low-Level Quality Control
 
@@ -635,15 +1352,19 @@ The first 3 rows of control probes information from QC contain the following inf
 
 In the following control probes are checked. For a more detailed descriptin see e.g. the [ILMN HD methylation assay protocol guide (15019519)](https://support.illumina.com/downloads/infinium_hd_methylation_assay_protocol_guide_(15019519_b).html) or the [Illumina BeadArray Controls Reporter Software Guide ](https://support.illumina.com/downloads/beadarray-controls-reporter-software-guide-1000000004009.html),pages 6-8. Probes are evaluated by MA plots. BS-I and BS-II control probes check the DNA bisulfite conversion step.
 
-![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-25-1.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-25-2.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-25-3.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-27-1.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-27-2.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-27-3.pdf)<!-- --> 
 
 We also check the Hybridisation of the amplified DNA to the array:
 
-![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-26-1.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-26-2.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-26-3.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-26-4.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-26-5.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-26-6.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-26-7.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-26-8.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-26-9.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-28-1.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-28-2.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-28-3.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-28-4.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-28-5.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-28-6.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-28-7.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-28-8.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-28-9.pdf)<!-- --> 
 
 
 The following table lists the detected outliers identified by the quality control and can be found 
-in the file /data/studies/00_GCKD/00_data/02_methylation/02_clean_data/EPIC_batch1/samples-filtered.csv in a slightly expanded version. 
+in the file 
+\newline 
+/data/studies/00_GCKD/00_data/02_methylation/02_clean_data/EPIC_batch1/samples-filtered.csv
+\newline
+ in a slightly expanded version. 
 
 
 ```
@@ -790,14 +1511,16 @@ in the file /data/studies/00_GCKD/00_data/02_methylation/02_clean_data/EPIC_batc
 ## 46          194            108588      1       0.9959042
 ```
 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-29-1.pdf)<!-- --> 
+
 ### Sex mismatch
 
 Gamete methylation can be used to check sex mismatches. First, we see the loadings of the PCA on markers in the space of samples. The second plot shows the principle components of the PCA on the samples in the space of samples.
 
-![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-28-1.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-28-2.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-30-1.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-30-2.pdf)<!-- --> 
 
 
-![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-29-1.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-14-09h24m-GCKD-QC_files/figure-latex/unnamed-chunk-29-2.pdf)<!-- --> 
+![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-31-1.pdf)<!-- --> ![](/dsk/data1/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/00_scripts/2018-05-30-09h23m-GCKD-QC_files/figure-latex/unnamed-chunk-31-2.pdf)<!-- --> 
 
 The previous calculations provide all information needed to filter the samples and make a tab-separated file *samplesfilefinal* for further use. 
 For this analysis, /data/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/01_input/samplesfile_GCKD_EPICs.txt was used as list of samples for the final preprocessing steps. 
@@ -806,7 +1529,7 @@ For this analysis, /data/studies/00_GCKD/01_analyses/ewas/00_DNAm-preprocessing/
 
 
 
-1. The following data is included in the Rdata-file QC_data_GCKD_2018-05-14-09h24m.Rdata:
+1. The following data is included in the Rdata-file QC_data_GCKD_2018-05-30-09h23m.Rdata:
 \begin{description}
 	\item[ctrl.all, ctrl.complete.Red.all, ctrl.complete.Green.all, control.info] control probe data
 	\item[ctrlprobes.scores] rotated control probe intensities into the coordinates given by principal component analysis
@@ -845,8 +1568,8 @@ If you want to have the Quality Control without the filtered samples in the seco
 
 ## Memory load and processing time
 
-The maximum memory load in this run was $5.52532\times 10^{4}$ Mb .
-It took 8.311567 hours of processing time.
+The maximum memory load in this run was $5.5253\times 10^{4}$ Mb .
+It took 8.615492 hours of processing time.
 
 
 ## Methods

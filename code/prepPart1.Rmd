@@ -12,6 +12,14 @@
  filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
 
 dim(filenames) <- c(length(filenames)/2,2)
+sample_names = apply(filenames, c(1,2), function(s){substring(s, first = (nchar(s) - 18))})
+
+datsamples <- read.table(file=samplesfile,header=T,as.is=T,sep="\t", colClasses = "character")
+datsamples$Gender = as.numeric(datsamples$Gender)
+# provide a new column with sample identifier
+if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamples))){stop("samplesfile must provide Sentrix_ID and Sentrix_Position.")}
+datsamples$Sentrix_Code = paste(datsamples$Sentrix_ID,datsamples$Sentrix_Position,sep = "_")
+datsamples$MFGender = ifelse(datsamples$Gender == 0, "M","F")
 
 detectionP.local <- function (rgSet, type = "m+u")
 {
@@ -173,8 +181,9 @@ for(i in 1:nrow(filenames)){
 	}
 	
 	# added 18.04.18 by FGC: minfi WBC estimation based on RGsets only 
-	
-	est_wbc <- estimateCellCounts(RGset, compositeCellType = "Blood", cellTypes = c("CD8T","CD4T", "NK","Bcell","Mono","Gran"))
+
+	est_wbc <- estimateCellCounts(RGset, compositeCellType = "Blood", cellTypes = c("CD8T","CD4T", "NK","Bcell","Mono","Gran"),
+				 sex = datsamples$MFGender[match(sample_names[i,],datsamples$Sentrix_Code)])
 	                              #,referencePlatform=arraytype)
 	if(exists("est.wbc.minfi")){
 		est.wbc.minfi = rbind(est_wbc, est_wbc)
@@ -403,11 +412,7 @@ plot.beta.densities(beta.raw,"Densities of raw autosomal beta values per sample"
 ```
 
 ```{r}
-datsamples <- read.table(file=samplesfile,header=T,as.is=T,sep="\t", colClasses = "character")
-datsamples$Gender = as.numeric(datsamples$Gender)
 # remove samples not in samplesfile
-if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamples))){stop("samplesfile must provide Sentrix_ID and Sentrix_Position.")}
-datsamples$Sentrix_Code = paste(datsamples$Sentrix_ID,datsamples$Sentrix_Position,sep = "_")
 samplesinclude <- intersect(names(sample.call),datsamples$Sentrix_Code)
 sample.call <- sample.call[samplesinclude]
 ctrl.complete.Green.all <- ctrl.complete.Green.all[,samplesinclude]
