@@ -90,9 +90,9 @@ In the following control probes are checked. For a more detailed descriptin see 
 
 ```{r}
 labels <- rownames(controlQC)
-removeOutlier <- function(val1,val2,labels=NULL,xname="val1",yname="val2",title="",filterYout=1) {
-    SDrange=4 # range to define outliers
-    nullOffs=0.0001 # offset to avoid division by zero, log 0, etc.
+removeOutlier <- function(val1,val2,labels=NULL,xname="val1",yname="val2",title="",filterYout=1, SDrange=4 ,nullOffs=0.0001 ) {
+    # SDrange is  range to define outliers
+    # nullOffs is offset to avoid division by zero, log 0, etc.
 
     x <- log2(sqrt(val1*val2)+nullOffs)
     y <- log2((val1+nullOffs)/(val2+nullOffs))
@@ -236,6 +236,28 @@ legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"])))
 points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
 legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
+
+# find potential outlier and save a list
+get.outliers = function(x, SDrange = 2){
+    out <- which(x>mean(x)+sd(x)*SDrange) # upper X
+    out <- c(out,which(x<mean(x)-sd(x)*SDrange)) # lower X
+}    
+mark.outliers  = function(x,y, color, labels){
+	out = c(get.outliers(x),get.outliers(y))
+	if (length(out)>0) {
+       		text(x[out],y[out],label=labels[out],col=color,adj=c(0,0),cex=0.7)
+	}
+	return(labels[out])
+}
+
+sex.mismatches = mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "red", EV$Sentrix_Code[idx])
+ sex.mismatches = c(sex.mismatches, mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "blue",EV$Sentrix_Code[-idx]) )
+```
+
+The samples whose values are more than two standard deviations from the mean of the samples with same assigned sex according to the first two principal components:
+
+````{r}
+print(sex.mismatches)
 
 ```
 
