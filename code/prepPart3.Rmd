@@ -237,11 +237,22 @@ plot(EV[,"PC3"],EV[,"PC4"], main=paste0("number of autosomal probes: ",nrow(pcaA
 
 
 ```{r} 
- qplot(EV[,"PC1"],EV[,"PC2"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x)),xlab=paste0("EV1 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[2]*100),"%)"), colour = EV$Sentrix_ID)
- qplot(EV[,"PC3"],EV[,"PC4"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x)),xlab=paste0("EV3 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[3]*100),"%)"),ylab=paste0("EV4 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[4]*100),"%)"), colour = EV$Sentrix_ID)
+ qplot(EV[,"PC1"],EV[,"PC2"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x)),xlab=paste0("EV1 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[2]*100),"%)"), colour = EV$Sentrix_ID, sub = "color by Sentrix_ID")
+ qplot(EV[,"PC3"],EV[,"PC4"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x)),xlab=paste0("EV3 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[3]*100),"%)"),ylab=paste0("EV4 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[4]*100),"%)"), colour = EV$Sentrix_ID, sub = "color by Sentrix_ID")
 
 ```
 
+
+```{r} 
+ qplot(EV[,"PC1"],EV[,"PC2"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x)),xlab=paste0("EV1 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[2]*100),"%)"), colour = EV$Sample_Plate, sub = "color by Sample_Plate")
+ qplot(EV[,"PC3"],EV[,"PC4"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x)),xlab=paste0("EV3 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[3]*100),"%)"),ylab=paste0("EV4 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[4]*100),"%)"), colour = EV$Sample_Plate, sub = "color by Sample_Plate")
+
+```
+
+
+```{r}
+# EVals
+par(mfrow=c(1,1))
 
 ```{r}
 # EVals
