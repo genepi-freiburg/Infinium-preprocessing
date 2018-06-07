@@ -225,6 +225,7 @@ betaPCA <- beta.raw.sex[sexprobes,]
 pcaSex <- prcomp(na.omit(betaPCA))
 EV <- pcaSex$rotation
 EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
+colnames(EV)[match("Row.names",colnames(EV))] <- "Sentrix_Code"
 
 # plot first males, then females: find female outlier
 idx = which(EV$Gender%in%c(1)) # 1 is female
@@ -241,24 +242,25 @@ legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 get.outliers = function(x, SDrange = 2){
     out <- which(x>mean(x)+sd(x)*SDrange) # upper X
     out <- c(out,which(x<mean(x)-sd(x)*SDrange)) # lower X
+    return(out)
 }    
 mark.outliers  = function(x,y, color, labels){
-	out = c(get.outliers(x),get.outliers(y))
+	out = unique(get.outliers(x),get.outliers(y))
 	if (length(out)>0) {
        		text(x[out],y[out],label=labels[out],col=color,adj=c(0,0),cex=0.7)
 	}
 	return(labels[out])
 }
 
-sex.mismatches = mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "red", EV$Sentrix_Code[idx])
- sex.mismatches = c(sex.mismatches, mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "blue",EV$Sentrix_Code[-idx]) )
+sex.mismatches = mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "blue", EV$Sentrix_Code[idx])
+sex.mismatches = c(sex.mismatches, mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "red",EV$Sentrix_Code[-idx]) )
 ```
 
-The samples whose values are more than two standard deviations from the mean of the samples with same assigned sex according to the first two principal components:
+The samples whose loadings are more than two standard deviations from the mean of the loadings with same assigned sex according to the first two principal components:
 
 ````{r}
 print(sex.mismatches)
-
+rm(sex.mismatches)
 ```
 
 
@@ -282,8 +284,19 @@ plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: 
 points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
 legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 
+sex.mismatches = mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "blue", EV$Sentrix_Code[idx])
+ sex.mismatches = c(sex.mismatches, mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "red",EV$Sentrix_Code[-idx]) )
+
 resSexCheck <- cbind(resSexCheck,data.frame(PC1=EV[,"PC1"],PC2=EV[,"PC2"]))
 write.csv(resSexCheck,file = paste0(outputdir,"/results-PCAsex_raw","_",projectname,"-",formatted.time,".csv"),row.names=F,quote=F)
+
+```
+
+The samples whose values are more than two standard deviations from the mean of the samples with same assigned sex according to the first two principal components:
+
+````{r}
+print(sex.mismatches)
+
 ```
 
 The previous calculations provide all information needed to filter the samples and make a tab-separated file *samplesfilefinal* for further use. 
