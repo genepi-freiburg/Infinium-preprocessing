@@ -25,7 +25,7 @@ sh /data/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/code/prepSwitchRmd.sh
 # Mail type options are BEGIN, END, FAIL, REQUEUE, ALL
 # It has no effect if one increases the number of cpus.
 
-# /data/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/temporary must be empty, otherwise another parameterfile may be used
 
 # NOTE So far the runs of the pipeline used up to 20 GB.
 # NOTE GCKD used > 40 GB.
+# NOTE Different runs at the same time overwrite each other. 

@@ -11,6 +11,7 @@
  # getwd()
  filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
 
+
 dim(filenames) <- c(length(filenames)/2,2)
 sample_names = apply(filenames, c(1,2), function(s){substring(s, first = (nchar(s) - 18))})
 
@@ -52,8 +53,8 @@ detectionP.local <- function (rgSet, type = "m+u")
     detP
 }
 
-for(i in 1:nrow(filenames)){
-	print(i)
+for(i in 1:2){#nrow(filenames)){
+	# print(i)
 	### 1 line here different
 	RGset <- read.metharray(filenames[i,], verbose=TRUE) # formerly: read.450k()
 	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
@@ -179,11 +180,18 @@ for(i in 1:nrow(filenames)){
         ctrl.complete.Green.all <- ctrl.complete.Green # added for lowlevel QC
         dp.all <- dp
 	}
-	
-	# added 18.04.18 by FGC: minfi WBC estimation based on RGsets only 
+}
 
+	
+# make WBC estimation
+	
+	filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
+	sample_names = substring(filenames, first = (nchar(filenames) - 18))
+	# added 18.04.18 by FGC: minfi WBC estimation based on RGsets only 
+	RGset <- read.metharray(filenames, verbose=TRUE) # formerly: read.450k()
+	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
 	est_wbc <- estimateCellCounts(RGset, compositeCellType = "Blood", cellTypes = c("CD8T","CD4T", "NK","Bcell","Mono","Gran"),
-				 sex = datsamples$MFGender[match(sample_names[i,],datsamples$Sentrix_Code)])
+				 sex = datsamples$MFGender[match(sample_names,datsamples$Sentrix_Code)])
 	                              #,referencePlatform=arraytype)
 	if(exists("est.wbc.minfi")){
 		est.wbc.minfi = rbind(est_wbc, est_wbc)
@@ -191,14 +199,17 @@ for(i in 1:nrow(filenames)){
 		est.wbc.minfi = as.data.frame(est_wbc)
 	}
 	
-}
-setwd(cwd)
+setwd(cwd)	
 
 ```
 
 ### Read data and parameters
 
-We are working with data from directory `r idatdir` which contains $`r length(filenames) `$ idat files.
+We are working with data from directory 
+\newline
+`r idatdir` 
+\newline
+which contains $`r length(filenames) `$ idat files.
 The annotationfile used is 
 \newline
 `r annotationfile` 
@@ -425,6 +436,8 @@ if(length(samplesinclude)<101){
 	datsamples$Sample_Name[datsamples$Sentrix_Code %in%samplesinclude]
 }
 ```
+
+
 
 * Identified by the samplefile, $`r length(samplesinclude)`$ samples are included in the analysis.
 

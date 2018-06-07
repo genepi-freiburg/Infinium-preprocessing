@@ -7,6 +7,7 @@ output:
   pdf_document:
     toc: true
     toc_depth: 2
+    keep_tex: true
 ---
 
 ```{r setup, include=FALSE, echo = FALSE}
