@@ -15,13 +15,13 @@ require(DescTools)
 library(ggplot2)
 
 if (arraytype=="IlluminaHumanMethylationEPIC") {
-	annotationfile="../annotationfileB4_2017-09-15.csv"
+	annotationfile="/data/programs/pipelines/CPACOR-EPIC_pipeline/annotationfileB4_2017-09-15.csv"
 	# this is identical to the file 
 	# MethylationEPIC_v-1-0_B4.csv
 	# which one can download from 
 	# https://support.illumina.com/array/array_kits/infinium-methylationepic-beadchip-kit/downloads.html 
 } else if  (arraytype=="IlluminaHumanMethylation450k") {
-	annotationfile="../annotationfile450k.csv"
+	annotationfile="/data/programs/pipelines/CPACOR-EPIC_pipeline/annotationfile450k.csv"
 	# this is identical to the file 
 	# HumanMethylation450_15017482_v1-2.csv
 	# which can be downloaded from 

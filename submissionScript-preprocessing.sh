@@ -10,7 +10,7 @@
 #SBATCH --output ../slurm-log-%A.txt
 
 
-sh /data/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/code/prepSwitchRmd.sh 
+sh /data/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/code/prepSwitchRmd_local.sh 
 
 # This file can be queued with $ sbatch /data/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/submissionScript-preprocessing.sh
 

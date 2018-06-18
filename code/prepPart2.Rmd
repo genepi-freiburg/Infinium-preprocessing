@@ -229,17 +229,17 @@ colnames(EV)[match("Row.names",colnames(EV))] <- "Sentrix_Code"
 
 # plot first males, then females: find female outlier
 idx = which(EV$Gender%in%c(1)) # 1 is female
-plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"]) + 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  ), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
+plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"]) + 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
 legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 
 # then plot first females, then males: find male-outlier
-plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  ), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
+plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
 legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 
 # find potential outlier and save a list
-get.outliers = function(x, SDrange = 2){
+get.outliers = function(x, SDrange = 3){
     out <- which(x>mean(x)+sd(x)*SDrange) # upper X
     out <- c(out,which(x<mean(x)-sd(x)*SDrange)) # lower X
     return(out)
@@ -256,7 +256,7 @@ sex.mismatches = mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "blue", EV$Sentrix_
 sex.mismatches = c(sex.mismatches, mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "red",EV$Sentrix_Code[-idx]) )
 ```
 
-The samples whose loadings are more than two standard deviations from the mean of the loadings with same assigned sex according to the first two principal components:
+The samples whose loadings are more than three standard deviations from the mean of the loadings with same assigned sex according to the first two principal components:
 
 ````{r}
 print(sex.mismatches)
@@ -265,22 +265,23 @@ rm(sex.mismatches)
 
 
 ```{r}
-resSexCheck <- data.frame(Sentrix_Code=EV$Row.names,Sex=EV$Gender,EV1=EV[,"PC1"],EV2=EV[,"PC2"])
+resSexCheck <- data.frame(Sentrix_Code=EV$Sentrix_Code, Sex=EV$Gender, EV1=EV[,"PC1"], EV2=EV[,"PC2"])
 
 # PC NA omit
 betaPCA <- beta.raw.sex[sexprobes,]
 pcaSex <- prcomp(t(na.omit(betaPCA)))
 EV <- pcaSex$x
 EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
+colnames(EV)[match("Row.names",colnames(EV))] <- "Sentrix_Code"
 
 # plot first males, then females: find female outlier
 idx = which(EV$Gender%in%c(1)) # 1 is female
-plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  ), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
+plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*( max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
 legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 
 # then plot first females, then males: find male-outlier
-plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  ), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
+plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
 legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 
@@ -292,7 +293,7 @@ write.csv(resSexCheck,file = paste0(outputdir,"/results-PCAsex_raw","_",projectn
 
 ```
 
-The samples whose values are more than two standard deviations from the mean of the samples with same assigned sex according to the first two principal components:
+The samples whose values are more than three standard deviations from the mean of the samples with same assigned sex according to the first two principal components:
 
 ````{r}
 print(sex.mismatches)
