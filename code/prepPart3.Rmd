@@ -10,17 +10,17 @@
 # extended by Alexander Teumer (University Medicine Greifswald/ Erasmus MC Rotterdam)
 # last change: 05/16/2016
 
-datsamplesfinal <- read.table(file=samplesfilefinal,header=T,as.is=T,sep="\t")
+datsamplesfinal <- read.table(file=samplesfilefinal,header=T,as.is=T,sep="\t", colClasses = "character")
+datsamplesfinal$Gender = as.numeric(datsamplesfinal$Gender)
+# provide a new column with sample identifier
+if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamplesfinal))){stop("Final samplesfile must provide Sentrix_ID and Sentrix_Position.")}
+datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$Sentrix_Position,sep = "_")
 samples <- colnames(TypeI.Red.M.All)
 samples <- samples[samples %in% datsamplesfinal$Sentrix_Code]
 datsamples <- datsamplesfinal[datsamplesfinal$Sentrix_Code %in% samples,]
 ```
 
-`r nrow(datsamples)` samples are included in the analysis, identified by the *samplesfilefinal* `r samplesfilefinal ` and existing sample calls:
-
-```{r}
-(as.data.frame(datsamples))$Sample_Name
-```
+`r nrow(datsamples)` samples are included in the analysis, identified by the *samplesfilefinal* `r samplesfilefinal ` and existing sample calls.
 
 ```{r}
 #QN autosomes # has to be filtered by samples 
