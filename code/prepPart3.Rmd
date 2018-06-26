@@ -131,7 +131,7 @@ rm(TypeII.Green_w,TypeII.Red_w,TypeI.Green.M_w,TypeI.Green.U_w,TypeI.Red.M_w,Typ
 plot.beta.densities(betaQN,"Densities of normalized autosomal beta values per sample")
 ```
 
-### PART 4: Control Probe Adjustment
+### PART 4: Principal Component Checks
 
 Control probes track for technical bias between batches. To adjust for these in the analysis while minimizing the number of variables due to convergence reasons, we calculate Principal Components and show how much variance they explain. 
 Markers which had at least one cpg site missing were excluded for the following PCA. 
@@ -220,10 +220,10 @@ hist(marker.callYwomen,breaks=50)
 }
 ```
 
-  
+The next PCA will be conducted on autosomal beta values after quantile normalisation and the PCA is per variable.   
 
 ```{r}
-# PCA (autosomes)
+# PCA variables (autosomes)
 betaPCA <- betaQN
 pcaAuto <- prcomp(na.omit(betaPCA))
 EV <- pcaAuto$rotation
@@ -236,24 +236,6 @@ plot(EV[,"PC3"],EV[,"PC4"], main=paste0("number of autosomal probes: ",nrow(pcaA
 ```
 
 
-```{r} 
- qplot(EV[,"PC1"],EV[,"PC2"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x),"\n color by Sentrix_ID"),xlab=paste0("EV1 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[2]*100),"%)"), colour = EV$Sentrix_ID)
- qplot(EV[,"PC3"],EV[,"PC4"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x),"\n color by Sentrix_ID"),xlab=paste0("EV3 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[3]*100),"%)"),ylab=paste0("EV4 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[4]*100),"%)"), colour = EV$Sentrix_ID)
-
-```
-
-
-```{r} 
- qplot(EV[,"PC1"],EV[,"PC2"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x),"\n color by Sample_Plate"),xlab=paste0("EV1 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[2]*100),"%)"), colour = EV$Sample_Plate)
- qplot(EV[,"PC3"],EV[,"PC4"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x),"\n color by Sample_Plate"),xlab=paste0("EV3 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[3]*100),"%)"),ylab=paste0("EV4 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[4]*100),"%)"), colour = EV$Sample_Plate)
-
-```
-
-
-```{r}
-# EVals
-par(mfrow=c(1,1))
-
 ```{r}
 # EVals
 par(mfrow=c(1,1))
@@ -262,4 +244,90 @@ text((y=pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1:10],x=1:10+0.1,labels=sprintf("%1.
 
 marker.call.all <- data.frame(callrate=c(marker.callQN,marker.call_sex)) # marker callrate of all samples incl. excluded ones
 ```
+
+Next we will plot the corresponding principal components of samples coloured by batches (autosomal beta after QN). 
+The colouring by Sentrix ID is saved in a separate pdf-file `r paste0("results-PCAauto-QN-batchwise","_",projectname,"-",formatted.time,".pdf")`  in `r outputdir`.
+
+
+```{r} 
+pca.col.plot2 <- function(pc, group,legend,col_pal){
+p1 <- fviz_pca_ind(pc,axes=c(1,2),
+		     col.ind = group, # color by groups
+             palette = col_pal, geom="point",
+             addEllipses = TRUE, # Concentration ellipses
+             ellipse.type = "confidence", legend.title = "", repel = FALSE)
+
+p2 <- fviz_pca_ind(pc,axes=c(3,4),
+		     col.ind = group, # color by groups
+             palette = col_pal, geom="point",
+             addEllipses = TRUE, # Concentration ellipses
+             ellipse.type = "confidence", legend.title = "", repel = FALSE)
+
+p3 <- fviz_pca_ind(pc,axes=c(5,6),
+		     col.ind = group, # color by groups
+             palette = col_pal, geom="point",
+             addEllipses = TRUE, # Concentration ellipses
+             ellipse.type = "confidence", legend.title = "", repel = FALSE)
+return(list(p1,p2,p3))
+}
+
+
+
+# PCA samples (autosomes)
+betaPCA <- betaQN
+pcaSamples <- prcomp(t(na.omit(betaPCA)))
+EV <- pcaSamples$x
+EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
+
+pdf(file=paste0(outputdir,"/results-PCAauto-QN-sentrixwise","_",projectname,"-",formatted.time,".pdf"),height=21,width = 21)
+par(mar=c(8.1,7.1,4.1,2.1))
+matched_category = datsamples$Sentrix_ID[match(datsamples$Sentrix_Code, rownames(pcaSamples$x))] 
+
+tmp <- pca.col.plot2(pc = pcaSamples,
+					 group=as.factor(matched_category),
+					 legend=levels(as.factor(matched_category)),
+					 col_pal=rainbow(n=length(unique(matched_category)))
+					)
+tmp[[1]]
+tmp[[2]]
+tmp[[3]]
+dev.off()
+
+```
+ 
+The colouring by Sample Plate is saved in a separate pdf-file `r paste0("results-PCAauto-QN-platewise","_",projectname,"-",formatted.time,".pdf")`  in `r outputdir`.
+
+
+```{r} 
+
+pdf(file=paste0(outputdir,"/results-PCAauto-QN-platewise","_",projectname,"-",formatted.time,".pdf"),height=21,width = 21)
+par(mar=c(8.1,7.1,4.1,2.1))
+
+matched_category = datsamples$Sample_Plate[match(datsamples$Sentrix_Code, rownames(pcaSamples$x))] 
+
+tmp <- pca.col.plot2(pc = pcaSamples,
+					 group=as.factor(matched_category),
+					 legend=levels(as.factor(matched_category)),
+					 col_pal=rainbow(n=length(unique(matched_category)))
+					)
+tmp[[1]]
+tmp[[2]]
+tmp[[3]]
+dev.off()
+```
+
+To better understand these results, compare the **number of samples per Plate**.
+```{r}
+number.of.samples.per.plate = sapply(unique(datsamples$Sample_Plate), function(n){sum(datsamples$Sample_Plate%in%n)})
+print(number.of.samples.per.plate)
+```
+Simple plots with colouring by Sample Plate:
+```{r} 
+ qplot(EV[,"PC1"],EV[,"PC2"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x),"\n color by Sample_Plate"),xlab=paste0("EV1 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[2]*100),"%)"), colour = EV$Sample_Plate)
+ qplot(EV[,"PC3"],EV[,"PC4"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x),"\n color by Sample_Plate"),xlab=paste0("EV3 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[3]*100),"%)"),ylab=paste0("EV4 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[4]*100),"%)"), colour = EV$Sample_Plate)
+
+```
+
+
+
 

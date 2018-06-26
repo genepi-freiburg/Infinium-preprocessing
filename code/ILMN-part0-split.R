@@ -9,6 +9,8 @@
 
 require(minfi)
 require(limma)
+require("factoextra")
+
 
 require(matrixStats)
 require(DescTools)
