@@ -133,7 +133,7 @@ plot.beta.densities(betaQN,"Densities of normalized autosomal beta values per sa
 
 ### PART 4: Principal Component Checks
 
-Control probes track for technical bias between batches. To adjust for these in the analysis while minimizing the number of variables due to convergence reasons, we calculate Principal Components and show how much variance they explain. 
+Control probes track technical bias between batches. To adjust for these in the analysis while minimizing the number of variables due to convergence reasons, we calculate Principal Components and show how much variance they explain. 
 Markers which had at least one cpg site missing were excluded for the following PCA. 
 
 ```{r}
@@ -142,6 +142,7 @@ datpca <- ctrl.all[samples,]
 pcaControls <- prcomp(na.omit(datpca))
 ctrlprobes.scores = pcaControls$x
 EV <- merge(ctrlprobes.scores,datsamples,by.x=0,by.y="Sentrix_Code")
+pcaControls <- EV # to have merged version
 colnames(ctrlprobes.scores) = paste(colnames(ctrlprobes.scores), '_cp', sep='')
 
 plot(EV[,"PC1"],EV[,"PC2"], main=paste0("PCA - number of controls probes: ",ncol(datpca)),xlab=paste0("PC1 (",sprintf("%1.1f",(pcaControls$sdev^2/sum(pcaControls$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaControls$sdev^2/sum(pcaControls$sdev^2))[2]*100),"%)"))
