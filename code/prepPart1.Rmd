@@ -191,8 +191,8 @@ for(i in 1:nrow(filenames)){
 	RGset <- read.metharray(filenames, verbose=TRUE) # formerly: read.450k()
 	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
 	est_wbc <- estimateCellCounts(RGset, compositeCellType = "Blood", cellTypes = c("CD8T","CD4T", "NK","Bcell","Mono","Gran"),
-				 sex = datsamples$MFGender[match(sample_names,datsamples$Sentrix_Code)])
-	                              #,referencePlatform=arraytype)
+				 sex = datsamples$MFGender[match(sample_names,datsamples$Sentrix_Code)] )
+	                              #referencePlatform=arraytype)
 	if(exists("est.wbc.minfi")){
 		est.wbc.minfi = rbind(est_wbc, est_wbc)
 	} else {
