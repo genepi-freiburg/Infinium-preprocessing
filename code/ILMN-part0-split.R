@@ -6,6 +6,8 @@
 # biocLite("limma")
 # biocLite("IlluminaHumanMethylationEPICmanifest") # for EPIC array
 # biocLite("IlluminaHumanMethylation450kmanifest") # for 450k array and Houseman
+# biocLite("FlowSorted.Blood.450k") 
+# biocLite("IlluminaHumanMethylation450kanno.ilmn12.hg19")
 
 require(minfi)
 require(limma)
