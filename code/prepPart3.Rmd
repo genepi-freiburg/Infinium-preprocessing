@@ -136,7 +136,7 @@ plot.beta.densities(betaQN,"Densities of normalized autosomal beta values per sa
 Control probes track technical bias between batches. To adjust for these in the analysis while minimizing the number of variables due to convergence reasons, we calculate Principal Components and show how much variance they explain. 
 Markers which had at least one cpg site missing were excluded for the following PCA. 
 
-```{r}
+```{r, echo = FALSE}
 #PCA of control-probe intensities
 datpca <- ctrl.all[samples,]
 pcaControls <- prcomp(na.omit(datpca))
@@ -164,7 +164,7 @@ sample.callX=colSums(!is.na(betaQN.sex[sexchrX,]))/nrow(betaQN.sex[sexchrX,])
 
 The following plot is a PCA on **variables**: It presents the importance of samples when differentiating between the CpG sites in the best way possible. 
 
-```{r}
+```{r, echo = FALSE}
 # chr X+Y
 betaPCA <- betaQN.sex[c(sexchrX,sexchrY),]
 pcaSex <- prcomp(na.omit(betaPCA))
@@ -180,7 +180,7 @@ resSexCheck <- data.frame(Sentrix_Code=EV$Row.names,Sex=EV$Gender,EV1=EV[,"PC1"]
 
 The next plot presents a PCA on **samples**, as it is more common. It shows the variance of the samples on the PC axes. 
 
-```{r}
+```{r, echo = FALSE}
 pcaSex <- prcomp(t(na.omit(betaPCA)))
 EV <- pcaSex$x
 EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
@@ -203,7 +203,7 @@ hist(YcallMen,breaks=50)
 
 
 
-```{r}
+```{r, echo = FALSE}
 if(length(women) > 1){
 hist(YcallWomen,breaks=50)
 
@@ -250,7 +250,7 @@ Next we will plot the corresponding principal components of samples coloured by 
 The colouring by Sentrix ID is saved in a separate pdf-file `r paste0("results-PCAauto-QN-batchwise","_",projectname,"-",formatted.time,".pdf")`  in `r outputdir`.
 
 
-```{r} 
+```{r, warnings = FALSE} 
 pca.col.plot2 <- function(pc, group,legend,col_pal){
 p1 <- fviz_pca_ind(pc,axes=c(1,2),
 		     col.ind = group, # color by groups
@@ -299,7 +299,7 @@ dev.off()
 The colouring by Sample Plate is saved in a separate pdf-file `r paste0("results-PCAauto-QN-platewise","_",projectname,"-",formatted.time,".pdf")`  in `r outputdir`.
 
 
-```{r} 
+```{r, warnings = FALSE} 
 
 pdf(file=paste0(outputdir,"/results-PCAauto-QN-platewise","_",projectname,"-",formatted.time,".pdf"),height=21,width = 21)
 par(mar=c(8.1,7.1,4.1,2.1))
@@ -323,9 +323,12 @@ number.of.samples.per.plate = sapply(unique(datsamples$Sample_Plate), function(n
 print(number.of.samples.per.plate)
 ```
 Simple plots with colouring by Sample Plate:
+\newline
+
 ```{r} 
- qplot(EV[,"PC1"],EV[,"PC2"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x),"\n color by Sample_Plate"),xlab=paste0("EV1 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[2]*100),"%)"), colour = EV$Sample_Plate)
- qplot(EV[,"PC3"],EV[,"PC4"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x),"\n color by Sample_Plate"),xlab=paste0("EV3 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[3]*100),"%)"),ylab=paste0("EV4 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[4]*100),"%)"), colour = EV$Sample_Plate)
+PC <- EV
+ qplot(PC[,"PC1"],PC[,"PC2"], main=paste0("number of samples: ",nrow(pcaSamples$x),"\n color by Sample_Plate"),xlab=paste0("PC1 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[2]*100),"%)"), colour = PC$Sample_Plate)
+ qplot(PC[,"PC3"],PC[,"PC4"], main=paste0("number of samples: ",nrow(pcaSamples$x),"\n color by Sample_Plate"),xlab=paste0("PC3 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[3]*100),"%)"),ylab=paste0("PC4 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[4]*100),"%)"), colour = PC$Sample_Plate)
 
 ```
 
