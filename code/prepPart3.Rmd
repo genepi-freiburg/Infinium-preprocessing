@@ -16,7 +16,7 @@ datsamplesfinal$Gender = as.numeric(datsamplesfinal$Gender)
 if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamplesfinal))){stop("Final samplesfile must provide Sentrix_ID and Sentrix_Position.")}
 datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$Sentrix_Position,sep = "_")
 samples <- colnames(TypeI.Red.M.All)
-samples <- samples[samples %in% datsamplesfinal$Sentrix_Code]
+samples <- unique(samples[samples %in% datsamplesfinal$Sentrix_Code])
 datsamples <- datsamplesfinal[datsamplesfinal$Sentrix_Code %in% samples,]
 ```
 
@@ -138,11 +138,10 @@ Markers which had at least one cpg site missing were excluded for the following 
 
 ```{r, echo = FALSE}
 #PCA of control-probe intensities
-datpca <- ctrl.all[samples,]
+datpca <- ctrl.all[unique(samples),]
 pcaControls <- prcomp(na.omit(datpca))
 ctrlprobes.scores = pcaControls$x
 EV <- merge(ctrlprobes.scores,datsamples,by.x=0,by.y="Sentrix_Code")
-pcaControls <- EV # to have merged version
 colnames(ctrlprobes.scores) = paste(colnames(ctrlprobes.scores), '_cp', sep='')
 
 plot(EV[,"PC1"],EV[,"PC2"], main=paste0("PCA - number of controls probes: ",ncol(datpca)),xlab=paste0("PC1 (",sprintf("%1.1f",(pcaControls$sdev^2/sum(pcaControls$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaControls$sdev^2/sum(pcaControls$sdev^2))[2]*100),"%)"))
@@ -153,42 +152,16 @@ text((y=pcaControls$sdev^2/sum(pcaControls$sdev^2))[1:10],x=1:10+0.1,labels=spri
 
 ctrlprobes.scores <- merge(ctrlprobes.scores,datsamples[,c("Sentrix_Code","Sample_Name")],by.x=0,by.y="Sentrix_Code")
 write.csv(ctrlprobes.scores,file=paste0(outputdir,"/PC_controls-finalSample","_",projectname,"-",formatted.time,".csv"),row.names=F)
+```
+  
+The following plots show the call rates of the sex chromosomes stratified per sex. 
+
+```{r, echo = FALSE}
+
 
 # sex-check
 sample.callY=colSums(!is.na(betaQN.sex[sexchrY,]))/nrow(betaQN.sex[sexchrY,])
 sample.callX=colSums(!is.na(betaQN.sex[sexchrX,]))/nrow(betaQN.sex[sexchrX,])
-
-# by PCA
-```
-  
-
-The following plot is a PCA on **variables**: It presents the importance of samples when differentiating between the CpG sites in the best way possible. 
-
-```{r, echo = FALSE}
-# chr X+Y
-betaPCA <- betaQN.sex[c(sexchrX,sexchrY),]
-pcaSex <- prcomp(na.omit(betaPCA))
-EV <- pcaSex$rotation
-EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
-plot(EV[,"PC1"],EV[,"PC2"],col=EV$Gender+2, main=paste0("number of X+Y probes: ",nrow(betaPCA)),xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"))
-legend("top", c("male","female"), col=c(2,3), pch = 1, cex=1.4)
-
-resSexCheck <- data.frame(Sentrix_Code=EV$Row.names,Sex=EV$Gender,EV1=EV[,"PC1"],EV2=EV[,"PC2"])
-```
-  
-
-
-The next plot presents a PCA on **samples**, as it is more common. It shows the variance of the samples on the PC axes. 
-
-```{r, echo = FALSE}
-pcaSex <- prcomp(t(na.omit(betaPCA)))
-EV <- pcaSex$x
-EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
-plot(EV[,"PC1"],EV[,"PC2"],col=EV$Gender+2, main=paste0("number of X+Y probes: ",nrow(betaPCA)),xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"))
-legend("top", c("male","female"), col=c(2,3), pch = 1, cex=1.4)
-
-resSexCheck <- cbind(resSexCheck,data.frame(PC1=EV[,"PC1"],PC2=EV[,"PC2"]))
-write.csv(resSexCheck,file = paste0(outputdir,"/results-PCAsex-QN","_",projectname,"-",formatted.time,".csv"),row.names=F)
 
 # plot sex call rates
 YcallMen <- sample.callY[names(sample.callY) %in% men]
@@ -221,18 +194,18 @@ hist(marker.callYwomen,breaks=50)
 }
 ```
 
-The next PCA will be conducted on autosomal beta values after quantile normalisation and the PCA is per variable.   
+Now a PCA will be conducted on autosomal beta values after quantile normalisation. Here we investigate how well the marker can be separated by choosing different base vectors. 
 
 ```{r}
 # PCA variables (autosomes)
 betaPCA <- betaQN
 pcaAuto <- prcomp(na.omit(betaPCA))
-EV <- pcaAuto$rotation
-EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
-par(mfrow=c(1,1))
-plot(EV[,"PC1"],EV[,"PC2"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x)),xlab=paste0("EV1 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[2]*100),"%)"))
-
-plot(EV[,"PC3"],EV[,"PC4"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x)),xlab=paste0("EV3 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[3]*100),"%)"),ylab=paste0("EV4 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[4]*100),"%)"))
+# EV <- pcaAuto$rotation
+# EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
+# par(mfrow=c(1,1))
+# plot(EV[,"PC1"],EV[,"PC2"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x)),xlab=paste0("EV1 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[2]*100),"%)"))
+# 
+# plot(EV[,"PC3"],EV[,"PC4"], main=paste0("number of autosomal probes: ",nrow(pcaAuto$x)),xlab=paste0("EV3 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[3]*100),"%)"),ylab=paste0("EV4 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[4]*100),"%)"))
 
 ```
 
@@ -240,32 +213,34 @@ plot(EV[,"PC3"],EV[,"PC4"], main=paste0("number of autosomal probes: ",nrow(pcaA
 ```{r}
 # EVals
 par(mfrow=c(1,1))
-plot((pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1:10],main="Explained Variance by autosomes",ylab="% variance",xlab="PC#",ylim=c(0,1.05))
+plot((pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1:10],main="Explained Variance of markers on autosomes",ylab="% variance",xlab="PC#",ylim=c(0,1.05))
 text((y=pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1:10],x=1:10+0.1,labels=sprintf("%1.3f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2)))[1:10],adj=c(0.5,-1))
 
 marker.call.all <- data.frame(callrate=c(marker.callQN,marker.call_sex)) # marker callrate of all samples incl. excluded ones
 ```
 
-Next we will plot the corresponding principal components of samples coloured by batches (autosomal beta after QN). 
-The colouring by Sentrix ID is saved in a separate pdf-file `r paste0("results-PCAauto-QN-batchwise","_",projectname,"-",formatted.time,".pdf")`  in `r outputdir`.
+The next PCA is also calculated on the quantile normalized beta values (omitting missing values), but now such that the first principal component explains most of the variation of the autosomal sample data. So the variation which is explained by the first pricipal component indicates how well the samples can be separated by choosing a new base vector.
+We plot the samples in the span of the corresponding principal components coloured by batches (autosomal beta after QN). 
+The colouring by Sentrix ID is saved in a separate pdf-file `r paste0("results-PCAauto-QN-batchwise","_",projectname,"-",formatted.time,".pdf")`  in `r outputdir`. 
+If there are more than 121 different Sentrix IDs, this plot may have to be modified because the number of colors is exhausted.
 
 
 ```{r, warnings = FALSE} 
 pca.col.plot2 <- function(pc, group,legend,col_pal){
 p1 <- fviz_pca_ind(pc,axes=c(1,2),
-		     col.ind = group, # color by groups
+		     col.ind = as.factor(c(1:25,32:127)[group]), # color by groups # if there are more than 121 groups, this will cause a warning or an error !!
              palette = col_pal, geom="point",
              addEllipses = TRUE, # Concentration ellipses
              ellipse.type = "confidence", legend.title = "", repel = FALSE)
 
 p2 <- fviz_pca_ind(pc,axes=c(3,4),
-		     col.ind = group, # color by groups
+		     col.ind = as.factor(c(1:25,32:127)[group]), # color by groups
              palette = col_pal, geom="point",
              addEllipses = TRUE, # Concentration ellipses
              ellipse.type = "confidence", legend.title = "", repel = FALSE)
 
 p3 <- fviz_pca_ind(pc,axes=c(5,6),
-		     col.ind = group, # color by groups
+		     col.ind = as.factor(c(1:25,32:127)[group]), # color by groups
              palette = col_pal, geom="point",
              addEllipses = TRUE, # Concentration ellipses
              ellipse.type = "confidence", legend.title = "", repel = FALSE)
@@ -279,9 +254,18 @@ betaPCA <- betaQN
 pcaSamples <- prcomp(t(na.omit(betaPCA)))
 EV <- pcaSamples$x
 EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
+plot(cumsum((pcaSamples$sdev^2/sum(pcaSamples$sdev^2)))[1:10],main="Cumulative explained variance between samples",ylab="% variance",xlab="number of PCs",ylim=c(0,1.05))
+```
 
-pdf(file=paste0(outputdir,"/results-PCAauto-QN-sentrixwise","_",projectname,"-",formatted.time,".pdf"),height=21,width = 21)
-par(mar=c(8.1,7.1,4.1,2.1))
+\newline
+
+```{r} 
+plot((pcaSamples$sdev^2/sum(pcaSamples$sdev^2))[1:10],main="Explained variance between samples",ylab="% variance",xlab="number of PCs",ylim=c(0,1.05))
+text((y=pcaSamples$sdev^2/sum(pcaSamples$sdev^2))[1:10],x=1:10+0.1,labels=sprintf("%1.3f",(pcaSamples$sdev^2/sum(pcaSamples$sdev^2)))[1:10],adj=c(0.5,-1))
+
+# pdf(file=paste0(outputdir,"/results-PCAauto-QN-sentrixwise","_",projectname,"-",formatted.time,".pdf"),height=21,width = 21)
+# par(mar=c(8.1,7.1,4.1,2.1))
+ par(mar=c(8,7,4,2))
 matched_category = datsamples$Sentrix_ID[match(datsamples$Sentrix_Code, rownames(pcaSamples$x))] 
 
 tmp <- pca.col.plot2(pc = pcaSamples,
@@ -292,7 +276,7 @@ tmp <- pca.col.plot2(pc = pcaSamples,
 tmp[[1]]
 tmp[[2]]
 tmp[[3]]
-dev.off()
+# dev.off()
 
 ```
  
@@ -301,7 +285,7 @@ The colouring by Sample Plate is saved in a separate pdf-file `r paste0("results
 
 ```{r, warnings = FALSE} 
 
-pdf(file=paste0(outputdir,"/results-PCAauto-QN-platewise","_",projectname,"-",formatted.time,".pdf"),height=21,width = 21)
+# pdf(file=paste0(outputdir,"/results-PCAauto-QN-platewise","_",projectname,"-",formatted.time,".pdf"),height=21,width = 21)
 par(mar=c(8.1,7.1,4.1,2.1))
 
 matched_category = datsamples$Sample_Plate[match(datsamples$Sentrix_Code, rownames(pcaSamples$x))] 
@@ -314,7 +298,7 @@ tmp <- pca.col.plot2(pc = pcaSamples,
 tmp[[1]]
 tmp[[2]]
 tmp[[3]]
-dev.off()
+# dev.off()
 ```
 
 To better understand these results, compare the **number of samples per Plate**.
@@ -322,16 +306,3 @@ To better understand these results, compare the **number of samples per Plate**.
 number.of.samples.per.plate = sapply(unique(datsamples$Sample_Plate), function(n){sum(datsamples$Sample_Plate%in%n)})
 print(number.of.samples.per.plate)
 ```
-Simple plots with colouring by Sample Plate:
-\newline
-
-```{r} 
-PC <- EV
- qplot(PC[,"PC1"],PC[,"PC2"], main=paste0("number of samples: ",nrow(pcaSamples$x),"\n color by Sample_Plate"),xlab=paste0("PC1 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[2]*100),"%)"), colour = PC$Sample_Plate)
- qplot(PC[,"PC3"],PC[,"PC4"], main=paste0("number of samples: ",nrow(pcaSamples$x),"\n color by Sample_Plate"),xlab=paste0("PC3 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[3]*100),"%)"),ylab=paste0("PC4 (",sprintf("%1.1f",(pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[4]*100),"%)"), colour = PC$Sample_Plate)
-
-```
-
-
-
-

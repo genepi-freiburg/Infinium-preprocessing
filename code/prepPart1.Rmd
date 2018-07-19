@@ -185,19 +185,19 @@ for(i in 1:nrow(filenames)){
 	
 # make WBC estimation
 	
-	filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
-	sample_names = substring(filenames, first = (nchar(filenames) - 18))
-	# added 18.04.18 by FGC: minfi WBC estimation based on RGsets only 
-	RGset <- read.metharray(filenames, verbose=TRUE) # formerly: read.450k()
-	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
-	est_wbc <- estimateCellCounts(RGset, compositeCellType = "Blood", cellTypes = c("CD8T","CD4T", "NK","Bcell","Mono","Gran"),
-				 sex = datsamples$MFGender[match(sample_names,datsamples$Sentrix_Code)] )
-	                              #referencePlatform=arraytype)
-	if(exists("est.wbc.minfi")){
-		est.wbc.minfi = rbind(est_wbc, est_wbc)
-	} else {
-		est.wbc.minfi = as.data.frame(est_wbc)
-	}
+ 	filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
+ 	sample_names = substring(filenames, first = (nchar(filenames) - 18))
+ 	# added 18.04.18 by FGC: minfi WBC estimation based on RGsets only 
+ 	RGset <- read.metharray(filenames, verbose=TRUE) # formerly: read.450k()
+ 	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
+ 	est_wbc <- estimateCellCounts(RGset, compositeCellType = "Blood", cellTypes = c("CD8T","CD4T", "NK","Bcell","Mono","Gran"),
+ 				 sex = datsamples$MFGender[match(sample_names,datsamples$Sentrix_Code)] )
+ 	                              #referencePlatform=arraytype)
+ 	if(exists("est.wbc.minfi")){
+ 		est.wbc.minfi = rbind(est_wbc, est_wbc)
+ 	} else {
+ 		est.wbc.minfi = as.data.frame(est_wbc)
+ 	}
 	
 setwd(cwd)	
 
@@ -241,7 +241,7 @@ if(QuantileNormalize == TRUE && length(samplesfilefinal)==0){
 	cat("In order to run Part 3: Quantile normalization and IQ-filter a final samplefile is needed.\n The samplesfile of the first and second part will be used instead.")
 	samplesfilefinal <- samplesfile
 }
-if(QuantileNormalize == TRUE){cat(paste("The samples listed in", samplesfilefinal,"are used for quantile normalization \n and calculation of outliers regarding inter-quartile-range."))}
+if(QuantileNormalize == TRUE){cat(paste("The samples listed in\n", samplesfilefinal,"\n are used for quantile normalization and calculation of outliers regarding inter-quartile-range."))}
 ```
 
 When reading the data using the minfi-package we apply Illumina Background correction.
@@ -259,7 +259,7 @@ We use this detection p-values and control probe information for high-level qual
 The estimation of White Blood Cells results in a data.frame est.wbc.minfi for further use as part of the phenodata:
 
 ```{r} 
-head(est.wbc.minfi)
+ head(est.wbc.minfi)
 ```
 
 ### Data preparation
@@ -308,7 +308,7 @@ dim(dpvec) <- c(nrow(dp.all)*ncol(dp.all),1)
 dpvecplot <- dpvec
 dpvecplot[which(dpvecplot==0)] <- 1E-20
 if(sum(dpvec>0)>0){
-	hist(-log10(dpvec),breaks=30, main = "detection p-values")
+	hist(-log10(dpvec[!dpvec%in%0]),breaks=30, main = "detection p-values: only positive values")
 }
 ```
 
@@ -328,6 +328,7 @@ The following table summarizes how many detection p-values are smaller than the 
 $`r detPthreshold `$ | $`r length(which(dpvec<detPthreshold))`$    | $`r length(which(dpvec<detPthreshold))/length(dpvec)`$
 0.01                 | $`r length(which(dpvec<0.01))`$             | $`r length(which(dpvec<0.01))/length(dpvec)`$
 
+$`r sum(is.na(dpvec))`$ detection p-values are missing.
 
 ```{r}
 #set detection p-value threshold
