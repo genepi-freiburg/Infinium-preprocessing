@@ -48,4 +48,4 @@ callrate.thres=0.95
 filterOutlierCtrlQC= TRUE
 QuantileNormalize=FALSE
 InterQuartileRangeCalculation=FALSE
-
+estimateWBCs=FALSE

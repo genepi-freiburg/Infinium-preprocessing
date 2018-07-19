@@ -184,7 +184,8 @@ for(i in 1:nrow(filenames)){
 
 	
 # make WBC estimation
-	
+
+if(!exists("estimateWBCs") || estimateWBCs%in%"TRUE"){
  	filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
  	sample_names = substring(filenames, first = (nchar(filenames) - 18))
  	# added 18.04.18 by FGC: minfi WBC estimation based on RGsets only 
@@ -198,7 +199,9 @@ for(i in 1:nrow(filenames)){
  	} else {
  		est.wbc.minfi = as.data.frame(est_wbc)
  	}
-	
+}
+
+
 setwd(cwd)	
 
 ```
@@ -233,6 +236,7 @@ callrate.thres                | $`r callrate.thres`$
 filterOutlierCtrlQC           | `r filterOutlierCtrlQC`
 QuantileNormalize             | `r QuantileNormalize`
 InterQuartileRangeCalculation | `r InterQuartileRangeCalculation`
+estimateWBCs                  | `r ifelse(exists("estimateWBCs"),estimateWBCs, "not provided, assumed TRUE")`
 
 Further we interpret the values for the gender in the samplesfile as **1=female** and **0=male**. 
 
@@ -256,10 +260,13 @@ We use this detection p-values and control probe information for high-level qual
 
 ### White Blood Cell estimation
 
-The estimation of White Blood Cells results in a data.frame est.wbc.minfi for further use as part of the phenodata:
+If the switch estimateWBCs is set to TRUE in the parameterfile, white blood cell distributions are estimated assuming measurements from whole blood.
+The estimation of White Blood Cells results in a data.frame est.wbc.minfi for further use as part of the phenodata.
 
 ```{r} 
- head(est.wbc.minfi)
+if(exists("est.wbc.minfi")){
+     head(est.wbc.minfi)
+}
 ```
 
 ### Data preparation
