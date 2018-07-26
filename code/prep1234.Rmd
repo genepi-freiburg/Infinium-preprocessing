@@ -67,8 +67,11 @@ If you run the pipeline a second time the data files will be overwritten, so ple
 ```{r}
 save(ctrl.all,ctrlprobes.scores,ctrl.complete.Red.all, ctrl.complete.Green.all, control.info,dp.all, TypeII.Red.All , TypeII.Green.All , TypeI.Red.M.All , TypeI.Red.U.All , TypeI.Green.M.All , TypeI.Green.U.All, TypeII.Red.All.d , TypeII.Green.All.d , TypeI.Red.M.All.d , TypeI.Red.U.All.d , TypeI.Green.M.All.d , TypeI.Green.U.All.d , sample.call, marker.call, beta.raw, beta.raw.sex, pcaAuto, sample.callY, sample.callX,marker.call.all, marker.outlier.all,  file=paste0(outputdir,'/',qcfilename))
 
+if(exists("est.wbc.minfi")){
 save(pcaControls, betaQN, betaQN.sex,betaQN.all,betaQN.all.3IQR, est.wbc.minfi, file=paste0(outputdir,"/",analysisfilename))
-#save(pcaControls, betaQN, betaQN.sex,betaQN.all,betaQN.all.3IQR, mdata, mdata.3IQR, file=paste0(outputdir,"/",analysisfilename)) # with mdata 
+} else {
+  save(pcaControls, betaQN, betaQN.sex,betaQN.all,betaQN.all.3IQR, file=paste0(outputdir,"/",analysisfilename))
+}
 ```
 
 

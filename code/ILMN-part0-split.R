@@ -12,7 +12,7 @@
 require(minfi)
 require(limma)
 require("factoextra")
-
+require(caret)
 
 require(matrixStats)
 require(DescTools)

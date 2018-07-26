@@ -29,4 +29,6 @@ EOF
 
 cp *.pdf ..
 cp -r *_files ..
+cd ..
+
 
