@@ -194,7 +194,7 @@ hist(marker.callYwomen,breaks=50)
 }
 ```
 
-Now a PCA will be conducted on autosomal beta values after quantile normalisation. Here we investigate how well the marker can be separated by choosing different base vectors. 
+Now a PCA will be conducted on autosomal beta values after quantile normalisation. Here we investigate how well the markers can be separated by choosing different base vectors. 
 
 ```{r}
 # PCA variables (autosomes)
@@ -220,27 +220,24 @@ marker.call.all <- data.frame(callrate=c(marker.callQN,marker.call_sex)) # marke
 ```
 
 The next PCA is also calculated on the quantile normalized beta values (omitting missing values), but now such that the first principal component explains most of the variation of the autosomal sample data. So the variation which is explained by the first pricipal component indicates how well the samples can be separated by choosing a new base vector.
-We plot the samples in the span of the corresponding principal components coloured by batches (autosomal beta after QN). 
-The colouring by Sentrix ID is saved in a separate pdf-file `r paste0("results-PCAauto-QN-batchwise","_",projectname,"-",formatted.time,".pdf")`  in `r outputdir`. 
-If there are more than 121 different Sentrix IDs, this plot may have to be modified because the number of colors is exhausted.
 
 
 ```{r, warnings = FALSE} 
 pca.col.plot2 <- function(pc, group,legend,col_pal){
 p1 <- fviz_pca_ind(pc,axes=c(1,2),
-		     col.ind = as.factor(c(1:25,32:127)[group]), # color by groups # if there are more than 121 groups, this will cause a warning or an error !!
+		     col.ind = group, # color by groups # if there are more than 25 groups, this will cause a warning or an error !!
              palette = col_pal, geom="point",
              addEllipses = TRUE, # Concentration ellipses
              ellipse.type = "confidence", legend.title = "", repel = FALSE)
 
 p2 <- fviz_pca_ind(pc,axes=c(3,4),
-		     col.ind = as.factor(c(1:25,32:127)[group]), # color by groups
+		     col.ind = group, # color by groups
              palette = col_pal, geom="point",
              addEllipses = TRUE, # Concentration ellipses
              ellipse.type = "confidence", legend.title = "", repel = FALSE)
 
 p3 <- fviz_pca_ind(pc,axes=c(5,6),
-		     col.ind = as.factor(c(1:25,32:127)[group]), # color by groups
+		     col.ind = group, # color by groups
              palette = col_pal, geom="point",
              addEllipses = TRUE, # Concentration ellipses
              ellipse.type = "confidence", legend.title = "", repel = FALSE)
@@ -257,26 +254,11 @@ EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
 plot(cumsum((pcaSamples$sdev^2/sum(pcaSamples$sdev^2)))[1:10],main="Cumulative explained variance between samples",ylab="% variance",xlab="number of PCs",ylim=c(0,1.05))
 ```
 
-\newline
+We plot the samples in the span of the corresponding principal components coloured by batches (autosomal beta after QN). 
 
 ```{r} 
 plot((pcaSamples$sdev^2/sum(pcaSamples$sdev^2))[1:10],main="Explained variance between samples",ylab="% variance",xlab="number of PCs",ylim=c(0,1.05))
 text((y=pcaSamples$sdev^2/sum(pcaSamples$sdev^2))[1:10],x=1:10+0.1,labels=sprintf("%1.3f",(pcaSamples$sdev^2/sum(pcaSamples$sdev^2)))[1:10],adj=c(0.5,-1))
-
-# pdf(file=paste0(outputdir,"/results-PCAauto-QN-sentrixwise","_",projectname,"-",formatted.time,".pdf"),height=21,width = 21)
-# par(mar=c(8.1,7.1,4.1,2.1))
- par(mar=c(8,7,4,2))
-matched_category = datsamples$Sentrix_ID[match(datsamples$Sentrix_Code, rownames(pcaSamples$x))] 
-
-tmp <- pca.col.plot2(pc = pcaSamples,
-					 group=as.factor(matched_category),
-					 legend=levels(as.factor(matched_category)),
-					 col_pal=rainbow(n=length(unique(matched_category)))
-					)
-tmp[[1]]
-tmp[[2]]
-tmp[[3]]
-# dev.off()
 
 ```
  
@@ -286,19 +268,34 @@ The colouring by Sample Plate is saved in a separate pdf-file `r paste0("results
 ```{r, warnings = FALSE} 
 
 # pdf(file=paste0(outputdir,"/results-PCAauto-QN-platewise","_",projectname,"-",formatted.time,".pdf"),height=21,width = 21)
-par(mar=c(8.1,7.1,4.1,2.1))
+# par(mar=c(8.1,7.1,4.1,2.1))
 
-matched_category = datsamples$Sample_Plate[match(datsamples$Sentrix_Code, rownames(pcaSamples$x))] 
+make.fancy.PCA.plots = function(batchvariable){
+	matched_category = datsamples[match(datsamples$Sentrix_Code, rownames(pcaSamples$x)),batchvariable] 
+	
+	# We can only plot up to 25 plates at the same time, so we plot 24 single plates and one (all-others-plate)
+	number.of.blocks = (length(unique(matched_category))%/%24) + 1
+	folds = createFolds(1:length(unique(matched_category)),k = number.of.blocks, list = FALSE)
+	
+	for( i in 1:number.of.blocks){
+		plot_categories = matched_category
+		plot_categories[!plot_categories%in%(unique(matched_category)[folds%in%i])] <- paste("all other",batchvariable)
+	
+	tmp <- pca.col.plot2(pc = pcaSamples,
+						 group=factor(plot_categories), 
+						 legend=levels(factor(plot_categories)),
+						 col_pal=rainbow(n=length(unique(plot_categories)))
+						)
+	tmp[[1]]
+	tmp[[2]]
+#	tmp[[3]]
+	}
+	# dev.off()
+}
 
-tmp <- pca.col.plot2(pc = pcaSamples,
-					 group=as.factor(matched_category),
-					 legend=levels(as.factor(matched_category)),
-					 col_pal=rainbow(n=length(unique(matched_category)))
-					)
-tmp[[1]]
-tmp[[2]]
-tmp[[3]]
-# dev.off()
+make.fancy.PCA.plots("Sentrix_ID")
+make.fancy.PCA.plots("Sample_Plate")
+
 ```
 
 To better understand these results, compare the **number of samples per Plate**.
