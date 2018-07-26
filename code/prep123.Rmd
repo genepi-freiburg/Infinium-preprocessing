@@ -13,10 +13,8 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 start.Time = Sys.time()
 formatted.time = format(Sys.time(), "%Y-%m-%d-%Hh%Mm")
-#source(params$parameterfile)
-#source("ILMN-part0-split.R")
-source('/data/studies/00_GCKD/00_data/02_methylation/01_QC/00_DNAm-preprocessing/00_scripts/parameterfile.R')
-source('/data/programs/pipelines/CPACOR-EPIC_pipeline/code/ILMN-part0-split.R')
+source(params$parameterfile)
+source("ILMN-part0-split.R")
 ```
 This is a pipeline for preprocessing EPIC-Methylation data using R. 
 

@@ -1,3 +1,4 @@
+# for using this pipeline, please install all packages listed in the code file "prepPart0.R"
 
 arraytype<-"IlluminaHumanMethylationEPIC"
 # SELECT  between "IlluminaHumanMethylation450k" and "IlluminaHumanMethylationEPIC"
