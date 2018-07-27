@@ -254,16 +254,16 @@ EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
 plot(cumsum((pcaSamples$sdev^2/sum(pcaSamples$sdev^2)))[1:10],main="Cumulative explained variance between samples",ylab="% variance",xlab="number of PCs",ylim=c(0,1.05))
 ```
 
-We plot the samples in the span of the corresponding principal components coloured by batches (autosomal beta after QN). 
-
 ```{r} 
 plot((pcaSamples$sdev^2/sum(pcaSamples$sdev^2))[1:10],main="Explained variance between samples",ylab="% variance",xlab="number of PCs",ylim=c(0,1.05))
 text((y=pcaSamples$sdev^2/sum(pcaSamples$sdev^2))[1:10],x=1:10+0.1,labels=sprintf("%1.3f",(pcaSamples$sdev^2/sum(pcaSamples$sdev^2)))[1:10],adj=c(0.5,-1))
 
 ```
  
-The colouring by Sample Plate is saved in a separate pdf-file `r paste0("results-PCAauto-QN-platewise","_",projectname,"-",formatted.time,".pdf")`  in `r outputdir`.
+The following plots show these principal components coloured by Sentrix_ID and Sample_Plate.
+Because color coding for more than 25 groups is problematic, we split the batch variable in disjoint random groups of maximum 24 members and plot each group together with a 25th member who summarizes the other batches. For each group of 24 batches, we plot the PCs 1&2 and 3&4. 
 
+First, we plot regarding *Sentrix_ID*:
 
 ```{r, warnings = FALSE} 
 
@@ -286,14 +286,20 @@ make.fancy.PCA.plots = function(batchvariable){
 						 legend=levels(factor(plot_categories)),
 						 col_pal=rainbow(n=length(unique(plot_categories)))
 						)
-	tmp[[1]]
-	tmp[[2]]
+	print(tmp[[1]])
+	print(tmp[[2]])
 #	tmp[[3]]
 	}
 	# dev.off()
 }
 
 make.fancy.PCA.plots("Sentrix_ID")
+```
+
+
+Next, we plot with respect to *Sample_Plate*:
+
+````{r}
 make.fancy.PCA.plots("Sample_Plate")
 
 ```
