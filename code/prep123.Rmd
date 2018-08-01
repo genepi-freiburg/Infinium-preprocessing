@@ -12,7 +12,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 start.Time = Sys.time()
-formatted.time = format(Sys.time(), "%Y-%m-%d-%Hh%Mm")
+formatted.time = format(start.Time, "%Y-%m-%d-%Hh%Mm")
 source(params$parameterfile)
 source("Part0.R")
 ```

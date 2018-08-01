@@ -9,7 +9,7 @@
  setwd(idatdir)
  # cwd
  # getwd()
- filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
+ filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T)) # for only-one-sample-plate-test [c(141, 142, 143, 144, 145, 146, 147, 148, 197, 198, 199, 200, 201, 202, 203, 204)]
 
 
 dim(filenames) <- c(length(filenames)/2,2)
