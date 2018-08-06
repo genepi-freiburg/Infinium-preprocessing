@@ -120,7 +120,7 @@ beta_w = as.matrix(rbind(TypeII.betas_w,TypeI.Green.betas_w,TypeI.Red.betas_w))
 
 betaQN.sex <- cbind(beta_m,beta_w) 
 marker.call_sex=rowSums(!is.na(betaQN.sex))/ncol(betaQN.sex)
-betaQN.all <- rbind(betaQN,betaQN.sex)
+betaQN.all <- rbind(betaQN,betaQN.sex[,match(colnames(betaQN),colnames(betaQN.sex))])
 
 ###### save data (combine with sex chr)
 
