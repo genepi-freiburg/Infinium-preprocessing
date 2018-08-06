@@ -49,13 +49,16 @@ controlQC <- cbind(controlQC,data.frame(HybL=ctrl.complete.Green.all[cprobes,]))
 cprobes <- control.info[grep("Target Removal",control.info$ExtendedType,value=F,fixed=T),"Address"] # select target removals
 controlQC <- cbind(controlQC,data.frame(TR=colMeans(ctrl.complete.Green.all[cprobes,])))
 
-# specificity I
-cprobes <- control.info[grep("GT Mismatch . \\(PM\\)",control.info$ExtendedType,value=F),"Address"] # select spec I signal
-controlQC <- cbind(controlQC,data.frame(SpecIPMred=colMeans(ctrl.complete.Red.all[cprobes,]))) # specific match (red)
-controlQC <- cbind(controlQC,data.frame(SpecIPMgreen=colMeans(ctrl.complete.Green.all[cprobes,]))) # specific match (green)
-cprobes <- control.info[grep("GT Mismatch . \\(MM\\)",control.info$ExtendedType,value=F),"Address"] # select spec I signal
-controlQC <- cbind(controlQC,data.frame(SpecIMMred=colMeans(ctrl.complete.Red.all[cprobes,]))) # specific match bg (red)
-controlQC <- cbind(controlQC,data.frame(SpecIMMgreen=colMeans(ctrl.complete.Green.all[cprobes,]))) # specific match bg (green)
+# specificity I - Limit PM and MM probes to specific channel (1-3 for green, 4-6 for red)
+cprobes <- control_info[grep("GT Mismatch [4-6] \\(PM\\)",control_info$ExtendedType,value=F),"Address"] # select spec I signal
+controlQC <- cbind(controlQC,data.frame(SpecIPMred=colMeans(ctrl_complete.Red.all[cprobes,]))) # specific match (red)
+cprobes <- control_info[grep("GT Mismatch [1-3] \\(PM\\)",control_info$ExtendedType,value=F),"Address"] # select spec I signal
+controlQC <- cbind(controlQC,data.frame(SpecIPMgreen=colMeans(ctrl_complete.Green.all[cprobes,]))) # specific match (green)
+
+cprobes <- control_info[grep("GT Mismatch [4-6] \\(MM\\)",control_info$ExtendedType,value=F),"Address"] # select spec I signal
+controlQC <- cbind(controlQC,data.frame(SpecIMMred=colMeans(ctrl_complete.Red.all[cprobes,]))) # specific match bg (red)
+cprobes <- control_info[grep("GT Mismatch [1-3] \\(MM\\)",control_info$ExtendedType,value=F),"Address"] # select spec I signal
+controlQC <- cbind(controlQC,data.frame(SpecIMMgreen=colMeans(ctrl_complete.Green.all[cprobes,]))) # specific match bg (green)
 
 # specificity II
 cprobes <- control.info[grep("Specificity ",control.info$ExtendedType,value=F),"Address"] # select spec II
