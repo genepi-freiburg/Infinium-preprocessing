@@ -58,6 +58,17 @@ for(i in 1:nrow(filenames)){
 	### 1 line here different
 	RGset <- read.metharray(filenames[i,], verbose=TRUE) # formerly: read.450k()
 	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
+	
+    if(exists("extractSNPs") && extractSNPs%in%"TRUE"){
+        snps <- getSnpBeta(RGset)
+        if(exists("snp.extraction")){
+            snp.extraction <- cbind(snp.extraction, snps)
+        } else {
+            snp.extraction <- snps
+        }
+    }
+	
+	
 	# Type II probes
 	TypeII.Name <- getProbeInfo(RGset, type = "II")$Name
 	TypeII.Green <- getGreen(RGset)[getProbeInfo(RGset, type = "II")$AddressA,]
@@ -204,6 +215,7 @@ if(!exists("estimateWBCs") || estimateWBCs%in%"TRUE"){
 
 setwd(cwd)	
 
+
 ```
 
 ### Read data and parameters
@@ -237,6 +249,7 @@ filterOutlierCtrlQC           | `r filterOutlierCtrlQC`
 QuantileNormalize             | `r QuantileNormalize`
 InterQuartileRangeCalculation | `r InterQuartileRangeCalculation`
 estimateWBCs                  | `r ifelse(exists("estimateWBCs"),estimateWBCs, "not provided, assumed TRUE")`
+extractSNPs                   |  `r ifelse(exists("extractSNPs"),extractSNPs, "not provided, assumed FALSE")`
 
 Further we interpret the values for the gender in the samplesfile as **1=female** and **0=male**. 
 
@@ -268,6 +281,24 @@ if(exists("est.wbc.minfi")){
      head(est.wbc.minfi)
 }
 ```
+
+### SNP data extraction
+
+If the switch extractSNPs is set to TRUE in the parameterfile, the SNP information from the RGset is extracted and exported to the file `r paste0(outputdir,"/extracted-snps","_",projectname,"-",formatted.time,".csv")`. 
+This information can be used to detect mismatches in labeling of samples and often explains most of the sex mismatches.
+Homozygotes should have values around $0$ and $1$, whereas heterozygotes have values close to $0.5$. 
+Please consider this when comparing to the genotyping from other sources which may be coded $0$ - $1$ - $2$. 
+
+```{r} 
+if(exists("extractSNPs") && extractSNPs%in%"TRUE"){
+    if(exists("snp.extraction")){
+        write.csv(snp.extraction, file = paste0(outputdir,"/extracted-snps","_",projectname,"-",formatted.time,".csv"),row.names=T)
+    } else {
+        cat("\nAn error occurres during SNP extraction. No results are exported.\n")
+    }
+}
+```
+
 
 ### Data preparation
 

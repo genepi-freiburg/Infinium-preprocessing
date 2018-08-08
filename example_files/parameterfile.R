@@ -50,3 +50,4 @@ filterOutlierCtrlQC= TRUE
 QuantileNormalize=FALSE
 InterQuartileRangeCalculation=FALSE
 estimateWBCs=FALSE
+extractSNPs=FALSE
