@@ -215,7 +215,9 @@ if(nrow(samples.filtered) > 0){
 
 ### Sex mismatch
 
-Gamete methylation can be used to check sex mismatches. First, we see the loadings of the PCA on markers in the space of samples. The second plot shows the principle components of the PCA on the samples in the space of samples.
+Gamete methylation can be used to check sex mismatches. First, we see the loadings of the PCA on markers in the space of samples. 
+This loadings plot shows the eigenvectors (EV) multiplied with the eigenvalues. 
+The loading indicates the importance of the variables for the PCs.
 
 ```{r}
 ############## sex mismatch ##############
@@ -266,6 +268,7 @@ print(sex.mismatches)
 rm(sex.mismatches)
 ```
 
+The second plot shows the principle components of the PCA on the samples in the space of samples (a standard PCA plot).
 
 ```{r}
 resSexCheck <- data.frame(Sentrix_Code=EV$Sentrix_Code, Sex=EV$Gender, EV1=EV[,"PC1"], EV2=EV[,"PC2"])

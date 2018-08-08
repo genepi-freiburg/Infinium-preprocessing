@@ -195,6 +195,7 @@ hist(marker.callYwomen,breaks=50)
 ```
 
 Now a PCA will be conducted on autosomal beta values after quantile normalisation. Here we investigate how well the markers can be separated by choosing different base vectors. 
+Rows are observations, here markers.
 
 ```{r}
 # PCA variables (autosomes)
@@ -219,7 +220,9 @@ text((y=pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1:10],x=1:10+0.1,labels=sprintf("%1.
 marker.call.all <- data.frame(callrate=c(marker.callQN,marker.call_sex)) # marker callrate of all samples incl. excluded ones
 ```
 
-The next PCA is also calculated on the quantile normalized beta values (omitting missing values), but now such that the first principal component explains most of the variation of the autosomal sample data. So the variation which is explained by the first pricipal component indicates how well the samples can be separated by choosing a new base vector.
+The next PCA is also calculated on the quantile normalized beta values (omitting missing values), but now such that the first principal component explains most of the variation of the autosomal sample data. 
+This is the same data as used in the plot before, but with transposed data (rows are observations, thus samples).
+So the variation which is explained by the first pricipal component indicates how well the samples can be separated by choosing a new base vector.
 
 
 ```{r, warnings = FALSE} 
