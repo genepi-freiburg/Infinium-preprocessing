@@ -239,12 +239,12 @@ p2 <- fviz_pca_ind(pc,axes=c(3,4),
              addEllipses = TRUE, # Concentration ellipses
              ellipse.type = "confidence", legend.title = "", repel = FALSE)
 
-p3 <- fviz_pca_ind(pc,axes=c(5,6),
-		     col.ind = group, # color by groups
-             palette = col_pal, geom="point",
-             addEllipses = TRUE, # Concentration ellipses
-             ellipse.type = "confidence", legend.title = "", repel = FALSE)
-return(list(p1,p2,p3))
+# p3 <- fviz_pca_ind(pc,axes=c(5,6),
+# 		     col.ind = group, # color by groups
+#              palette = col_pal, geom="point",
+#              addEllipses = TRUE, # Concentration ellipses
+#              ellipse.type = "confidence", legend.title = "", repel = FALSE)
+return(list(p1,p2)) #,p3))
 }
 
 
