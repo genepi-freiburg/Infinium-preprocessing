@@ -53,10 +53,11 @@ detectionP.local <- function (rgSet, type = "m+u")
     detP
 }
 
-for(i in 1:nrow(filenames)){
+for(i in 1:2){ #nrow(filenames)){
 	# print(i)
 	### 1 line here different
-	RGset <- read.metharray(filenames[i,], verbose=TRUE) # formerly: read.450k()
+	# RGset <- read.metharray(filenames[i,], verbose=TRUE) # formerly: read.450k()
+	RGset <- read.metharray(paste0(idatdir,"/",filenames[i,]), verbose=TRUE) # formerly: read.450k()
 	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
 	
     if(exists("extractSNPs") && extractSNPs%in%"TRUE"){
