@@ -53,20 +53,22 @@ detectionP.local <- function (rgSet, type = "m+u")
     detP
 }
 
-for(i in 1:2){ #nrow(filenames)){
+for(i in 1:nrow(filenames)){
 	# print(i)
 	### 1 line here different
 	# RGset <- read.metharray(filenames[i,], verbose=TRUE) # formerly: read.450k()
 	RGset <- read.metharray(paste0(idatdir,"/",filenames[i,]), verbose=TRUE) # formerly: read.450k()
 	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
 	
-    if(exists("extractSNPs") && extractSNPs%in%"TRUE"){
-        snps <- getSnpBeta(RGset)
-        if(exists("snp.extraction")){
-            snp.extraction <- cbind(snp.extraction, snps)
-        } else {
-            snp.extraction <- snps
-        }
+    if(exists("extractSNPs")){
+	if(extractSNPs%in%"TRUE"){
+        	snps <- getSnpBeta(RGset)
+       		 if(exists("snp.extraction")){
+       		     snp.extraction <- cbind(snp.extraction, snps)
+       		 } else {
+       		     snp.extraction <- snps
+       		 }
+	}
     }
 	
 	
@@ -197,7 +199,8 @@ for(i in 1:2){ #nrow(filenames)){
 	
 # make WBC estimation
 
-if(!exists("estimateWBCs") || estimateWBCs%in%"TRUE"){
+WBCok = ifelse(exists("estimateWBCs"), estimateWBCs, FALSE)
+if(WBCok%in%TRUE){
  	filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
  	sample_names = substring(filenames, first = (nchar(filenames) - 18))
  	# added 18.04.18 by FGC: minfi WBC estimation based on RGsets only 
@@ -249,7 +252,7 @@ callrate.thres                | $`r callrate.thres`$
 filterOutlierCtrlQC           | `r filterOutlierCtrlQC`
 QuantileNormalize             | `r QuantileNormalize`
 InterQuartileRangeCalculation | `r InterQuartileRangeCalculation`
-estimateWBCs                  | `r ifelse(exists("estimateWBCs"),estimateWBCs, "not provided, assumed TRUE")`
+estimateWBCs                  | `r ifelse(exists("estimateWBCs"),estimateWBCs, "not provided, assumed FALSE")`
 extractSNPs                   |  `r ifelse(exists("extractSNPs"),extractSNPs, "not provided, assumed FALSE")`
 
 Further we interpret the values for the gender in the samplesfile as **1=female** and **0=male**. 
