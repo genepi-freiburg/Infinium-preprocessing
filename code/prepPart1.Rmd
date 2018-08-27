@@ -435,20 +435,34 @@ beta.raw.sex = as.matrix(rbind(TypeII.betas,TypeI.Green.betas,TypeI.Red.betas))
  
 ```
 
-beta values:   | autosomes           |  sex chromosomes 
----------------|---------------------|----------------------------
-dimension:     | $`r dim(beta.raw)`$ | $`r dim(beta.raw.sex)`$
-
-
 
 ```{r}
 # calculate sample and marker calls without filter -- used for sample filter 
 sample.call=colSums(!is.na(beta.raw))/nrow(beta.raw)
 marker.call=rowSums(!is.na(beta.raw))/ncol(beta.raw)
+
+# remove samples not in samplesfile
+samplesinclude <- intersect(names(sample.call),datsamples$Sentrix_Code)
+sample.call <- sample.call[samplesinclude]
+ctrl.complete.Green.all <- ctrl.complete.Green.all[,samplesinclude]
+ctrl.complete.Red.all <- ctrl.complete.Red.all[,samplesinclude]
+beta.raw.sex <- beta.raw.sex[,samplesinclude]
+beta.raw <- beta.raw[,samplesinclude]
 ```
 
+* Identified by the samplefile, $`r length(samplesinclude)`$ samples are included in the analysis.
 
-```{r}
+
+beta values:   | autosomes           |  sex chromosomes 
+---------------|---------------------|----------------------------
+dimension:     | $`r dim(beta.raw)`$ | $`r dim(beta.raw.sex)`$
+
+````{r}
+if(length(samplesinclude)<101){
+	cat("\nThe sample names of the included samples:\n")
+	datsamples$Sample_Name[datsamples$Sentrix_Code %in%samplesinclude]
+}
+
 plot.beta.densities = function(beta, title){
 	densities = apply(beta,2,function(x){ density(x, na.rm = TRUE) } )
 	xmax = max(sapply(densities, function(d){max(d$x)}))
@@ -465,26 +479,7 @@ plot.beta.densities = function(beta, title){
 plot.beta.densities(beta.raw,"Densities of raw autosomal beta values per sample")
 ```
 
-```{r}
-# remove samples not in samplesfile
-samplesinclude <- intersect(names(sample.call),datsamples$Sentrix_Code)
-sample.call <- sample.call[samplesinclude]
-ctrl.complete.Green.all <- ctrl.complete.Green.all[,samplesinclude]
-ctrl.complete.Red.all <- ctrl.complete.Red.all[,samplesinclude]
-beta.raw.sex <- beta.raw.sex[,samplesinclude]
-beta.raw <- beta.raw[,samplesinclude]
 
-if(length(samplesinclude)<101){
-	cat("\nThe sample names of the included samples:\n")
-	datsamples$Sample_Name[datsamples$Sentrix_Code %in%samplesinclude]
-}
-```
-
-
-
-* Identified by the samplefile, $`r length(samplesinclude)`$ samples are included in the analysis.
-
-* There is call-rate filtering with threshold $`r callrate.thres`$.
 
 ```{r}
 # call-rate filtering
@@ -494,6 +489,7 @@ bufout <- names(sample.call[sample.call<=callrate.thres])
 if (length(bufout)>0) samples.filtered <- data.frame(sample=bufout,x=NA,y=NA,filter=paste0("callrate ",callrate.thres),stringsAsFactors=F)
 ```
   
+* There is call-rate filtering with threshold $`r callrate.thres`$.
 
 * $`r length(bufout)`$ samples were tagged for exclusion because the call-rate was below the threshold $`r callrate.thres`$.
 
