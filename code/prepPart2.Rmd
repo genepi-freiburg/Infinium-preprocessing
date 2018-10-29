@@ -176,6 +176,7 @@ if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout
 plot(1,1,type="n",xaxt="n",yaxt="n",xlab="",ylab="",bty="n")
 text(1,1,label="cross-check with Extension outliers!")
 # par(mfrow=c(1,1))
+}
 
 if (nrow(samples.filtered)>0) {
     samples.filtered <- merge(samples.filtered,datsamples,all.x=T,by.x="sample",by.y="Sentrix_Code")
@@ -184,7 +185,6 @@ if (nrow(samples.filtered)>0) {
 }
 write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
 
-}
 ```
 
 

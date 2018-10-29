@@ -101,7 +101,7 @@ for(i in 1:nrow(filenames)){
 	### until next ### different: control defined 
 	control=getProbeInfo(RGset, type = "Control") # needed also for lowlevel QC
 
-	#BSC1 control probes - 450k: 16:18 ### 1:18 sind für 45ok die Zeilen control$Type=="BISULFITE CONVERSION I" & (control$Color %in% c("Green","LimeGreen","Lime")) 
+	#BSC1 control probes - 450k: 16:18 ### 1:18 sind f??r 45ok die Zeilen control$Type=="BISULFITE CONVERSION I" & (control$Color %in% c("Green","LimeGreen","Lime")) 
         BSCI.Green.Name = control[control$Type=="BISULFITE CONVERSION I" & (control$Color %in% c("Green","LimeGreen","Lime")),]$ExtendedType
         BSCI.Green <- matrix(NA_real_, ncol = ncol(RGset), nrow = length(BSCI.Green.Name), dimnames = list(BSCI.Green.Name, sampleNames(RGset)))
         BSCI.Green[BSCI.Green.Name,] <- getGreen(RGset)[control[control$Type=="BISULFITE CONVERSION I" & (control$Color %in% c("Green","LimeGreen","Lime")),]$Address,]
@@ -464,17 +464,20 @@ if(length(samplesinclude)<101){
 }
 
 plot.beta.densities = function(beta, title){
-	densities = apply(beta,2,function(x){ density(x, na.rm = TRUE) } )
-	xmax = max(sapply(densities, function(d){max(d$x)}))
-	xmin = min(sapply(densities, function(d){min(d$x)}))
-	ymax = max(sapply(densities, function(d){max(d$y)}))
-
-	plot(NA, xlim = c(xmin,xmax), ylim = c(0,ymax), main = title, ylab = "")
-	colors = rainbow(10)
-	for(i in 1:ncol(beta)){
-		lines(densities[[i]], col = colors[i%%10 + 1])
-	}
-
+  if(!is.null(dim(beta))){
+  	densities = apply(beta,2,function(x){ density(x, na.rm = TRUE) } )
+  	xmax = max(sapply(densities, function(d){max(d$x)}))
+  	xmin = min(sapply(densities, function(d){min(d$x)}))
+  	ymax = max(sapply(densities, function(d){max(d$y)}))
+  
+  	plot(NA, xlim = c(xmin,xmax), ylim = c(0,ymax), main = title, ylab = "")
+  	colors = rainbow(10)
+  	for(i in 1:ncol(beta)){
+  		lines(densities[[i]], col = colors[i%%10 + 1])
+  	}
+  } else if(length(beta) > 1){
+    plot(density(beta, na.rm = TRUE), main = title)
+  }
 }
 plot.beta.densities(beta.raw,"Densities of raw autosomal beta values per sample")
 ```
