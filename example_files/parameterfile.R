@@ -36,6 +36,10 @@ samplesfilefinal="samplesfile_example_postQC"
 #9797    B01    1    RS3_pilot_450K        5723654049    R02C01    5723654049_R02C01    0
 
 ############################
+# Only needed if there are more batch variables then Sample_Plate and Sample_Well that should be tested for batch effects. 
+BatchVariablesFile="additionalBatchVariables.tsv"
+
+############################
 # threshold parameters ###
 
 detPthreshold=1E-16
@@ -51,3 +55,4 @@ QuantileNormalize=FALSE
 InterQuartileRangeCalculation=FALSE
 estimateWBCs=FALSE
 extractSNPs=FALSE
+additionalBatchVariables=FALSE

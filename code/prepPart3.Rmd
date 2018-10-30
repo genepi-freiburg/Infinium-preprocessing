@@ -316,3 +316,18 @@ To better understand these results, compare the **number of samples per Plate**.
 number.of.samples.per.plate = sapply(unique(datsamples$Sample_Plate), function(n){sum(datsamples$Sample_Plate%in%n)})
 print(number.of.samples.per.plate)
 ```
+
+```{r}
+if(exists("additionalBatchVariables")){
+	if(additionalBatchVariables){
+		BatchVariables = read.table(BatchVariablesFile, header = FALSE, stringsAsFactors = F)$V1
+		for( batchvariable in BatchVariables){
+			if(batchvariable%in%colnames(datsamples)){
+				make.fancy.PCA.plots(batchvariable)		
+			} else {
+				cat("\n",batchvariable, "is not reported by the samplesfile.\n")
+		  }
+	  }
+	}
+}
+```
