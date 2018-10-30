@@ -9,7 +9,7 @@
  setwd(idatdir)
  # cwd
  # getwd()
- filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T)) # for only-one-sample-plate-test [c(141, 142, 143, 144, 145, 146, 147, 148, 197, 198, 199, 200, 201, 202, 203, 204)]
+ filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
 
 
 dim(filenames) <- c(length(filenames)/2,2)
@@ -236,10 +236,8 @@ The annotationfile used is
  - if problems occur with annotation, please have a look at [Illumina downloads](https://support.illumina.com/array/downloads.html)    *Infimum Methylation EPIC Product files*. 
 
 
-Output is directed to 
-\newline `r outputdir`.\newline
- We use samples listed in 
- \newline`r samplesfile`\newline
+Output is directed to  `r strsplit(outputdir,split = "/")[[1]]`.\newline
+ We use samples listed in `r strsplit(samplesfile, split = "/")[[1]]`\newline
   for quality control. 
 
 As given in *parameterfile.R*, the following parameters were used: 
@@ -262,7 +260,7 @@ if(QuantileNormalize == TRUE && length(samplesfilefinal)==0){
 	cat("In order to run Part 3: Quantile normalization and IQ-filter a final samplefile is needed.\n The samplesfile of the first and second part will be used instead.")
 	samplesfilefinal <- samplesfile
 }
-if(QuantileNormalize == TRUE){cat(paste("The samples listed in\n", samplesfilefinal,"\n are used for quantile normalization and calculation of outliers regarding inter-quartile-range."))}
+if(QuantileNormalize == TRUE){cat(paste("The samples listed in\n", strsplit(samplesfilefinal, split = "/")[[1]],"\n are used for quantile normalization and calculation of outliers regarding inter-quartile-range."))}
 ```
 
 When reading the data using the minfi-package we apply Illumina Background correction.
