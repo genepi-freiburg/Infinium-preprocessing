@@ -1,5 +1,8 @@
 
 ## PART 3: Quantile Normalisation
+
+The previous calculations provide all information needed to filter the samples and make a tab-separated file *samplesfilefinal* for further use. 
+For this analysis, `r samplesfilefinal` was used as list of samples for the final preprocessing steps. 
 ```{r}
 ###############################################################################
 

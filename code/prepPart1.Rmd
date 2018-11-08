@@ -9,7 +9,7 @@
  setwd(idatdir)
  # cwd
  # getwd()
- filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
+ filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))[1:60]
 
 
 dim(filenames) <- c(length(filenames)/2,2)
@@ -236,8 +236,8 @@ The annotationfile used is
  - if problems occur with annotation, please have a look at [Illumina downloads](https://support.illumina.com/array/downloads.html)    *Infimum Methylation EPIC Product files*. 
 
 
-Output is directed to  `r strsplit(outputdir,split = "/")[[1]]`.\newline
- We use samples listed in `r strsplit(samplesfile, split = "/")[[1]]`\newline
+Output is directed to  `r paste(strsplit(outputdir,split = "/")[[1]][-1], collapse = "/ ")`.
+ We use samples listed in `r paste(strsplit(samplesfile, split = "/")[[1][-1], collapse = "/ ")]`\newline
   for quality control. 
 
 As given in *parameterfile.R*, the following parameters were used: 
@@ -260,7 +260,7 @@ if(QuantileNormalize == TRUE && length(samplesfilefinal)==0){
 	cat("In order to run Part 3: Quantile normalization and IQ-filter a final samplefile is needed.\n The samplesfile of the first and second part will be used instead.")
 	samplesfilefinal <- samplesfile
 }
-if(QuantileNormalize == TRUE){cat(paste("The samples listed in\n", strsplit(samplesfilefinal, split = "/")[[1]],"\n are used for quantile normalization and calculation of outliers regarding inter-quartile-range."))}
+if(QuantileNormalize == TRUE){cat(paste("The samples listed in\n", paste(strsplit(samplesfilefinal, split = "/")[[1][-1], collapse = "/ ")],"\n are used for quantile normalization and calculation of outliers regarding inter-quartile-range."))}
 ```
 
 When reading the data using the minfi-package we apply Illumina Background correction.
@@ -502,12 +502,12 @@ hist(sample.call,breaks=100, main = "sample call rates")
 
 ```{r}
 # plot sample call rates
-hist(sample.call,breaks=100, main = "sample call rates zoomed x-axis", xlim = c(0.85,1))
+hist(sample.call,breaks=100, main = "sample call rates zoomed x-axis", xlim = c(0.85,1), sub = "zoomed x-axis is fixed to 0.85 to 1")
 ```
 
 ```{r}
 # plot sample call rates
-hist(sample.call,breaks=100, main = "sample call rates zoomed y-axis", ylim = c(0,30))
+hist(sample.call,breaks=100, main = "sample call rates zoomed y-axis", ylim = c(0,30), sub = "zoomed y axis is fixed to 0 to 30")
 ```
 
 $`r max(0,length(sample.call[which(sample.call<=0.98)]))`$ of all sample call rates are lower than 0.98,  
@@ -523,7 +523,7 @@ hist(marker.call,breaks=100, main = "marker call rates")
 
 
 ```{r}
-hist(marker.call,breaks=100, main = "marker call rates zoomed y-axis", ylim = c(0,500))
+hist(marker.call,breaks=100, main = "marker call rates zoomed y-axis", ylim = c(0,500), sub = "zoomed y axis is fixed to 0 to 500")
 ```  
 
 $`r max(0,length(marker.call[which(marker.call<=0.98)]))`$ of all marker call rates are lower than 0.98,  

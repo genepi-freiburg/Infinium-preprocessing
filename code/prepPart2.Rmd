@@ -303,11 +303,12 @@ The samples whose values are more than three standard deviations from the mean o
 
 ````{r}
 print(sex.mismatches)
-
+sex.mismatch.df = data.frame(sample = sex.mismatches, filter = "sex mismatch", stringsAsFactors= F)
+ sex.mismatch.df <- merge(sex.mismatch.df,datsamples,all.x=T,by.x="sample",by.y="Sentrix_Code")
+samples.filtered <- merge(samples.filtered,sex.mismatch.df,all=T)
+write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
 ```
 
 To further investigate possible sex mismatches, it might be useful to compare SNP alleles. Some of these are recorded on the methylation array for this purpose and can be obtained using  the R-package \texttt{minfi}: First read the rgSet from the concerned samples and then run the function \textbf{getSnpBeta} from minfi to get a list of rs-identifiers and corresponding SNP information. These can be compared with genotype information from other sources to clarify whether samples were mixed up. 
 
 
-The previous calculations provide all information needed to filter the samples and make a tab-separated file *samplesfilefinal* for further use. 
-For this analysis, `r samplesfilefinal` was used as list of samples for the final preprocessing steps. 
