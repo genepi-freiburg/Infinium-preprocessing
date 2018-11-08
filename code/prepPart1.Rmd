@@ -236,9 +236,7 @@ We are working with data from directory
 `r paste(strsplit(idatdir, split = "/")[[1]][-1], collapse = "/ ")` 
 which contains $`r length(filenames) `$ idat files.
 The annotationfile used is 
-\begin{center}
-`r annotationfile` 
-\end{center}
+`r paste(strsplit(annotationfile, split = "/")[[1]][-1], collapse = "/ ")`
  - if problems occur with annotation, please have a look at [Illumina downloads](https://support.illumina.com/array/downloads.html)    *Infimum Methylation EPIC Product files*. 
 
 
