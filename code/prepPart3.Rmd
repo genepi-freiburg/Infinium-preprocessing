@@ -2,7 +2,7 @@
 ## PART 3: Quantile Normalisation
 
 The previous calculations provide all information needed to filter the samples and make a tab-separated file *samplesfilefinal* for further use. 
-For this analysis, `r samplesfilefinal` was used as list of samples for the final preprocessing steps. 
+For this analysis, `r paste(strsplit(samplesfilefinal, split = "/")[[1]][-1], collapse = "/ ")` was used as list of samples for the final preprocessing steps. 
 ```{r}
 ###############################################################################
 
@@ -13,17 +13,18 @@ For this analysis, `r samplesfilefinal` was used as list of samples for the fina
 # extended by Alexander Teumer (University Medicine Greifswald/ Erasmus MC Rotterdam)
 # last change: 05/16/2016
 
-datsamplesfinal <- read.table(file=samplesfilefinal,header=T,as.is=T,sep="\t", colClasses = "character")
-datsamplesfinal$Gender = as.numeric(datsamplesfinal$Gender)
-# provide a new column with sample identifier
-if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamplesfinal))){stop("Final samplesfile must provide Sentrix_ID and Sentrix_Position.")}
-datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$Sentrix_Position,sep = "_")
+# read in for estimation of WBCs
+# datsamplesfinal <- read.table(file=samplesfilefinal,header=T,as.is=T,sep="\t", colClasses = "character")
+# datsamplesfinal$Gender = as.numeric(datsamplesfinal$Gender)
+# # provide a new column with sample identifier
+# if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamplesfinal))){stop("Final samplesfile must provide Sentrix_ID and Sentrix_Position.")}
+# datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$Sentrix_Position,sep = "_")
 samples <- colnames(TypeI.Red.M.All)
 samples <- unique(samples[samples %in% datsamplesfinal$Sentrix_Code])
 datsamples <- datsamplesfinal[datsamplesfinal$Sentrix_Code %in% samples,]
 ```
 
-`r nrow(datsamples)` samples are included in the analysis, identified by the *samplesfilefinal* `r samplesfilefinal ` and existing sample calls.
+`r nrow(datsamples)` samples are included in the analysis, identified by the *samplesfilefinal* and existing sample calls.
 
 ```{r}
 #QN autosomes # has to be filtered by samples 
@@ -277,7 +278,7 @@ First, we plot regarding *Sentrix_ID*:
 # par(mar=c(8.1,7.1,4.1,2.1))
 
 make.fancy.PCA.plots = function(batchvariable){
-	matched_category = datsamples[match(datsamples$Sentrix_Code, rownames(pcaSamples$x)),batchvariable] 
+	matched_category = datsamples[match(rownames(pcaSamples$x),datsamples$Sentrix_Code),batchvariable] 
 	if(length(unique(matched_category)) < 2){ 
 		cat("\nThere is no point in investigating batch effects with respect to ", batchvariable, " \n as there are less than two of these batches.\n")
 	} else {
@@ -306,6 +307,23 @@ make.fancy.PCA.plots = function(batchvariable){
 make.fancy.PCA.plots("Sentrix_ID")
 ```
 
+Additionally we supply the Sentrix_IDs of outliers (defined by three times the standard deviation per PC). They are exported to the file `r paste0("samples-with-batch-effect","_",projectname,"-",formatted.time,".csv")`.
+```{r}
+EV = as.data.frame(pcaSamples$x)
+plot(EV$PC1, EV$PC2, main = "Label outliers (3*SD)", xlab = "PC1", ylab = "PC2")
+batch.effect.samples12 = mark.outliers(EV$PC1, EV$PC2,"blue",rownames(EV), sd.range = 3, color.points = TRUE)
+print(batch.effect.samples12)
+
+plot(EV$PC3, EV$PC4, main = "Label outliers (3*SD)", xlab = "PC3", ylab = "PC4")
+batch.effect.samples34 = mark.outliers(EV$PC3, EV$PC4,"blue",rownames(EV), sd.range = 3, color.points = TRUE)
+print(batch.effect.samples34)
+
+batch.effect.samples = unique(c(batch.effect.samples12, batch.effect.samples34))
+batch.effect.info = datsamples[datsamples$Sentrix_Code%in%batch.effect.samples,]
+all.batch.effect.info = cbind(batch.effect.info, EV[batch.effect.info$Sentrix_Code,c("PC1","PC2","PC3","PC4")])
+
+write.csv(batch.effect.samples,file = paste0(outputdir,"/samples-with-batch-effect","_",projectname,"-",formatted.time,".csv"),row.names=F)
+```
 
 Next, we plot with respect to *Sample_Plate*:
 

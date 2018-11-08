@@ -189,10 +189,7 @@ write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",proje
 
 
 The following table lists the detected outliers identified by the quality control and can be found 
-in the file 
-\newline 
-`r paste0(outputdir,"/samples-filtered.csv")`
-\newline
+in the file **samples-filtered.csv**
  in a slightly expanded version. 
 
 ```{r}
@@ -249,10 +246,13 @@ get.outliers = function(x, SDrange = 3){
     out <- c(out,which(x<mean(x)-sd(x)*SDrange)) # lower X
     return(out)
 }    
-mark.outliers  = function(x,y, color, labels){
-	out = unique(get.outliers(x),get.outliers(y))
+mark.outliers  = function(x,y, color, labels, sd.range = 3, color.points = FALSE){
+	out = unique(c(get.outliers(x, SDrange = sd.range),get.outliers(y, SDrange = sd.range)))
 	if (length(out)>0) {
        		text(x[out],y[out],label=labels[out],col=color,adj=c(0,0),cex=0.7)
+	}
+	if(color.points){
+	  points(x[out],y[out],col="blue")
 	}
 	return(labels[out])
 }

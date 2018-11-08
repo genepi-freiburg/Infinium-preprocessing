@@ -9,7 +9,7 @@
  setwd(idatdir)
  # cwd
  # getwd()
- filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))[1:60]
+ filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
 
 
 dim(filenames) <- c(length(filenames)/2,2)
@@ -198,11 +198,19 @@ for(i in 1:nrow(filenames)){
 
 	
 # make WBC estimation
+# 
+datsamplesfinal <- read.table(file=samplesfilefinal,header=T,as.is=T,sep="\t", colClasses = "character")
+datsamplesfinal$Gender = as.numeric(datsamplesfinal$Gender)
+# provide a new column with sample identifier
+if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamplesfinal))){stop("Final samplesfile must provide Sentrix_ID and Sentrix_Position.")}
+datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$Sentrix_Position,sep = "_")
 
 WBCok = ifelse(exists("estimateWBCs"), estimateWBCs, FALSE)
 if(WBCok%in%TRUE){
  	filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
- 	sample_names = substring(filenames, first = (nchar(filenames) - 18))
+ 	length.of.folder = max(gregexpr2("/", filenames[1])[[1]]) # we assume the pattern is identical for all measurements; if something goes missing, make some unlist here and everything gets complicated, but it's possible
+ 	sample_names = substring(filenames, first = length.of.folder + 1)
+ 	filenames = filenames[sample_names%in%datsamplesfinal$Sentrix_Code]
  	# added 18.04.18 by FGC: minfi WBC estimation based on RGsets only 
  	RGset <- read.metharray(filenames, verbose=TRUE) # formerly: read.450k()
  	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
@@ -225,19 +233,17 @@ setwd(cwd)
 ### Read data and parameters
 
 We are working with data from directory 
-\newline
-`r idatdir` 
-\newline
+`r paste(strsplit(idatdir, split = "/")[[1]][-1], collapse = "/ ")` 
 which contains $`r length(filenames) `$ idat files.
 The annotationfile used is 
-\newline
+\begin{center}
 `r annotationfile` 
-\newline
+\end{center}
  - if problems occur with annotation, please have a look at [Illumina downloads](https://support.illumina.com/array/downloads.html)    *Infimum Methylation EPIC Product files*. 
 
 
 Output is directed to  `r paste(strsplit(outputdir,split = "/")[[1]][-1], collapse = "/ ")`.
- We use samples listed in `r paste(strsplit(samplesfile, split = "/")[[1][-1], collapse = "/ ")]`\newline
+ We use samples listed in `r paste(strsplit(samplesfile, split = "/")[[1]][-1], collapse = "/ ")`\newline
   for quality control. 
 
 As given in *parameterfile.R*, the following parameters were used: 
@@ -260,7 +266,7 @@ if(QuantileNormalize == TRUE && length(samplesfilefinal)==0){
 	cat("In order to run Part 3: Quantile normalization and IQ-filter a final samplefile is needed.\n The samplesfile of the first and second part will be used instead.")
 	samplesfilefinal <- samplesfile
 }
-if(QuantileNormalize == TRUE){cat(paste("The samples listed in\n", paste(strsplit(samplesfilefinal, split = "/")[[1][-1], collapse = "/ ")],"\n are used for quantile normalization and calculation of outliers regarding inter-quartile-range."))}
+if(QuantileNormalize == TRUE){cat(paste("The samples listed in\n", paste(strsplit(samplesfilefinal, split = "/")[[1]][-1], collapse = "/ "),"\n are used for quantile normalization and calculation of outliers regarding inter-quartile-range."))}
 ```
 
 When reading the data using the minfi-package we apply Illumina Background correction.
@@ -276,7 +282,8 @@ We use this detection p-values and control probe information for high-level qual
 ### White Blood Cell estimation
 
 If the switch estimateWBCs is set to TRUE in the parameterfile, white blood cell distributions are estimated assuming measurements from whole blood.
-The estimation of White Blood Cells results in a data.frame est.wbc.minfi for further use as part of the phenodata.
+The estimation of White Blood Cells results in a data.frame est.wbc.minfi for further use as part of the phenodata.\newline
+**Notice**: Dependencies of the results on the sample selection is possible. To avoid that the WBC estimation of fine runs is disturbed by problematic measurements, the estimation is based on samples from the final sample file only.
 
 ```{r} 
 if(exists("est.wbc.minfi")){
