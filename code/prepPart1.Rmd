@@ -268,7 +268,7 @@ if(QuantileNormalize == TRUE){cat(paste("The samples listed in\n", paste(strspli
 ```
 
 When reading the data using the minfi-package we apply Illumina Background correction.
-Whithin this process we also 
+Within this process we also 
 
 * extract control-probe information. 
 * calculate detection p-values.
