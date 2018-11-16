@@ -11,7 +11,6 @@
  # getwd()
  filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
 
-
 dim(filenames) <- c(length(filenames)/2,2)
 sample_names = apply(filenames, c(1,2), function(s){substring(s, first = (nchar(s) - 18))})
 
@@ -281,7 +280,7 @@ We use this detection p-values and control probe information for high-level qual
 
 If the switch estimateWBCs is set to TRUE in the parameterfile, white blood cell distributions are estimated assuming measurements from whole blood.
 The estimation of White Blood Cells results in a data.frame est.wbc.minfi for further use as part of the phenodata.\newline
-**Notice**: Dependencies of the results on the sample selection is possible. To avoid that the WBC estimation of fine runs is disturbed by problematic measurements, the estimation is based on samples from the final sample file only.
+*Notice*: Dependencies of the results on the sample selection is possible. To avoid that the WBC estimation of fine runs is disturbed by problematic measurements, the estimation is based on samples from the final sample file only.
 
 ```{r} 
 if(exists("est.wbc.minfi")){
