@@ -230,24 +230,24 @@ So the variation which is explained by the first pricipal component indicates ho
 
 
 ```{r, warnings = FALSE} 
-pca.col.plot2 <- function(pc, group,legend,col_pal){
+pca.col.plot2 <- function(pc, group,legend,col_pal, header = ""){
 p1 <- fviz_pca_ind(pc,axes=c(1,2),
 		     col.ind = group, # color by groups # if there are more than 25 groups, this will cause a warning or an error !!
              palette = col_pal, geom="point",
              addEllipses = TRUE, # Concentration ellipses
-             ellipse.type = "confidence", legend.title = "", repel = FALSE)
+             ellipse.type = "confidence", legend.title = header, repel = FALSE)
 
 p2 <- fviz_pca_ind(pc,axes=c(3,4),
 		     col.ind = group, # color by groups
              palette = col_pal, geom="point",
              addEllipses = TRUE, # Concentration ellipses
-             ellipse.type = "confidence", legend.title = "", repel = FALSE)
+             ellipse.type = "confidence", legend.title = header, repel = FALSE)
 
 # p3 <- fviz_pca_ind(pc,axes=c(5,6),
 # 		     col.ind = group, # color by groups
 #              palette = col_pal, geom="point",
 #              addEllipses = TRUE, # Concentration ellipses
-#              ellipse.type = "confidence", legend.title = "", repel = FALSE)
+#              ellipse.type = "confidence", legend.title = header, repel = FALSE)
 return(list(p1,p2)) #,p3))
 }
 
@@ -279,7 +279,17 @@ First, we plot regarding *Sentrix_ID*:
 
 make.fancy.PCA.plots = function(batchvariable){
 	matched_category = datsamples[match(rownames(pcaSamples$x),datsamples$Sentrix_Code),batchvariable] 
-	if(length(unique(matched_category)) < 2){ 
+	
+	if(length(unique(matched_category)) > 150){ 
+	cat("\nWe will investigate batch effects with respect to ", batchvariable, " \n using quartiles as there are  more than 150 of these batches.\n")
+		matched_category = as.numeric(matched_category)
+		q = summary(matched_category)[c("Min.","1st Qu.","Median","3rd Qu.","Max.")]
+		matched_category = cut(matched_category, breaks = q)
+	} 
+	
+	if(!batchvariable%in%colnames(datsamples)){
+		cat("\n",batchvariable,"\n is not provided by phenotype data.\n")
+	} else if(length(unique(matched_category)) < 2){ 
 		cat("\nThere is no point in investigating batch effects with respect to ", batchvariable, " \n as there are less than two of these batches.\n")
 	} else {
 	
