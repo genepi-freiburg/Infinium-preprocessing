@@ -42,12 +42,17 @@ In the following, these quartiles are calculated for all autosomal beta values p
    marker.outlier.all$callrate<-marker.outlier.all$nprobes/length(samples)
 ```
 
+```{r}
+Nprobes = (nrow(betaQN.all)*ncol(betaQN.all))
+Nprobes.nocall = length(betaQN.all[which(is.na(betaQN.all))])
+Nprobes.call = length(betaQN.all.3IQR[which(is.na(betaQN.all.3IQR))])
+```
 
-part                    | number of probes                                        | percentage 
-------------------------|---------------------------------------------------------|-------------------------------------------------------------------------------------------
-total                   | `r (nrow(betaQN.all)*ncol(betaQN.all))`                     | 100\%
-noCall                  | `r length(betaQN.all[which(is.na(betaQN.all))])`            |`r length(betaQN.all[which(is.na(betaQN.all))])/((nrow(betaQN.all)*ncol(betaQN.all))) `
-noCall with filter 3IQR | `r length(betaQN.all.3IQR[which(is.na(betaQN.all.3IQR))])`  | `r length(betaQN.all.3IQR[which(is.na(betaQN.all.3IQR))])/((nrow(betaQN.all)*ncol(betaQN.all))) `
+part                    | number of probes      | percentage 
+------------------------|-----------------------|----------------------------------------------------------------------
+total                   | `r Nprobes`           | 100\%
+noCall                  | `r Nprobes.nocall`    |`r (Nprobes.nocall/Nprobes)/100 `\%
+noCall with filter 3IQR | `r Nprobes.call`  	|`r (Nprobes.call/Nprobes)/100 `\%
 
 ```{r}   
    hist(marker.outlier.all$outlier3_IQR,breaks=50,main="#Probes Outlier 3 IQR",xlab="#outliers per probe",ylab="#probes")

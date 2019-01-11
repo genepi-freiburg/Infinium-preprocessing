@@ -25,12 +25,13 @@ if (arraytype=="IlluminaHumanMethylationEPIC") {
 	# which one can download from 
 	# https://support.illumina.com/array/array_kits/infinium-methylationepic-beadchip-kit/downloads.html 
 } else if  (arraytype=="IlluminaHumanMethylation450k") {
-	annotationfile="/data/programs/pipelines/CPACOR-EPIC_pipeline/annotationfile450k.csv"
+# 	annotationfile="/data/programs/pipelines/CPACOR-EPIC_pipeline/annotationfile450k.csv"
+	annotationfile="/data/programs/pipelines/CPACOR-EPIC_pipeline/HumanMethylation450_15017482_v1-2.csv"
 	# this is identical to the file 
 	# HumanMethylation450_15017482_v1-2.csv
 	# which can be downloaded from 
 	# https://support.illumina.com/array/array_kits/infinium_humanmethylation450_beadchip_kit.html	
 } else {
-    stop("Unsupported array type: ",arraytype,". Exiting...\n")
+    stop("Unsupported array type: ",arraytype,".\n Supported array types are:\n IlluminaHumanMethylationEPIC\n IlluminaHumanMethylation450k\n Exiting...\n")
 }
 

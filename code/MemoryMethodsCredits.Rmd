@@ -13,7 +13,13 @@ We will draft an example methods part for papers.
 
 ## Credits
 
-The code for this pipeline was written by Benjamin Lehne (Imperial College London) and Alexander Drong (Oxford University), extended by Alexander Teumer (University Medicine Greifswald/ Erasmus MC Rotterdam) and combined into the pipeline by Pascal Schlosser and Franziska Grundner-Culemann in 2017. 
+The code for the CPACOR analysis pipeline was adapted from Lehne et. al. (Genome Biology, 2015)
+which was developed and written by Benjamin Lehne (Imperial College London) and Alexander Drong
+(Oxford University).
+The code for the low-level quality control was developed and written by Alexander Teumer
+(University Medicine Greifswald/ Erasmus MC Rotterdam).
+The code was combined into the current pipeline by Pascal Schlosser and Franziska Grundner-Culemann.
+It is available at https://github.com/genepi-freiburg/Infinium-preprocessing.
 
 See *A coherent approach for analysis of the Illumina HumanMethylation450 Bead Chip improves quality and performance in epigenome-wide association studies* by Lehne et. al., Genome Biology (2015)
 for the basic idea. The method was then extended to EPIC arrays. 

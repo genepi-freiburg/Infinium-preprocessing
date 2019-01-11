@@ -11,7 +11,9 @@
  # getwd()
  filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
 
-dim(filenames) <- c(length(filenames)/2,2)
+# if(length(filenames)%%2==1){filenames <- c(filenames,NA)}
+# dim(filenames) <- c(length(filenames)/2,2)
+dim(filenames) <- c(1,length(filenames))
 sample_names = apply(filenames, c(1,2), function(s){substring(s, first = (nchar(s) - 18))})
 
 datsamples <- read.table(file=samplesfile,header=T,as.is=T,sep="\t", colClasses = "character")
