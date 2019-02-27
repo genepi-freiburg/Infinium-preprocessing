@@ -6,10 +6,20 @@ The maximum memory load in this run was $`r (gc())[1,6] + (gc())[2,6]  `$ Mb .
 It took `r format(Sys.time() - start.Time)` of processing time.
 
 
-## Methods
+## Methods draft
 
-We will draft an example methods part for papers.
-(in the processing)
+For processing and quality control of the raw methylation data, a customized version of 
+the CPACOR pipeline < PMID: 25853392> was used for quality control, 
+data normalization and calculation of beta values, 
+calculating principal components of the control probes for adjustment 
+and exclusion of outliers based on the Inter-Quartile-Range. 
+The threshold for the sample call rate was set to CHANGE. 
+White blood cell type (WBC) sub-populations were estimated based on 100 CpG sites 
+by the Houseman method REFERENCE as implemented in the minfi R package REFERENCE. 
+XXXXX samples discordant for reported and genetic sex, based on CpGs on the X- and Y-chromosome,
+was excluded from analyses. Additionally, quality control based on principal component analyses
+of the control probes was conducted to detect samples with measurement failures.
+
 
 ## Credits
 
