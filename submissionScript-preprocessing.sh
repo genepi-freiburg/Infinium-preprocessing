@@ -6,13 +6,13 @@
 
 # SBATCH --mail-user=CHANGE@imbi.uni-freiburg.de
 #SBATCH --mail-type=ALL
-#SBATCH --partition=genepi 
+#SBATCH --partition=slurm 
 #SBATCH --output ../slurm-log-%A.txt
 
 
-sh /data/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/code/prepSwitchRmd_local.sh 
+sh /data/programs/pipelines/CPACOR-EPIC_pipeline/code/prepSwitchRmd_local.sh 
 
-# This file can be queued with $ sbatch /data/epigenetics/02_EPIC_pipeline/CPACOR-EPIC_pipeline/submissionScript-preprocessing.sh
+# This file can be queued with $ sbatch /data/programs/pipelines/CPACOR-EPIC_pipeline/submissionScript-preprocessing.sh
 
 # It is necessary to provide a file parameterfile.R in the very same directory from which the job is batched. 
 # The parameterfile may not be changed until the job is started, which may be later than its submission.
