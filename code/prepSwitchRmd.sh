@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-time R-3.4.1 --vanilla << "EOF"
+time R-3.5.2 --vanilla << "EOF"
 .libPaths()
 getwd()
 
