@@ -1,18 +1,21 @@
 # PART 0 (Settings)
 
 # install packages
-# source("http://bioconductor.org/biocLite.R")
-# biocLite("minfi")
-# biocLite("limma")
-# biocLite("IlluminaHumanMethylationEPICmanifest") # for EPIC array
-# biocLite("IlluminaHumanMethylation450kmanifest") # for 450k array and Houseman
-# biocLite("FlowSorted.Blood.450k") 
-# biocLite("IlluminaHumanMethylation450kanno.ilmn12.hg19")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
 
+# BiocManager::install("minfi")
+# BiocManager::install("limma")
+# BiocManager::install("IlluminaHumanMethylationEPICmanifest") # for EPIC array
+# BiocManager::install("IlluminaHumanMethylation450kmanifest") # for 450k array and Houseman
+# BiocManager::install("FlowSorted.Blood.450k") 
+# BiocManager::install("IlluminaHumanMethylation450kanno.ilmn12.hg19")
+
+require(caret)
 require(minfi)
 require(limma)
 require("factoextra")
-require(caret)
+
 
 require(matrixStats)
 require(DescTools)
