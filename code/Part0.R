@@ -1,8 +1,8 @@
 # PART 0 (Settings)
 
 # install packages
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
+# if (!requireNamespace("BiocManager", quietly = TRUE))
+#     install.packages("BiocManager")
 
 # BiocManager::install("minfi")
 # BiocManager::install("limma")
@@ -10,6 +10,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 # BiocManager::install("IlluminaHumanMethylation450kmanifest") # for 450k array and Houseman
 # BiocManager::install("FlowSorted.Blood.450k") 
 # BiocManager::install("IlluminaHumanMethylation450kanno.ilmn12.hg19")
+# BiocManager::install("IlluminaHumanMethylationEPICanno.ilm10b4.hg19")
 
 require(caret)
 require(minfi)
