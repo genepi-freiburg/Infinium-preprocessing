@@ -1,6 +1,6 @@
 #!/bin/bash
 
-time R-3.5.2 --vanilla << "EOF"
+time R-3.5.3 --vanilla << "EOF"
 .libPaths()
 # .libPaths(.libPaths()[c(2,1,3,4)]) ### grundner-3.4-Pfad an erste Stelle setzen
 getwd()

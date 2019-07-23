@@ -5,12 +5,13 @@
 #SBATCH --mem=100G
 
 # SBATCH --mail-user=CHANGE@imbi.uni-freiburg.de
-#SBATCH --mail-type=ALL
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-type=END
 #SBATCH --partition=slurm 
 #SBATCH --output ../slurm-log-%A.txt
 
 
-sh /data/programs/pipelines/CPACOR-EPIC_pipeline/code/prepSwitchRmd_local.sh 
+sh /data/programs/pipelines/CPACOR-EPIC_pipeline/code/prepSwitchRmd_local.sh | tee console_output.log
 
 # This file can be queued with $ sbatch /data/programs/pipelines/CPACOR-EPIC_pipeline/submissionScript-preprocessing.sh
 
@@ -26,6 +27,6 @@ sh /data/programs/pipelines/CPACOR-EPIC_pipeline/code/prepSwitchRmd_local.sh
 # It has no effect if one increases the number of cpus.
 
 
-# NOTE So far the runs of the pipeline used up to 20 GB.
+# NOTE Panther (80 samples) used 20 GB.
 # NOTE GCKD used > 40 GB.
 # NOTE Different runs at the same time overwrite each other. 
