@@ -90,7 +90,12 @@ TypeI.Red.U_m = normalizeQuantiles(TypeI.Red.U_m)
 TypeII.betas_m = TypeII.Green_m/(TypeII.Red_m+TypeII.Green_m+100)
 TypeI.Green.betas_m = TypeI.Green.M_m/(TypeI.Green.M_m+TypeI.Green.U_m+100)
 TypeI.Red.betas_m = TypeI.Red.M_m/(TypeI.Red.M_m+TypeI.Red.U_m+100)
-beta_m = as.matrix(rbind(TypeII.betas_m,TypeI.Green.betas_m,TypeI.Red.betas_m))
+
+if(length(men) > 1){
+  beta_m = as.matrix(rbind(TypeII.betas_m,TypeI.Green.betas_m,TypeI.Red.betas_m))
+} else {
+  beta_m = c(TypeII.betas_m,TypeI.Green.betas_m,TypeI.Red.betas_m)
+}
 
 #QN women
 markers=as.matrix(intersect(rownames(TypeII.Green.All.d), category))
@@ -120,7 +125,12 @@ TypeI.Green.U_w = normalizeQuantiles(TypeI.Green.U_w)
  TypeII.betas_w = TypeII.Green_w/(TypeII.Red_w+TypeII.Green_w+100)
 TypeI.Green.betas_w = TypeI.Green.M_w/(TypeI.Green.M_w+TypeI.Green.U_w+100)
 TypeI.Red.betas_w = TypeI.Red.M_w/(TypeI.Red.M_w+TypeI.Red.U_w+100)
-beta_w = as.matrix(rbind(TypeII.betas_w,TypeI.Green.betas_w,TypeI.Red.betas_w))
+
+if(length(women) > 1){
+  beta_w = as.matrix(rbind(TypeII.betas_w,TypeI.Green.betas_w,TypeI.Red.betas_w))
+} else {
+  beta_w = c(TypeII.betas_w,TypeI.Green.betas_w,TypeI.Red.betas_w)
+}
 
 betaQN.sex <- cbind(beta_m,beta_w) 
 marker.call_sex=rowSums(!is.na(betaQN.sex))/ncol(betaQN.sex)

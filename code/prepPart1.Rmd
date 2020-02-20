@@ -9,6 +9,7 @@
  setwd(idatdir)
  # cwd
  # getwd()
+#  filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))[1:10]
  filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
 
 # if(length(filenames)%%2==1){filenames <- c(filenames,NA)}
@@ -54,7 +55,7 @@ detectionP.local <- function (rgSet, type = "m+u")
     detP
 }
 
-for(i in 1:4){ #nrow(filenames)){
+for(i in 1:nrow(filenames)){
 	# print(i)
 	### 1 line here different
 	# RGset <- read.metharray(filenames[i,], verbose=TRUE) # formerly: read.450k()

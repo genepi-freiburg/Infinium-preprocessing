@@ -11,7 +11,7 @@
 #SBATCH --output ../slurm-log-%A.txt
 
 
-sh /data/programs/pipelines/CPACOR-EPIC_pipeline/code/prepSwitchRmd_local.sh | tee console_output.log
+sh /data/programs/pipelines/CPACOR-EPIC_pipeline/code/prepSwitchRmd_local.sh 
 
 # This file can be queued with $ sbatch /data/programs/pipelines/CPACOR-EPIC_pipeline/submissionScript-preprocessing.sh
 
