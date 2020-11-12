@@ -204,9 +204,11 @@ if(nrow(samples.filtered) > 0){
 	# print
 	print(reduced.samples.filtered[,c(posName,posFilter)])
 	print(reduced.samples.filtered[,-c(posName,posFilter)])
-	plot.beta.densities(beta.raw[,unique(samples.filtered$sample)],"Densities of raw autosomal beta values of filtered samples")
+
+	plot.beta.densities(beta.raw[,unique(samples.filtered$sample)],"Densities of raw autosomal beta values of excluded samples")
+	cat(paste0(length(unique(samples.filtered$sample))," samples were marked for exclusion from the analysis."))
 } else {
-	cat("No samples were filtered.")
+	cat("No samples were marked for exclusion from the analysis.")
 }
 ```
 
@@ -315,5 +317,6 @@ write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",proje
 ```
 
 To further investigate possible sex mismatches, it might be useful to compare SNP alleles. Some of these are recorded on the methylation array for this purpose and can be obtained using the R-package \texttt{minfi}: First read the rgSet from the concerned samples and then run the function \textbf{getSnpBeta} from minfi to get a list of rs-identifiers and corresponding SNP information. These can be compared with genotype information from other sources to clarify whether samples were mixed up. 
+
 
 

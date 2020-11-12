@@ -266,7 +266,8 @@ if(QuantileNormalize == TRUE && length(samplesfilefinal)==0){
 	cat("In order to run Part 3: Quantile normalization and IQ-filter a final samplefile is needed.\n The samplesfile of the first and second part will be used instead.")
 	samplesfilefinal <- samplesfile
 }
-if(QuantileNormalize == TRUE){cat(paste("The samples listed in\n", paste(strsplit(samplesfilefinal, split = "/")[[1]][-1], collapse = "/ "),"\n are used for quantile normalization and calculation of outliers regarding inter-quartile-range."))}
+path_depth<-length(strsplit(samplesfilefinal, split = "/")[[1]])
+if(QuantileNormalize == TRUE){cat(paste0("The samples listed in\n", paste(strsplit(samplesfilefinal, split = "/")[[1]][2:(path_depth-3)], collapse = "/"),"/\n",paste0(strsplit(samplesfilefinal, split = "/")[[1]][(path_depth-2):path_depth], collapse = "/"),"\n are used for quantile normalization and calculation of outliers regarding inter-quartile-range."))}
 ```
 
 When reading the data using the minfi-package we apply Illumina Background correction.
@@ -370,7 +371,7 @@ rm(dpvecplot)
 
 The following table summarizes how many detection p-values are smaller than the threshold $`r detPthreshold `$ given in the *parameterfile*, or 0.01: 
 
- threshold           | count                                       | percentage
+ threshold           | count                                       | proportion
 ---------------------|---------------------------------------------|-----------------------------------------------------
 $`r detPthreshold `$ | $`r length(which(dpvec<detPthreshold))`$    | $`r length(which(dpvec<detPthreshold))/length(dpvec)`$
 0.01                 | $`r length(which(dpvec<0.01))`$             | $`r length(which(dpvec<0.01))/length(dpvec)`$
@@ -394,7 +395,7 @@ TypeI.Red.U.All.d = ifelse(d<thres,TypeI.Red.U.All,NA)
 samples=colnames(TypeI.Red.M.All)
 ```
 
-$`r length(which(dpvec>detPthreshold))`$   ($`r round(length(which(dpvec>detPthreshold))/length(dpvec), digits = 3)`$ \%)   measurements are excluded because their detection p-value is bigger than $`r detPthreshold`$. Only values with a detection p-value strictly smaller the threshold are kept.
+$`r length(which(dpvec>detPthreshold))`$   ($`r round(length(which(dpvec>detPthreshold))/length(dpvec), digits = 3)*100`$ \%)   measurements are excluded because their detection p-value is bigger than $`r detPthreshold`$. Only values with a detection p-value strictly smaller the threshold are kept.
 To skip this filtering, set the parameter *detPthreshold* to a value **strictly** bigger than 1 in the *parameterfile.R*.
 
 
@@ -538,3 +539,4 @@ $`r max(0,length(marker.call[which(marker.call<=0.98)]))`$ of all marker call ra
 
 
 The results of the sample call rate filter are included in the export file **samples_filtered.csv** which also documents the following control-probe based quality control.
+

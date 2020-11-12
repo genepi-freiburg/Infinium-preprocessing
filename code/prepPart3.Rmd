@@ -84,7 +84,7 @@ TypeI.Green.U_m = normalizeQuantiles(TypeI.Green.U_m)
 TypeI.Red.M_m = normalizeQuantiles(TypeI.Red.M_m)
 TypeI.Red.U_m = normalizeQuantiles(TypeI.Red.U_m)
 } else {
-	cat("Quantile normalization for men was skipped, because it has no effect when there are less than 2 samples.")
+	cat("Quantile normalization for men was skipped, because it has no effect when there are\nless than 2 samples.")
 }
 
 TypeII.betas_m = TypeII.Green_m/(TypeII.Red_m+TypeII.Green_m+100)
@@ -277,8 +277,8 @@ text((y=pcaSamples$sdev^2/sum(pcaSamples$sdev^2))[1:10],x=1:10+0.1,labels=sprint
 
 ```
  
-The following plots show these principal components coloured by Sentrix_ID and Sample_Plate.
-Because color coding for more than 25 groups is problematic, we split the batch variable in disjoint random groups of maximum 24 members and plot each group together with a 25th member who summarizes the other batches. For each group of 24 batches, we plot the PCs 1&2 and 3&4. 
+The following plots show these principal components colored by Sentrix_ID and Sample_Plate.
+Because color coding for more than 18 groups is problematic, we split the batch variable in disjoint random groups of maximum 17 members and plot each group together with a 18th member who summarizes the other batches. For each group of 18 batches, we plot the PCs 1&2 and 3&4. 
 
 First, we plot regarding *Sentrix_ID*:
 
@@ -303,14 +303,21 @@ make.fancy.PCA.plots = function(batchvariable){
 		cat("\nThere is no point in investigating batch effects with respect to ", batchvariable, " \n as there are less than two of these batches.\n")
 	} else {
 	
-	# We can only plot up to 25 plates at the same time, so we plot 24 single plates and one (all-others-plate)
-	number.of.blocks = (length(unique(matched_category))%/%24) + 1
-	folds = createFolds(1:length(unique(matched_category)),k = number.of.blocks, list = FALSE)
-	
+
+	# We can only plot up to 19 plates at the same time, so we plot 18 single plates and one (all-others-plate)
+	max.categories.per.block<-18
+	unique_categories = unique(matched_category)
+	number.of.blocks = ceiling(length(unique_categories)/max.categories.per.block) 
 	for( i in 1:number.of.blocks){
 		plot_categories = matched_category
-		plot_categories[!plot_categories%in%(unique(matched_category)[folds%in%i])] <- paste("all other",batchvariable)
-	
+		if(i<number.of.blocks){
+			selected_categories <-
+unique_categories[c(((i-1)*max.categories.per.block+1):(i*max.categories.per.block))]
+		}else{
+			selected_categories <- unique_categories[c(((i-1)*max.categories.per.block+1):length(unique_categories))]
+		}
+plot_categories[-which(plot_categories %in% selected_categories)] <- paste("all other",batchvariable)
+
 	tmp <- pca.col.plot2(pc = pcaSamples,
 						 group=factor(plot_categories), 
 						 legend=levels(factor(plot_categories)),
@@ -327,7 +334,10 @@ make.fancy.PCA.plots = function(batchvariable){
 make.fancy.PCA.plots("Sentrix_ID")
 ```
 
-Additionally we supply the Sentrix_IDs of outliers (defined by three times the standard deviation per PC). They are exported to the file `r paste0("samples-with-batch-effect","_",projectname,"-",formatted.time,".csv")`.
+Additionally we supply the Sentrix_IDs of outliers (defined by three times the standard deviation per PC). They are exported to the file 
+`r cat(paste0("samples-with-batch-effect_",projectname,"-",formatted.time,".csv"),"\n")`.
+
+
 ```{r}
 EV = as.data.frame(pcaSamples$x)
 plot(EV$PC1, EV$PC2, main = "Label outliers (3*SD)", xlab = "PC1", ylab = "PC2")
@@ -372,3 +382,4 @@ if(exists("additionalBatchVariables")){
 	}
 }
 ```
+
