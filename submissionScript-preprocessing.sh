@@ -27,6 +27,6 @@ sh /data/programs/pipelines/CPACOR-EPIC_pipeline/code/prepSwitchRmd_local.sh
 # It has no effect if one increases the number of cpus.
 
 
-# NOTE Panther (80 samples) used 20 GB.
-# NOTE GCKD used > 40 GB.
+# NOTE 80 samples used 20 GB.
+# NOTE 600 samples used > 40 GB.
 # NOTE Different runs at the same time overwrite each other. 
