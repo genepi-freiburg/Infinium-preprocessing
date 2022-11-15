@@ -12,14 +12,14 @@
 # BiocManager::install("IlluminaHumanMethylation450kanno.ilmn12.hg19")
 # BiocManager::install("IlluminaHumanMethylationEPICanno.ilm10b4.hg19")
 
-require(caret)
-require(minfi)
-require(limma)
-require("factoextra")
+library(caret)
+library(minfi)
+library(limma)
+library("factoextra")
 
 
-require(matrixStats)
-require(DescTools)
+library(matrixStats)
+library(DescTools)
 library(ggplot2)
 
 if (arraytype=="IlluminaHumanMethylationEPIC") {
