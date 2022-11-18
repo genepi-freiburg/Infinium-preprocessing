@@ -7,22 +7,36 @@
  cwd<-getwd()
 
  setwd(idatdir)
- # cwd
- # getwd()
 #  filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))[1:10]
  filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
 
-# if(length(filenames)%%2==1){filenames <- c(filenames,NA)}
-# dim(filenames) <- c(length(filenames)/2,2)
-dim(filenames) <- c(1,length(filenames))
-sample_names = apply(filenames, c(1,2), function(s){substring(s, first = (nchar(s) - 18))})
+length.of.folder = sapply(gregexpr2("/",filenames), max) 
+# can be used to replace the nchar - 18 # TODO
 
+sample_names = sapply(filenames, function(s){substring(s, first = (nchar(s) - 18))})
+dim(filenames) <- c(1,length(filenames))
+# as list : sample_names = apply(filenames, c(1,2), function(s){substring(s, first = (nchar(s) - 18))})
+
+# read samples
 datsamples <- read.table(file=samplesfile,header=T,as.is=T,sep="\t", colClasses = "character")
 datsamples$Gender = as.numeric(datsamples$Gender)
 # provide a new column with sample identifier
 if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamples))){stop("samplesfile must provide Sentrix_ID and Sentrix_Position.")}
 datsamples$Sentrix_Code = paste(datsamples$Sentrix_ID,datsamples$Sentrix_Position,sep = "_")
 datsamples$MFGender = ifelse(datsamples$Gender == 0, "M","F")
+
+# read final samples
+datsamplesfinal <- read.table(file=samplesfilefinal,header=T,as.is=T,sep="\t", colClasses = "character")
+datsamplesfinal$Gender = as.numeric(datsamplesfinal$Gender)
+# provide a new column with sample identifier
+if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamplesfinal))){stop("Final samplesfile must provide Sentrix_ID and Sentrix_Position.")}
+datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$Sentrix_Position,sep = "_")
+# datsamplesfinal$MFGender = ifelse(datsamplesfinal$Gender == 0, "M","F")
+
+
+# filter filenames list with combined samples of samplesfile and samplesfile_final
+ filenames_idx <- filenames %in% union(datsamplesfinal$Sentrix_Code,datsamples$Sentrix_Code)
+ filenames = filenames[filenames_idx]
 
 detectionP.local <- function (rgSet, type = "m+u")
 {
@@ -56,13 +70,48 @@ detectionP.local <- function (rgSet, type = "m+u")
 }
 
 for(i in 1:nrow(filenames)){
+# for(i in 1:5){ # test version
 	# print(i)
 	### 1 line here different
 	# RGset <- read.metharray(filenames[i,], verbose=TRUE) # formerly: read.450k()
 	RGset <- read.metharray(paste0(idatdir,"/",filenames[i,]), verbose=TRUE, force=TRUE) #
-			#formerly: read.450k()
+	
 
 	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
+	
+	# add: make WBC estimation with samples from *final* samplesfile
+	# integrated into for loop 18th of November 2022 FGC
+
+		WBCok = ifelse(exists("estimateWBCs"), estimateWBCs, FALSE)
+		# if(WBCok%in%TRUE){
+		if(WBCok%in%TRUE && filenames[i,] %in% datsamplesfinal$Sentrix_Code){
+
+		#  	filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
+		#  	length.of.folder = max(gregexpr2("/", filenames[1])[[1]]) # we assume the pattern is identical for all measurements
+		#  	length.of.folder = sapply(gregexpr2("/",filenames), max)  # different paths 
+		#  	sample_names = substring(filenames, first = length.of.folder + 1)
+		#  	filenames = filenames[sample_names%in%datsamplesfinal$Sentrix_Code]
+ 	
+ 		# added 18.04.18 by FGC: minfi WBC estimation based on RGsets only 
+ 	
+		#  	RGset <- read.metharray(filenames, verbose=TRUE, force=TRUE) # formerly: read.450k()
+		#  	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
+ 	
+ 		est_wbc <- estimateCellCounts(RGset, compositeCellType = "Blood", cellTypes = c("CD8T","CD4T", "NK","Bcell","Mono","Gran"),
+ 				 sex = datsamples$MFGender[match(sample_names,datsamples$Sentrix_Code)] )
+ 	                              #referencePlatform=arraytype)
+ 	                              
+ 		if(exists("est.wbc.minfi")){
+ 			est.wbc.minfi2 = rbind(est_wbc, est_wbc)
+ 			est.wbc.minfi = rbind(est.wbc.minfi, est_wbc)
+ 		} else {
+ 			est.wbc.minfi2 = as.data.frame(est_wbc)
+ 			est.wbc.minfi = as.data.frame(est_wbc)
+ 		}
+	} # end of WBC estimation
+
+	
+	# refine and create methylation data objects 
 	
     if(exists("extractSNPs")){
 	if(extractSNPs%in%"TRUE"){
@@ -74,7 +123,6 @@ for(i in 1:nrow(filenames)){
        		 }
 	}
     }
-	
 	
 	# Type II probes
 	TypeII.Name <- getProbeInfo(RGset, type = "II")$Name
@@ -201,33 +249,6 @@ for(i in 1:nrow(filenames)){
 }
 
 	
-# make WBC estimation
-# 
-datsamplesfinal <- read.table(file=samplesfilefinal,header=T,as.is=T,sep="\t", colClasses = "character")
-datsamplesfinal$Gender = as.numeric(datsamplesfinal$Gender)
-# provide a new column with sample identifier
-if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamplesfinal))){stop("Final samplesfile must provide Sentrix_ID and Sentrix_Position.")}
-datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$Sentrix_Position,sep = "_")
-
-WBCok = ifelse(exists("estimateWBCs"), estimateWBCs, FALSE)
-if(WBCok%in%TRUE){
- 	filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
- 	length.of.folder = max(gregexpr2("/", filenames[1])[[1]]) # we assume the pattern is identical for all measurements; if something goes missing, make some unlist here and everything gets complicated, but it's possible
- 	sample_names = substring(filenames, first = length.of.folder + 1)
- 	filenames = filenames[sample_names%in%datsamplesfinal$Sentrix_Code]
- 	# added 18.04.18 by FGC: minfi WBC estimation based on RGsets only 
- 	RGset <- read.metharray(filenames, verbose=TRUE, force=TRUE) # formerly: read.450k()
- 	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
- 	est_wbc <- estimateCellCounts(RGset, compositeCellType = "Blood", cellTypes = c("CD8T","CD4T", "NK","Bcell","Mono","Gran"),
- 				 sex = datsamples$MFGender[match(sample_names,datsamples$Sentrix_Code)] )
- 	                              #referencePlatform=arraytype)
- 	if(exists("est.wbc.minfi")){
- 		est.wbc.minfi = rbind(est_wbc, est_wbc)
- 	} else {
- 		est.wbc.minfi = as.data.frame(est_wbc)
- 	}
-}
-
 
 setwd(cwd)	
 
