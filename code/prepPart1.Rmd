@@ -14,7 +14,7 @@ length.of.folder = sapply(gregexpr2("/",filenames), max)
 # can be used to replace the nchar - 18 # TODO
 
 sample_names = sapply(filenames, function(s){substring(s, first = (nchar(s) - 18))})
-dim(filenames) <- c(1,length(filenames))
+# dim(filenames) <- c(1,length(filenames))
 # as list : sample_names = apply(filenames, c(1,2), function(s){substring(s, first = (nchar(s) - 18))})
 
 # read samples
@@ -35,8 +35,14 @@ datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$
 
 
 # filter filenames list with combined samples of samplesfile and samplesfile_final
- filenames_idx <- filenames %in% union(datsamplesfinal$Sentrix_Code,datsamples$Sentrix_Code)
- filenames = filenames[filenames_idx]
+ filenames_idx <- sapply(union(datsamplesfinal$Sentrix_Code,datsamples$Sentrix_Code), function(x){grep(x,filenames)})
+  
+ filenames_final_idx <- sapply(datsamplesfinal$Sentrix_Code, function(x){grep(x,filenames)})
+ filenames_final_vector <- filenames[filenames_final_idx]
+ 
+ filenames = filenames[filenames_idx] # !! this changes filenames object! 
+ dim(filenames) <- c(1,length(filenames))
+
 
 detectionP.local <- function (rgSet, type = "m+u")
 {
@@ -69,7 +75,7 @@ detectionP.local <- function (rgSet, type = "m+u")
     detP
 }
 
-for(i in 1:nrow(filenames)){
+for(i in 1:nrow(filenames)){ # in code as is needless since i is only 1 and all files are read simultaneously
 # for(i in 1:5){ # test version
 	# print(i)
 	### 1 line here different
@@ -83,8 +89,8 @@ for(i in 1:nrow(filenames)){
 	# integrated into for loop 18th of November 2022 FGC
 
 		WBCok = ifelse(exists("estimateWBCs"), estimateWBCs, FALSE)
-		# if(WBCok%in%TRUE){
-		if(WBCok%in%TRUE && filenames[i,] %in% datsamplesfinal$Sentrix_Code){
+		 if(WBCok%in%TRUE){
+		# if(WBCok%in%TRUE && filenames[i,] %in% filenames_final_vector) { # no this does not work as reduction to final samples; the RGset must be either reduced directly or a RGset_final mst be created as read-in
 
 		#  	filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
 		#  	length.of.folder = max(gregexpr2("/", filenames[1])[[1]]) # we assume the pattern is identical for all measurements
@@ -98,14 +104,12 @@ for(i in 1:nrow(filenames)){
 		#  	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
  	
  		est_wbc <- estimateCellCounts(RGset, compositeCellType = "Blood", cellTypes = c("CD8T","CD4T", "NK","Bcell","Mono","Gran"),
- 				 sex = datsamples$MFGender[match(sample_names,datsamples$Sentrix_Code)] )
- 	                              #referencePlatform=arraytype)
+ 				 sex = datsamples$MFGender[match(sample_names,datsamples$Sentrix_Code)]) # , # )
+ 	                              # referencePlatform=arraytype)
  	                              
- 		if(exists("est.wbc.minfi")){
- 			est.wbc.minfi2 = rbind(est_wbc, est_wbc)
+ 		if(exists("est.wbc.minfi")){ # in code as is needless since i is only 1 and all files are read simultaneously
  			est.wbc.minfi = rbind(est.wbc.minfi, est_wbc)
  		} else {
- 			est.wbc.minfi2 = as.data.frame(est_wbc)
  			est.wbc.minfi = as.data.frame(est_wbc)
  		}
 	} # end of WBC estimation
