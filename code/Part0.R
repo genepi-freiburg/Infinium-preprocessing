@@ -9,6 +9,7 @@
 # BiocManager::install("IlluminaHumanMethylationEPICmanifest") # for EPIC array
 # BiocManager::install("IlluminaHumanMethylation450kmanifest") # for 450k array and Houseman
 # BiocManager::install("FlowSorted.Blood.450k") 
+# BiocManager::install("FlowSorted.Blood.EPIC") 
 # BiocManager::install("IlluminaHumanMethylation450kanno.ilmn12.hg19")
 # BiocManager::install("IlluminaHumanMethylationEPICanno.ilm10b4.hg19")
 
