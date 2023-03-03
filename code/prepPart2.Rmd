@@ -226,6 +226,8 @@ sexprobes <- c(sexchrX,sexchrY) # chr X+Y
 
 # EV NA omit
 betaPCA <- beta.raw.sex[sexprobes,]
+if(dim(na.omit(betaPCA))[1] > 0){ # code crashes if all cg sites have missings
+
 pcaSex <- prcomp(na.omit(betaPCA))
 EV <- pcaSex$rotation
 EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
@@ -261,6 +263,30 @@ mark.outliers  = function(x,y, color, labels, sd.range = 3, color.points = FALSE
 
 sex.mismatches = mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "blue", EV$Sentrix_Code[idx])
 sex.mismatches = c(sex.mismatches, mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "red",EV$Sentrix_Code[-idx]) )
+
+} else {
+
+cat("Sex mismatch evaluation failed. \nAll sex-specific cg sites were excluded due to missing data in one or more samples.\n")
+
+sex.mismatches <- NA
+
+print("Count of sex chromosome cg sites:")
+print(nrow(betaPCA))
+
+print("Summary on overall relative missing data (all samples):")
+countna <- apply(betaPCA, 2, function(x){sum(is.na(x))})
+countna.relative <- countna/dim(betaPCA)[1]
+print(round(summary(countna.relative), digits = 4))
+
+countsexna <- apply(betaPCA, 2, function(x){sum(is.na(x))})
+countna.all <- as.data.frame(rbind(countna, countna.relative, countsexna))
+countna.all$subset <- c("number.of.missings.in.all.cpg.sites","percentage.of.missings.all.cpg.sites","number.of.missings.in.sex.specific.cpg.sites")
+
+cat("Overall and sex-specific missings were reported\n in a file named 'count-missing' \n as additional information on call-rates." )
+write.csv(countna.all,file = paste0(outputdir,"/count-missing","_",projectname,"-",formatted.time,".csv"),row.names=F)
+
+}
+
 ```
 
 The samples whose loadings are more than three standard deviations from the mean of the loadings with same assigned sex according to the first two principal components:
@@ -277,6 +303,7 @@ resSexCheck <- data.frame(Sentrix_Code=EV$Sentrix_Code, Sex=EV$Gender, EV1=EV[,"
 
 # PC NA omit
 betaPCA <- beta.raw.sex[sexprobes,]
+if(dim(na.omit(betaPCA))[1] > 0){
 pcaSex <- prcomp(t(na.omit(betaPCA)))
 EV <- pcaSex$x
 EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
@@ -298,21 +325,29 @@ sex.mismatches = mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "blue", EV$Sentrix_
 
 resSexCheck <- cbind(resSexCheck,data.frame(PC1=EV[,"PC1"],PC2=EV[,"PC2"]))
 write.csv(resSexCheck,file = paste0(outputdir,"/results-PCAsex_raw","_",projectname,"-",formatted.time,".csv"),row.names=F,quote=F)
+} else {
 
+sex.mismatches <- NA
+cat("Impossible due to missing data.\n")
+
+}
 ```
 
 The samples whose values are more than three standard deviations from the mean of the samples with same assigned sex according to the first two principal components:
 
 ````{r}
-if(length(sex.mismatches) > 0){
+if(length(sex.mismatches) > 0 && !is.na(sex.mismatches)){
 	print(sex.mismatches)
 	sex.mismatch.df = data.frame(sample = sex.mismatches, filter = "sex mismatch", stringsAsFactors= F)
  	sex.mismatch.df <- merge(sex.mismatch.df,datsamples,all.x=T,by.x="sample",by.y="Sentrix_Code")
 	samples.filtered <- merge(samples.filtered,sex.mismatch.df,all=T)	
 } else {
-	print("No sex mismatches could be detected.")
+	cat("\nNo sex mismatches could be detected.\n")
 }
 write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
+
+# rm(beta.raw, beta.raw.sex)
+
 
 ```
 
