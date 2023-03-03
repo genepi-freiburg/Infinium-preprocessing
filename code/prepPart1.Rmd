@@ -256,7 +256,7 @@ for(i in 1:nrow(filenames)){ # in code as is needless since i is only 1 and all 
 
 setwd(cwd)	
 
-
+# save.image("test_runbyhand.Rdata")
 ```
 
 ### Read data and parameters
