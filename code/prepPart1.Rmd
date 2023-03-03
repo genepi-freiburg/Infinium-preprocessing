@@ -317,6 +317,7 @@ The estimation of White Blood Cells results in a data.frame est.wbc.minfi for fu
 if(exists("est.wbc.minfi")){
      head(est.wbc.minfi)
 }
+
 ```
 
 ### SNP data extraction
@@ -334,6 +335,7 @@ if(exists("extractSNPs") && extractSNPs%in%"TRUE"){
         cat("\nAn error occurres during SNP extraction. No results are exported.\n")
     }
 }
+# rm(RGset, snp.extraction)
 ```
 
 
@@ -566,4 +568,5 @@ $`r max(0,length(marker.call[which(marker.call<=0.98)]))`$ of all marker call ra
 
 
 The results of the sample call rate filter are included in the export file **samples_filtered.csv** which also documents the following control-probe based quality control.
+
 
