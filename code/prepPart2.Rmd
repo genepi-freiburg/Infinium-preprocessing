@@ -299,11 +299,16 @@ rm(sex.mismatches)
 The second plot shows the principle components of the PCA on the samples in the space of samples (a standard PCA plot).
 
 ```{r}
+if(exists("EV")){
 resSexCheck <- data.frame(Sentrix_Code=EV$Sentrix_Code, Sex=EV$Gender, EV1=EV[,"PC1"], EV2=EV[,"PC2"])
+} else {
+resSexCheck <- NULL
+}
 
 # PC NA omit
 betaPCA <- beta.raw.sex[sexprobes,]
-if(dim(na.omit(betaPCA))[1] > 0){
+if(min(dim(na.omit(betaPCA))) > 0){
+
 pcaSex <- prcomp(t(na.omit(betaPCA)))
 EV <- pcaSex$x
 EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
