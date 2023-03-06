@@ -322,7 +322,7 @@ if(exists("est.wbc.minfi")){
 
 ### SNP data extraction
 
-If the switch extractSNPs is set to TRUE in the parameterfile, the SNP information from the RGset is extracted and exported to the file `r paste0(outputdir,"/extracted-snps","_",projectname,"-",formatted.time,".csv")`. 
+If the switch extractSNPs is set to TRUE in the parameterfile, the SNP information from the RGset is extracted and exported to the file `r gsub("/","/ ", paste0(outputdir,"/extracted-snps","_",projectname,"-",formatted.time,".csv"))`. 
 This information can be used to detect mismatches in labeling of samples and often explains most of the sex mismatches.
 Homozygotes should have values around $0$ and $1$, whereas heterozygotes have values close to $0.5$. 
 Please consider this when comparing to the genotyping from other sources which may be coded $0$ - $1$ - $2$. 
