@@ -221,69 +221,112 @@ The loading indicates the importance of the variables for the PCs.
 ```{r}
 ############## sex mismatch ##############
 
+# parameters
+sex.mismatch.callrate.threshold <- 0.99 # in case there are too many missing sex probes
+
+
+# functions
+	# find potential outlier and save a list
+	get.outliers = function(x, SDrange = 3){
+		out <- which(x>mean(x)+sd(x)*SDrange) # upper X
+		out <- c(out,which(x<mean(x)-sd(x)*SDrange)) # lower X
+		return(out)
+	}    
+	mark.outliers  = function(x,y, color, labels, sd.range = 3, color.points = FALSE){
+		out = unique(c(get.outliers(x, SDrange = sd.range),get.outliers(y, SDrange = sd.range)))
+		if (length(out)>0) {
+				text(x[out],y[out],label=labels[out],col=color,adj=c(0,0),cex=0.7)
+		}
+		if(color.points){
+		  points(x[out],y[out],col="blue")
+		}
+		return(labels[out])
+	}
+
+
 # Raw betas
 sexprobes <- c(sexchrX,sexchrY) # chr X+Y
 
 # EV NA omit
 betaPCA <- beta.raw.sex[sexprobes,]
-if(dim(na.omit(betaPCA))[1] > 0){ # code crashes if all cg sites have missings
+if(min(dim(na.omit(betaPCA))) > 0){ # code crashes if all cg sites have missings
 
-pcaSex <- prcomp(na.omit(betaPCA))
-EV <- pcaSex$rotation
-EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
-colnames(EV)[match("Row.names",colnames(EV))] <- "Sentrix_Code"
+	pcaSex <- prcomp(na.omit(betaPCA))
+	EV <- pcaSex$rotation
+	EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
+	colnames(EV)[match("Row.names",colnames(EV))] <- "Sentrix_Code"
 
-# plot first males, then females: find female outlier
-idx = which(EV$Gender%in%c(1)) # 1 is female
-plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"]) + 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
-points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
-legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
+	# plot first males, then females: find female outlier
+	idx = which(EV$Gender%in%c(1)) # 1 is female
+	plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"]) + 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
+	points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
+	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 
-# then plot first females, then males: find male-outlier
-plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
-points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
-legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
+	# then plot first females, then males: find male-outlier
+	plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
+	points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
+	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 
-# find potential outlier and save a list
-get.outliers = function(x, SDrange = 3){
-    out <- which(x>mean(x)+sd(x)*SDrange) # upper X
-    out <- c(out,which(x<mean(x)-sd(x)*SDrange)) # lower X
-    return(out)
-}    
-mark.outliers  = function(x,y, color, labels, sd.range = 3, color.points = FALSE){
-	out = unique(c(get.outliers(x, SDrange = sd.range),get.outliers(y, SDrange = sd.range)))
-	if (length(out)>0) {
-       		text(x[out],y[out],label=labels[out],col=color,adj=c(0,0),cex=0.7)
-	}
-	if(color.points){
-	  points(x[out],y[out],col="blue")
-	}
-	return(labels[out])
-}
-
-sex.mismatches = mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "blue", EV$Sentrix_Code[idx])
-sex.mismatches = c(sex.mismatches, mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "red",EV$Sentrix_Code[-idx]) )
+	sex.mismatches = mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "blue", EV$Sentrix_Code[idx])
+	sex.mismatches = c(sex.mismatches, mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "red",EV$Sentrix_Code[-idx]) )
 
 } else {
 
-cat("Sex mismatch evaluation failed. \nAll sex-specific cg sites were excluded due to missing data in one or more samples.\n")
+	cat("Sex mismatch evaluation failed. \nAll sex-specific cg sites were excluded due to missing data in one or more samples.\n")
 
-sex.mismatches <- NA
+	sex.mismatches <- NA
 
-print("Count of sex chromosome cg sites:")
-print(nrow(betaPCA))
+	print("Count of sex chromosome cg sites:")
+	print(nrow(betaPCA))
 
-print("Summary on overall relative missing data (all samples):")
-countna <- apply(betaPCA, 2, function(x){sum(is.na(x))})
-countna.relative <- countna/dim(betaPCA)[1]
-print(round(summary(countna.relative), digits = 4))
+	print("Summary on overall relative missing data (all samples):")
+	countna <- apply(beta.raw, 2, function(x){sum(is.na(x))})
+	print(round(summary(countna), digits = 4))
 
-countsexna <- apply(betaPCA, 2, function(x){sum(is.na(x))})
-countna.all <- as.data.frame(rbind(countna, countna.relative, countsexna))
-countna.all$subset <- c("number.of.missings.in.all.cpg.sites","percentage.of.missings.all.cpg.sites","number.of.missings.in.sex.specific.cpg.sites")
+	countsexna <- apply(betaPCA, 2, function(x){sum(is.na(x))})
+	countna.relative <- countsexna/(dim(betaPCA)[1])
+	countna.all <- as.data.frame(rbind(countsexna, countna.relative, countna))
+	countna.all$subset <- c("number.of.missings.sex.specific.cpg.sites","percentage.of.missings.sex.specific.cpg.sites","number.of.missings.all.sites")
 
-cat("Overall and sex-specific missings were reported\n in a file named 'count-missing' \n as additional information on call-rates." )
-write.csv(countna.all,file = paste0(outputdir,"/count-missing","_",projectname,"-",formatted.time,".csv"),row.names=F)
+	cat("Overall and sex-specific missings were reported\n in a file named 'count-missing' \n as additional information on call-rates." )
+	write.csv(countna.all,file = paste0(outputdir,"/count-missing","_",projectname,"-",formatted.time,".csv"),row.names=F)
+
+# ##### version 2
+# 
+# 	countsexna <- apply(betaPCA, 2, function(x){sum(is.na(x))})
+# 	countna.relative <- countna/(dim(betaPCA)[1])
+# 	# exclude samples with sex cpg site callrate lower or equal than 0.99
+# 	betaPCA <- betaPCA[,countna.relative > sex.mismatch.callrate.threshold]
+# 
+# 	# add sex callrate filtered samples to samplesfile
+# 	sex.callrate.filtered.samples <- colnames(betaPCA)[countna.relative < sex.mismatch.callrate.threshold] # maybe with intersect and names() to avoid mistakes?
+#  	bufout.sex.callrate <- datsamples[datsamples$Sentrix_Code %in% sex.callrate.filtered.samples,]
+#  	bufout.sex.callrate$filter <- paste0("sex chromosome callrate <= ", sex.mismatch.callrate.threshold )
+#  	samples.filtered <- merge(samples.filtered,bufout.sex.callrate,all.x=T,by.x="sample",by.y="Sentrix_Code")	
+# 
+# 
+# 	if(min(dim(na.omit(betaPCA))) > 0){
+# 
+# 	cat("Due to extremely high missingness samples with callrate <", sex.mismatch.callrate.threshold, "\n were excluded from sex mismatch analysis.\n We recommend deliberating about whether to exclude these samples from analysis alltogether.\n")
+# 
+# 	pcaSex <- prcomp(na.omit(betaPCA))
+# 	EV <- pcaSex$rotation
+# 	EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
+# 	colnames(EV)[match("Row.names",colnames(EV))] <- "Sentrix_Code"
+# 
+# 	# plot first males, then females: find female outlier
+# 	idx = which(EV$Gender%in%c(1)) # 1 is female
+# 	plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"]) + 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
+# 	points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
+# 	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
+# 
+# 	# then plot first females, then males: find male-outlier
+# 	plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
+# 	points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
+# 	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
+# 
+# 	sex.mismatches = mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "blue", EV$Sentrix_Code[idx])
+# 	sex.mismatches = c(sex.mismatches, mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "red",EV$Sentrix_Code[-idx]) )
 
 }
 
@@ -300,40 +343,86 @@ The second plot shows the principle components of the PCA on the samples in the 
 
 ```{r}
 if(exists("EV")){
-resSexCheck <- data.frame(Sentrix_Code=EV$Sentrix_Code, Sex=EV$Gender, EV1=EV[,"PC1"], EV2=EV[,"PC2"])
+	resSexCheck <- data.frame(Sentrix_Code=EV$Sentrix_Code, Sex=EV$Gender, EV1=EV[,"PC1"], EV2=EV[,"PC2"])
 } else {
-resSexCheck <- NULL
+	resSexCheck <- NULL
 }
 
 # PC NA omit
 betaPCA <- beta.raw.sex[sexprobes,]
+
 if(min(dim(na.omit(betaPCA))) > 0){
 
-pcaSex <- prcomp(t(na.omit(betaPCA)))
-EV <- pcaSex$x
-EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
-colnames(EV)[match("Row.names",colnames(EV))] <- "Sentrix_Code"
+	pcaSex <- prcomp(t(na.omit(betaPCA)))
+	EV <- pcaSex$x
+	EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
+	colnames(EV)[match("Row.names",colnames(EV))] <- "Sentrix_Code"
 
-# plot first males, then females: find female outlier
-idx = which(EV$Gender%in%c(1)) # 1 is female
-plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*( max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
-points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
-legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
+	# plot first males, then females: find female outlier
+	idx = which(EV$Gender%in%c(1)) # 1 is female
+	plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*( max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
+	points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
+	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 
-# then plot first females, then males: find male-outlier
-plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
-points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
-legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
+	# then plot first females, then males: find male-outlier
+	plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
+	points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
+	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 
-sex.mismatches = mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "blue", EV$Sentrix_Code[idx])
- sex.mismatches = c(sex.mismatches, mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "red",EV$Sentrix_Code[-idx]) )
+	sex.mismatches = mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "blue", EV$Sentrix_Code[idx])
+	 sex.mismatches = c(sex.mismatches, mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "red",EV$Sentrix_Code[-idx]) )
 
-resSexCheck <- cbind(resSexCheck,data.frame(PC1=EV[,"PC1"],PC2=EV[,"PC2"]))
-write.csv(resSexCheck,file = paste0(outputdir,"/results-PCAsex_raw","_",projectname,"-",formatted.time,".csv"),row.names=F,quote=F)
+	resSexCheck <- cbind(resSexCheck,data.frame(PC1=EV[,"PC1"],PC2=EV[,"PC2"]))
+	write.csv(resSexCheck,file = paste0(outputdir,"/results-PCAsex_raw","_",projectname,"-",formatted.time,".csv"),row.names=F,quote=F)
+
 } else {
 
-sex.mismatches <- NA
-cat("Impossible due to missing data.\n")
+	betaPCA <- beta.raw.sex[sexprobes,]
+
+	countsexna <- apply(betaPCA, 2, function(x){sum(is.na(x))})
+	countna.relative <- countna/dim(betaPCA)[1]
+	# exclude samples with sex cpg site callrate lower or equal than 0.99
+	betaPCA <- betaPCA[,countna.relative > sex.mismatch.callrate.threshold]
+
+	# add sex callrate filtered samples to samplesfile
+	sex.callrate.filtered.samples <- colnames(betaPCA)[countna.relative < sex.mismatch.callrate.threshold] # maybe with intersect and names() to avoid mistakes?
+ 	bufout.sex.callrate <- datsamples[datsamples$Sentrix_Code %in% sex.callrate.filtered.samples,]
+ 	bufout.sex.callrate$filter <- paste0("sex chromosome callrate <= ", sex.mismatch.callrate.threshold )
+ 	samples.filtered <- merge(samples.filtered,bufout.sex.callrate,all.x=T,by.x="sample",by.y="Sentrix_Code")	
+
+
+	if(min(dim(na.omit(betaPCA))) > 0){
+
+		cat("Due to extremely high missingness samples with callrate <", sex.mismatch.callrate.threshold, "\n were excluded from sex mismatch analysis.\n We recommend to exclude these samples from analysis alltogether.\n")
+
+		pcaSex <- prcomp(t(na.omit(betaPCA)))
+		EV <- pcaSex$x
+		EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
+		colnames(EV)[match("Row.names",colnames(EV))] <- "Sentrix_Code"
+
+		# plot first males, then females: find female outlier
+		idx = which(EV$Gender%in%c(1)) # 1 is female
+		plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*( max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
+		points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
+		legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
+
+		# then plot first females, then males: find male-outlier
+		plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
+		points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
+		legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
+
+		sex.mismatches = mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "blue", EV$Sentrix_Code[idx])
+		 sex.mismatches = c(sex.mismatches, mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "red",EV$Sentrix_Code[-idx]) )
+
+		resSexCheck <- cbind(resSexCheck,data.frame(PC1=EV[,"PC1"],PC2=EV[,"PC2"]))
+		write.csv(resSexCheck,file = paste0(outputdir,"/results-PCAsex_raw","_",projectname,"-",formatted.time,".csv"),row.names=F,quote=F)
+
+	} else {
+
+		sex.mismatches <- NA
+
+		cat("Due to extremely high missingness samples with callrate < ",sex.mismatch.callrate.threshold, "\n were excluded from sex mismatch analysis, but it still failed.\n")
+	}
 
 }
 ```
@@ -351,7 +440,6 @@ if(length(sex.mismatches) > 0 && !is.na(sex.mismatches)){
 }
 write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
 
-# rm(beta.raw, beta.raw.sex)
 
 
 ```
