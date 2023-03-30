@@ -274,29 +274,10 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 
 	cat("Sex mismatch evaluation failed. \nAll sex-specific cg sites were excluded due to missing data in one or more samples.\n")
 
-# 	sex.mismatches <- NA
-# 
-# 	print("Count of sex chromosome cg sites:")
-# 	print(nrow(betaPCA))
-# 
-# 	print("Summary on overall relative missing data (all samples):")
-# 	countna <- apply(beta.raw, 2, function(x){sum(is.na(x))})
-# 	print(round(summary(countna), digits = 4))
-# 
-# 	countsexna <- apply(betaPCA, 2, function(x){sum(is.na(x))})
-# 	countna.relative <- countsexna/(dim(betaPCA)[1])
-# 	countna.all <- as.data.frame(rbind(countsexna, countna.relative, countna))
-# 	countna.all$subset <- c("number.of.missings.sex.specific.cpg.sites","percentage.of.missings.sex.specific.cpg.sites","number.of.missings.all.sites")
-# 
-# 	cat("Overall and sex-specific missings were reported\n in a file named 'count-missing' \n as additional information on call-rates." )
-# 	write.csv(countna.all,file = paste0(outputdir,"/count-missing","_",projectname,"-",formatted.time,".csv"),row.names=F)
-
-##### version 2
-
 	countsexna <- apply(betaPCA, 2, function(x){sum(is.na(x))})
-	countna.relative <- countsexna/(dim(betaPCA)[1])
+	countsexna.relative <- countsexna/(dim(betaPCA)[1])
 	# exclude samples with sex cpg site callrate lower or equal than 0.95 (0.99 seems to provoke huge losses)
-	betaPCA <- betaPCA[,countna.relative < (1 - sex.mismatch.callrate.threshold)] # high callrate means low percentage of missings 
+	betaPCA <- betaPCA[,countsexna.relative < (1 - sex.mismatch.callrate.threshold)] # high callrate means low percentage of missings 
 
 	# add sex callrate filtered samples to samplesfile
 	sex.callrate.filtered.samples <- colnames(betaPCA) # maybe with intersect and names() to avoid mistakes?
@@ -330,11 +311,12 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 	
 	# report callrates
 		countna <- apply(beta.raw, 2, function(x){sum(is.na(x))})
-		countna.all <- as.data.frame(rbind(countsexna, countna.relative, countna))
-	  countna.all$subset <- c("number.of.missings.sex.specific.cpg.sites","percentage.of.missings.sex.specific.cpg.sites","number.of.missings.all.sites")
+		countna.relative <- countna/(dim(betaPCA)[1])
+		countna.all <- as.data.frame(rbind(countsexna, round(countsexna.relative,digits = 3), countna, round(countna.relative,digits = 3)))
+	  	countna.all$subset <- c("number.of.missings.sex.specific.cpg.sites","percentage.of.missings.sex.specific.cpg.sites","number.of.missings.all.sites","percentage.of.missings.all.cpg.sites")
 
 	cat("Overall and sex-specific missings were reported\n in a file named 'count-missing' \n as additional information on call-rates." )
-	write.csv(countna.all,file = paste0(outputdir,"/count-missing","_",projectname,"-",formatted.time,".csv"),row.names=F)
+	write.csv(t(countna.all),file = paste0(outputdir,"/count-missing","_",projectname,"-",formatted.time,".csv"),row.names=F)
 
 
 }
