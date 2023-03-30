@@ -1,6 +1,6 @@
 ## PART 1: Data and parameters
 
-```{r, message = FALSE, echo = FALSE}
+```{r, message = FALSE, echo = FALSE, warning = FALSE}
 #####################
 
  #read data
