@@ -9,7 +9,7 @@ output:
     toc_depth: 2
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, echo = FALSE, warning = FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 start.Time = Sys.time()
 formatted.time = format(start.Time, "%Y-%m-%d-%Hh%Mm")
