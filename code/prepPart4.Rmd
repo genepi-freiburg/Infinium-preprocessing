@@ -2,13 +2,13 @@
 ## PART 4: Calculating Inter-Quartile Ranges 
 
 The inter-quartile range of a set of values is the difference between its 0.75-quartile and its 0.25-quartile. 
-In the following, these quartiles are calculated for all autosomal beta values per probe and beta values whose difference to the median is greater than 3 times the inter-quartile range are marked as outliers and set to missing (NA) in betaQN.all.3IQR.
+In the following, these quartiles are calculated for all quantile-normalized autosomal beta values per probe. Beta values whose difference to the median is greater than 3 times the inter-quartile range are marked as outliers and set to missing (NA) in betaQN.all.3IQR.
 
 ```{r}
   # outliers
   IQRrange <- 1.5
   betaQN.all.3IQR <- betaQN.all
-  probe_IQR <- t(apply(betaQN.all,1,function(x) {quantile(x,probs=c(0.25,0.75,0.5),na.rm=T)}))
+  probe_IQR <- t(apply(betaQN.all.3IQR,1,function(x) {quantile(x,probs=c(0.25,0.75,0.5),na.rm=T)}))
   probe_IQR <- data.frame(probe_IQR)
   probe_IQR$IQR <- probe_IQR[,2]-probe_IQR[,1]
   probe_IQR$rangeMin3IQR <- probe_IQR[,3]-3*probe_IQR$IQR # 3 IQR from median
