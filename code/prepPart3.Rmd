@@ -18,10 +18,17 @@ For this analysis, `r paste(strsplit(samplesfilefinal, split = "/")[[1]][-1], co
 # datsamplesfinal$Gender = as.numeric(datsamplesfinal$Gender)
 # # provide a new column with sample identifier
 # if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamplesfinal))){stop("Final samplesfile must provide Sentrix_ID and Sentrix_Position.")}
-# datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$Sentrix_Position,sep = "_")
+# if(!c("Sentrix_Code")%in%colnames(datsamplesfinal)){datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$Sentrix_Position,sep = "_")}
 samples <- colnames(TypeI.Red.M.All)
 samples <- unique(samples[samples %in% datsamplesfinal$Sentrix_Code])
 datsamples <- datsamplesfinal[datsamplesfinal$Sentrix_Code %in% samples,]
+
+# --- minimum callrate filtering on samples is necessary -----------
+# otherwise normalizeQuantiles crashes
+# since filtering is on samples, filtering is overall and not Type-wise
+
+
+
 ```
 
 `r nrow(datsamples)` samples are included in the analysis, identified by the *samplesfilefinal* and existing sample calls.
@@ -51,11 +58,6 @@ TypeI.Red.betas = TypeI.Red.M/(TypeI.Red.M+TypeI.Red.U+100)
 betaQN = as.matrix(rbind(TypeII.betas,TypeI.Green.betas,TypeI.Red.betas))
 marker.callQN =rowSums(!is.na(betaQN))/ncol(betaQN) # this line is added; if problems occur, maybe delete it and rechange all lines where marker.callQN occurs to marker.call
 
-# sex chromosomes ------------------------------------------------------------------
-women <- datsamples[datsamples$Gender==1,"Sentrix_Code"]
-men <- datsamples[datsamples$Gender==0,"Sentrix_Code"]
-category=c(sexchrX,sexchrY)
-
 ```
 
 Of the persons from whom samples are processed, `r length(women)` are women and `r length(men)` men.   
@@ -63,6 +65,12 @@ Of the persons from whom samples are processed, `r length(women)` are women and 
 
 
 ```{r}
+# sex chromosomes ------------------------------------------------------------------
+women <- datsamples[datsamples$Gender==1,"Sentrix_Code"]
+men <- datsamples[datsamples$Gender==0,"Sentrix_Code"]
+category=c(sexchrX,sexchrY)
+
+
 #QN men
 
 markers=as.matrix(intersect(rownames(TypeII.Green.All.d), category))
