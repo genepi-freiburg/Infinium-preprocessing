@@ -47,7 +47,7 @@ datsamples <- datsamplesfinal[datsamplesfinal$Sentrix_Code %in% samples,]
 rm(samples.auto.QN, sample.call.auto, samples.callrate.typewise.auto, markers.auto, markersIRed, markersIGreen, markersII)
 ```
 
-`r nrow(datsamples)` samples are included in the analysis, identified by the *samplesfilefinal*, existing sample calls and samplewise minimum callrate `r minimum_callrate`. Callrate filtering is performed on autosomes and for sex chromosome QN additionally on sex chromosomes.
+`r nrow(datsamples)` samples are included in the analysis, identified by the *samplesfilefinal*, existing sample calls and samplewise minimum callrate `r minimum_callrate_QN`. Callrate filtering is performed on autosomes and for sex chromosome QN additionally on sex chromosomes.
 
 ```{r}
 #QN autosomes # has to be filtered by samples 
@@ -74,6 +74,10 @@ TypeI.Red.betas = TypeI.Red.M/(TypeI.Red.M+TypeI.Red.U+100)
 betaQN = as.matrix(rbind(TypeII.betas,TypeI.Green.betas,TypeI.Red.betas))
 marker.callQN =rowSums(!is.na(betaQN))/ncol(betaQN) # this line is added; if problems occur, maybe delete it and rechange all lines where marker.callQN occurs to marker.call
 
+# sex chromosomes ------------------------------------------------------------------
+women <- datsamples[datsamples$Gender==1,"Sentrix_Code"]
+men <- datsamples[datsamples$Gender==0,"Sentrix_Code"]
+category=c(sexchrX,sexchrY)
 ```
 
 Of the persons from whom samples are processed, `r length(women)` are women and `r length(men)` men.   
@@ -81,10 +85,6 @@ Of the persons from whom samples are processed, `r length(women)` are women and 
 
 
 ```{r}
-# sex chromosomes ------------------------------------------------------------------
-women <- datsamples[datsamples$Gender==1,"Sentrix_Code"]
-men <- datsamples[datsamples$Gender==0,"Sentrix_Code"]
-category=c(sexchrX,sexchrY)
 
 # minimum callrate filtering on samples
 markersII=as.matrix(intersect(rownames(TypeII.Green.All.d), category))
@@ -167,7 +167,7 @@ TypeI.Green.U_w = normalizeQuantiles(TypeI.Green.U_w)
 	cat("Quantile normalization for women was skipped, because it has no effect when there are less than 2 samples.")
 }
 
- TypeII.betas_w = TypeII.Green_w/(TypeII.Red_w+TypeII.Green_w+100)
+TypeII.betas_w = TypeII.Green_w/(TypeII.Red_w+TypeII.Green_w+100)
 TypeI.Green.betas_w = TypeI.Green.M_w/(TypeI.Green.M_w+TypeI.Green.U_w+100)
 TypeI.Red.betas_w = TypeI.Red.M_w/(TypeI.Red.M_w+TypeI.Red.U_w+100)
 
