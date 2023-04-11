@@ -288,7 +288,13 @@ extractSNPs                   |  `r ifelse(exists("extractSNPs"),extractSNPs, "n
 
 Further we interpret the values for the gender in the samplesfile as **1=female** and **0=male**. 
 
+InterQuartileRange calculation depends on QuantileNormalisation, therefore Quantile Normalize is set to TRUE, if InterQuartileRangeCalculation is requested. 
+
 ```{r}
+if(InterQuartileRangeCalculation == TRUE){
+	QuantileNormalize <- TRUE
+}
+
 if(QuantileNormalize == TRUE && length(samplesfilefinal)==0){
 	cat("In order to run Part 3: Quantile normalization and IQ-filter a final samplefile is needed.\n The samplesfile of the first and second part will be used instead.")
 	samplesfilefinal <- samplesfile
