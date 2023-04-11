@@ -21,17 +21,33 @@ For this analysis, `r paste(strsplit(samplesfilefinal, split = "/")[[1]][-1], co
 # if(!c("Sentrix_Code")%in%colnames(datsamplesfinal)){datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$Sentrix_Position,sep = "_")}
 samples <- colnames(TypeI.Red.M.All)
 samples <- unique(samples[samples %in% datsamplesfinal$Sentrix_Code])
-datsamples <- datsamplesfinal[datsamplesfinal$Sentrix_Code %in% samples,]
 
 # --- minimum callrate filtering on samples is necessary -----------
 # otherwise normalizeQuantiles crashes
 # since filtering is on samples, filtering is overall and not Type-wise
 
+minimum_callrate_QN <- 0
 
+category=auto
+markersII=as.matrix(intersect(rownames(TypeII.Green.All.d), category))
+markersIGreen=intersect(rownames(TypeI.Green.M.All.d), category)
+markersIRed=intersect(rownames(TypeI.Red.M.All.d), category)
+markers.auto <- list(II = markersII, IG = markersIGreen, IR = markersIRed)
+samples.callrate.typewise.auto <- do.call("rbind", lapply(markers.auto, function(m){colSums(!is.na(beta.raw[m,]))/nrow(beta.raw[m,])}))
 
+sample.call.auto = apply(samples.callrate.typewise.auto, 2, min)
+samples.auto.QN <- colnames(samples.callrate.typewise.auto)[sample.call.auto > minimum_callrate_QN]
+
+samples <- unique(samples[samples %in% samples.auto.QN])
+
+# update datsamples information # for sex chromosome QN datsamples is additionally filtered to samples.sex, but not globally
+datsamples <- datsamplesfinal[datsamplesfinal$Sentrix_Code %in% samples,]
+
+# clean up 
+rm(samples.auto.QN, sample.call.auto, samples.callrate.typewise.auto, markers.auto, markersIRed, markersIGreen, markersII)
 ```
 
-`r nrow(datsamples)` samples are included in the analysis, identified by the *samplesfilefinal* and existing sample calls.
+`r nrow(datsamples)` samples are included in the analysis, identified by the *samplesfilefinal*, existing sample calls and samplewise minimum callrate `r minimum_callrate`. Callrate filtering is performed on autosomes and for sex chromosome QN additionally on sex chromosomes.
 
 ```{r}
 #QN autosomes # has to be filtered by samples 
@@ -70,9 +86,30 @@ women <- datsamples[datsamples$Gender==1,"Sentrix_Code"]
 men <- datsamples[datsamples$Gender==0,"Sentrix_Code"]
 category=c(sexchrX,sexchrY)
 
+# minimum callrate filtering on samples
+markersII=as.matrix(intersect(rownames(TypeII.Green.All.d), category))
+markersIGreen=intersect(rownames(TypeI.Green.M.All.d), category)
+markersIRed=intersect(rownames(TypeI.Red.M.All.d), category)
+markers.sex <- list(II = markersII, IG = markersIGreen, IR = markersIRed)
+samples.callrate.typewise.sex <- do.call("rbind", lapply(markers.sex, function(m){colSums(!is.na(beta.raw.sex[m,]))/nrow(beta.raw.sex[m,])}))
+
+sample.call.sex = apply(samples.callrate.typewise.sex, 2, min)
+samples.sex.QN <- colnames(samples.callrate.typewise.sex)[sample.call.sex > minimum_callrate_QN]
+
+women <- unique(women[women %in% samples.sex.QN])
+men <- unique(men[men %in% samples.sex.QN])
+
+# clean up 
+rm(samples.sex.QN, sample.call.sex, samples.callrate.typewise.sex, markers.sex, markersIRed, markersIGreen, markersII)
+```
+
+`r length(men)` men and `r length(women)` women samples are included in Quantile Normalisation.
+
+```{r}
+
+# ---- QN ---------------------------------
 
 #QN men
-
 markers=as.matrix(intersect(rownames(TypeII.Green.All.d), category))
 TypeII.Green_m= TypeII.Green.All.d[markers,men]
 TypeII.Red_m = TypeII.Red.All.d[markers,men]
