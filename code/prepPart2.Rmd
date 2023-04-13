@@ -277,28 +277,15 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 	countsexna <- apply(betaPCA, 2, function(x){sum(is.na(x))})
 	countsexna.relative <- countsexna/(dim(betaPCA)[1])
 	# exclude samples with sex cpg site callrate lower or equal than 0.95 (0.99 seems to provoke huge losses)
+	sex.callrate.filtered.samples <- colnames(betaPCA)[countsexna.relative < (1 - sex.mismatch.callrate.threshold)]
 	betaPCA <- betaPCA[,countsexna.relative < (1 - sex.mismatch.callrate.threshold)] # high callrate means low percentage of missings 
 
 	# add sex callrate filtered samples to samplesfile
-# 	sex.callrate.filtered.samples <- colnames(betaPCA) # maybe with intersect and names() to avoid mistakes?
-#  	bufout.sex.callrate <- datsamples[datsamples$Sentrix_Code %in% sex.callrate.filtered.samples,]
-#  	bufout.sex.callrate$filter <- paste0("sex chromosome callrate <= ", sex.mismatch.callrate.threshold )
-#  	samples.filtered <- merge(samples.filtered,bufout.sex.callrate,all.x=T,by.x="sample",by.y="Sentrix_Code")	
-#  		# report callrates
-# 		countna <- apply(beta.raw, 2, function(x){sum(is.na(x))})
-# 		countna.relative <- countna/(dim(betaPCA)[1])
-# 		countna.all <- as.data.frame(rbind(countsexna, round(countsexna.relative,digits = 3), countna, round(countna.relative,digits = 3)))
-# 	  	countna.all$subset <- c("number.of.missings.sex.specific.cpg.sites","percentage.of.missings.sex.specific.cpg.sites","number.of.missings.all.sites","percentage.of.missings.all.cpg.sites")
-# 	
-# 	### TODO ####
-# 	# this is how to add this 
-# # 	sex.mismatch.df = data.frame(sample = sex.mismatches, filter = "sex mismatch", stringsAsFactors= F)
-# #  	sex.mismatch.df <- merge(sex.mismatch.df,datsamples,all.x=T,by.x="sample",by.y="Sentrix_Code")
-# # 	samples.filtered <- merge(samples.filtered,sex.mismatch.df,all=T)	
-# OLD VERSION
-# 	cat("Overall and sex-specific missings were reported\n in a file named 'count-missing' \n as additional information on call-rates." )
-# 	write.csv(t(countna.all),file = paste0(outputdir,"/count-missing","_",projectname,"-",formatted.time,".csv"),row.names=F)
+  	bufout.sex.callrate <- datsamples[datsamples$Sentrix_Code %in% sex.callrate.filtered.samples,]
+  	bufout.sex.callrate$filter <- paste0("sex chromosome callrate <= ", sex.mismatch.callrate.threshold )
 
+  	samples.filtered <- merge(samples.filtered, bufout.sex.callrate,all.x=T,by.x="sample",by.y="Sentrix_Code", all.y = T)	
+	write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
 
 	if(min(dim(na.omit(betaPCA))) > 0){
 
