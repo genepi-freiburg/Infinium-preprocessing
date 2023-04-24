@@ -194,16 +194,16 @@ in the file **samples-filtered.csv**
 
 ```{r}
 if(nrow(samples.filtered) > 0){
-	# remove redundant information
-	posID = match("Sentrix_ID", colnames(samples.filtered))
-	posPos = match("Sentrix_Position", colnames(samples.filtered))
-	reduced.samples.filtered = samples.filtered[,-c(posID, posPos)]
-	# find most interesting columns
-	posName = match("Sample_Name", colnames(reduced.samples.filtered))
-	posFilter = match("filter", colnames(reduced.samples.filtered))
-	# print
-	print(reduced.samples.filtered[,c(posName,posFilter)])
-	print(reduced.samples.filtered[,-c(posName,posFilter)])
+# 	# remove redundant information
+# 	posID = match("Sentrix_ID", colnames(samples.filtered))
+# 	posPos = match("Sentrix_Position", colnames(samples.filtered))
+# 	reduced.samples.filtered = samples.filtered[,-c(posID, posPos)]
+# 	# find most interesting columns
+# 	posName = match("Sample_Name", colnames(reduced.samples.filtered))
+# 	posFilter = match("filter", colnames(reduced.samples.filtered))
+# 	# print
+# 	print(reduced.samples.filtered[,c(posName,posFilter)])
+# 	print(reduced.samples.filtered[,-c(posName,posFilter)])
 
 	plot.beta.densities(beta.raw[,unique(samples.filtered$sample)],"Densities of raw autosomal beta values of excluded samples")
 	cat(paste0(length(unique(samples.filtered$sample))," samples were marked for exclusion from the analysis."))
@@ -222,7 +222,7 @@ The loading indicates the importance of the variables for the PCs.
 ############## sex mismatch ##############
 
 # parameters
-sex.mismatch.callrate.threshold <- 0.95 # in case there are too many missing sex probes
+sex.mismatch.callrate.minimum <- 0.0001 # in case there are too many missing sex probes # this is basically representing a callrate minimum of zero 
 
 
 # functions
@@ -262,34 +262,53 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 	points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
 	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 
+	sex.mismatches = mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "red",EV$Sentrix_Code[-idx])
+
 	# then plot first females, then males: find male-outlier
 	plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 	points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
 	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 
-	sex.mismatches = mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "blue", EV$Sentrix_Code[idx])
-	sex.mismatches = c(sex.mismatches, mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "red",EV$Sentrix_Code[-idx]) )
+	sex.mismatches = c(sex.mismatches, mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "blue", EV$Sentrix_Code[idx]) )
 
 } else {
 
 	# cat("Sex mismatch evaluation on full data failed.\n")
 
-	countsexna <- apply(betaPCA, 2, function(x){sum(is.na(x))})
+	countsexna <- apply(betaPCA, 2, function(x){sum(!is.na(x))})
 	countsexna.relative <- countsexna/(dim(betaPCA)[1])
-	# exclude samples with sex cpg site callrate lower or equal than 0.95 (0.99 seems to provoke huge losses)
-	sex.callrate.filtered.samples <- colnames(betaPCA)[countsexna.relative < (1 - sex.mismatch.callrate.threshold)]
-	betaPCA <- betaPCA[,countsexna.relative < (1 - sex.mismatch.callrate.threshold)] # high callrate means low percentage of missings 
+	names(countsexna.relative) <- colnames(betaPCA)
+	# exclude samples with sex cpg site callrate lower or equal than minimum callrate
+	sex.callrate.filtered.samples <- colnames(betaPCA)[countsexna.relative <= sex.mismatch.callrate.minimum]
+	betaPCA <- betaPCA[,countsexna.relative > sex.mismatch.callrate.minimum] # the percentage of non-missing data should be higher than the minimum (which is very low, basically testing for non-zero)
 
 	# add sex callrate filtered samples to samplesfile
-  	bufout.sex.callrate <- datsamples[datsamples$Sentrix_Code %in% sex.callrate.filtered.samples,]
-  	bufout.sex.callrate$filter <- paste0("sex chromosome callrate <= ", sex.mismatch.callrate.threshold )
+  	bufout.sex.callrate <- data.frame(sample = sex.callrate.filtered.samples, filter = paste0("sex chromosome callrate <= ", sex.mismatch.callrate.minimum ), sex.chr.callrate = countsexna.relative[sex.callrate.filtered.samples])
 
-  	samples.filtered <- merge(samples.filtered, bufout.sex.callrate,all.x=T,by.x="sample",by.y="Sentrix_Code", all.y = T)	
+	if (nrow(samples.filtered)>0) {
+	# reduce samples.filtered top bufout information without datsamples and callrate
+		general.columns <- c(colnames(datsamples),"callrate")
+    	samples.filter.list <- samples.filtered[,!colnames(samples.filtered) %in% general.columns]
+	# merge the filter informations
+		samples.filtered <- merge(samples.filter.list, bufout.sex.callrate, all = T)
+	} else {
+		samples.filtered <- bufout.sex.callrate
+	}
+	# remerge the general information on datsamples and callrate 
+	if (nrow(samples.filtered)>0) {
+    	samples.filtered <- merge(samples.filtered,datsamples,all.x=T,by.x="sample",by.y="Sentrix_Code")
+    	samples.filtered <- merge(samples.filtered,data.frame(callrate=sample.call),all.x=T,by.x="sample",by.y=0)    
+    	samples.filtered <- samples.filtered[order(samples.filtered$sample,samples.filtered$filter),]
+	}
 	write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
+
+	# transfer this to part 3 typewise callrate (better would be a function ^^)
+
+	################# now proceed calculations on filtered data ######################
 
 	if(min(dim(na.omit(betaPCA))) > 0){
 
-	cat("Due to extremely high missingness samples with sex specific callrate <", sex.mismatch.callrate.threshold, "\nwere excluded from sex mismatch analysis.\nWe recommend deliberating about whether to exclude these samples from analysis alltogether.\n")
+	cat("Due to extremely high missingness samples with sex chromosome specific callrate <", sex.mismatch.callrate.minimum, "\nwere excluded from sex mismatch analysis.\nWe recommend deliberating about whether to exclude these samples from analysis alltogether.\n")
 
 	pcaSex <- prcomp(na.omit(betaPCA))
 	EV <- pcaSex$rotation
@@ -314,7 +333,7 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 
 		if(!exists("sex.mismatches")) sex.mismatches <- NA
 
-		cat("Due to extremely high missingness samples with callrate < ",sex.mismatch.callrate.threshold, "\n were excluded from sex mismatch analysis, but it still failed.\n")
+		cat("Due to extremely high missingness samples with callrate < ",sex.mismatch.callrate.minimum, "\n were excluded from sex mismatch analysis, but it still failed.\n")
 	}
 }
 ```
@@ -365,12 +384,11 @@ if(min(dim(na.omit(betaPCA))) > 0){
 } else {
 
 	# same data, same filter as above - no second reporting necessary
-	# exclude samples with sex cpg site callrate lower or equal than 0.95 (0.99 seems to provoke huge losses)
-	betaPCA <- betaPCA[,countsexna.relative <= (1 - sex.mismatch.callrate.threshold)] # high callrate means low percentage of missings 
+	betaPCA <- betaPCA[,countsexna.relative > sex.mismatch.callrate.minimum] 
 
 	if(min(dim(na.omit(betaPCA))) > 0){
 
-		cat("Due to extremely high missingness samples with callrate <", sex.mismatch.callrate.threshold, "\nwere excluded from sex mismatch analysis. (Part2)\n")
+		cat("Due to extremely high missingness samples with callrate <", sex.mismatch.callrate.minimum, "\nwere excluded from sex mismatch analysis. (Part2)\n")
 
 		pcaSex <- prcomp(t(na.omit(betaPCA)))
 		EV <- pcaSex$x
@@ -398,7 +416,7 @@ if(min(dim(na.omit(betaPCA))) > 0){
 
 		if(!exists("sex.mismatches")) sex.mismatches <- NA
 
-		cat("Due to extremely high missingness samples with callrate < ",sex.mismatch.callrate.threshold, "\n were excluded from sex mismatch analysis, but it still failed. (Part2)\n")
+		cat("Due to extremely high missingness samples with callrate < ",sex.mismatch.callrate.minimum, "\n were excluded from sex mismatch analysis, but it still failed. (Part2)\n")
 	}
 
 }
@@ -409,13 +427,24 @@ The samples whose values are more than three standard deviations from the mean o
 ````{r}
 if(length(sex.mismatches) > 0 && !is.na(sex.mismatches)){
 	print(sex.mismatches)
-	sex.mismatch.df = data.frame(sample = sex.mismatches, filter = "sex mismatch", stringsAsFactors= F)
+	if(exists(countsexna.relative)){
+		sex.mismatch.df = data.frame(sample = sex.mismatches, filter = "sex mismatch", sex.chr.callrate = countsexna.relative[sex.mismatches], stringsAsFactors= F)	
+	} else {
+		sex.mismatch.df = data.frame(sample = sex.mismatches, filter = "sex mismatch", stringsAsFactors= F)
+ 	}
  	sex.mismatch.df <- merge(sex.mismatch.df,datsamples,all.x=T,by.x="sample",by.y="Sentrix_Code")
-	samples.filtered <- merge(samples.filtered,sex.mismatch.df,all=T)	
+	sex.mismatch.df <- merge(sex.mismatch.df,data.frame(callrate=sample.call),all.x=T,by.x="sample",by.y=0)    
+		if (nrow(samples.filtered)>0) {
+			samples.filtered <- merge(samples.filtered,sex.mismatch.df,all=T)
+			} else { samples.filtered <- sex.mismatch.df }
 } else {
 	cat("\nNo sex mismatches could be detected.\n")
 }
-write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
+
+if (nrow(samples.filtered)>0) {
+	samples.filtered <- samples.filtered[order(samples.filtered$sample,samples.filtered$filter),]
+	write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
+}
 
 
 
