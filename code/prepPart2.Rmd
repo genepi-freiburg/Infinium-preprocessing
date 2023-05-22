@@ -222,7 +222,7 @@ The loading indicates the importance of the variables for the PCs.
 ############## sex mismatch ##############
 
 # parameters
-sex.mismatch.callrate.minimum <- 0.0001 # in case there are too many missing sex probes # this is basically representing a callrate minimum of zero 
+sex.mismatch.callrate.minimum <- 0.001 # in case there are too many missing sex probes # this is basically representing a callrate minimum of zero 
 
 
 # functions
@@ -278,7 +278,7 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 	countsexna <- apply(betaPCA, 2, function(x){sum(!is.na(x))})
 	countsexna.relative <- countsexna/(dim(betaPCA)[1])
 	names(countsexna.relative) <- colnames(betaPCA)
-	# exclude samples with sex cpg site callrate lower or equal than minimum callrate
+	# exclude samples with sex cpg site callrate lower or equal than minimum callrate / at least the sample with the lowest callrate since the data crashes ? 
 	sex.callrate.filtered.samples <- colnames(betaPCA)[countsexna.relative <= sex.mismatch.callrate.minimum]
 	betaPCA <- betaPCA[,countsexna.relative > sex.mismatch.callrate.minimum] # the percentage of non-missing data should be higher than the minimum (which is very low, basically testing for non-zero)
 
@@ -302,7 +302,7 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 	}
 	write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
 
-	# transfer this to part 3 typewise callrate (better would be a function ^^)
+	# TODO: transfer this to part 3 typewise callrate (better would be a function ^^)
 
 	################# now proceed calculations on filtered data ######################
 
@@ -427,7 +427,7 @@ The samples whose values are more than three standard deviations from the mean o
 ````{r}
 if(length(sex.mismatches) > 0 && !is.na(sex.mismatches)){
 	print(sex.mismatches)
-	if(exists(countsexna.relative)){
+	if(exists("countsexna.relative")){
 		sex.mismatch.df = data.frame(sample = sex.mismatches, filter = "sex mismatch", sex.chr.callrate = countsexna.relative[sex.mismatches], stringsAsFactors= F)	
 	} else {
 		sex.mismatch.df = data.frame(sample = sex.mismatches, filter = "sex mismatch", stringsAsFactors= F)
@@ -453,4 +453,138 @@ if (nrow(samples.filtered)>0) {
 To further investigate possible sex mismatches, it might be useful to compare SNP alleles. Some of these are recorded on the methylation array for this purpose and can be obtained using the R-package \texttt{minfi}: First read the rgSet from the concerned samples and then run the function \textbf{getSnpBeta} from minfi to get a list of rs-identifiers and corresponding SNP information. These can be compared with genotype information from other sources to clarify whether samples were mixed up. 
 
 
+
+### Typewise callrate filter
+
+To ensure correct performance of quantile normalisation samples with a callrate of zero on sex chromosomes or each type of signal on autosomes separately are excluded from QN and reported as samples filtered.
+
+
+
+```{r}
+
+minimum_callrate_QN <- 0
+
+category=auto
+markersII=as.matrix(intersect(rownames(TypeII.Green.All.d), category))
+markersIGreen=intersect(rownames(TypeI.Green.M.All.d), category)
+markersIRed=intersect(rownames(TypeI.Red.M.All.d), category)
+markers.auto <- list(II = markersII, IG = markersIGreen, IR = markersIRed)
+samples.callrate.typewise.auto <- do.call("rbind", lapply(markers.auto, function(m){colSums(!is.na(beta.raw[m,]))/nrow(beta.raw[m,])}))
+
+sample.call.auto = apply(samples.callrate.typewise.auto, 2, min)
+samples.auto.QN <- colnames(samples.callrate.typewise.auto)[sample.call.auto > minimum_callrate_QN]
+
+samples <- unique(samples[samples %in% samples.auto.QN])
+bufout.callrate.typewise.auto <- unique(samples[!samples %in% samples.auto.QN])
+
+# update datsamples information # for sex chromosome QN datsamples is additionally filtered to samples.sex, but not globally
+datsamples <- datsamplesfinal[datsamplesfinal$Sentrix_Code %in% samples,]
+
+# alternative version of reporting - apply or delete 
+# if(length(bufout.callrate.typewise.auto) > 0){
+# # report QN sample filter to samples.filtered
+# 	if(!exists("samples.filtered")){samples.filtered <- NA}
+# 	QN.filter.df = data.frame(sample = bufout.callrate.typewise.auto, filter = paste0("for Quantile Normalisation: callrate.typewise.autosomes <= ", minimum_callrate_QN), stringsAsFactors= F)
+#  	QN.filter.df <- merge(QN.filter.df,datsamples,all.x=T,by.x="sample",by.y="Sentrix_Code")
+# 	samples.filtered <- merge(samples.filtered,QN.filter.df,all=T)	
+#   write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
+# }
+# 
+# # add sex callrate filtered samples to samplesfile
+#   	bufout.sex.callrate <- data.frame(sample = sex.callrate.filtered.samples, filter = paste0("sex chromosome callrate <= ", sex.mismatch.callrate.minimum ), sex.chr.callrate = countsexna.relative[sex.callrate.filtered.samples])
+# 
+# 	if (nrow(samples.filtered)>0) {
+# 	# reduce samples.filtered top bufout information without datsamples and callrate
+# 		general.columns <- c(colnames(datsamples),"callrate")
+#     	samples.filter.list <- samples.filtered[,!colnames(samples.filtered) %in% general.columns]
+# 	# merge the filter informations
+# 		samples.filtered <- merge(samples.filter.list, bufout.sex.callrate, all = T)
+# 	} else {
+# 		samples.filtered <- bufout.sex.callrate
+# 	}
+# 	# remerge the general information on datsamples and callrate 
+# 	if (nrow(samples.filtered)>0) {
+#     	samples.filtered <- merge(samples.filtered,datsamples,all.x=T,by.x="sample",by.y="Sentrix_Code")
+#     	samples.filtered <- merge(samples.filtered,data.frame(callrate=sample.call),all.x=T,by.x="sample",by.y=0)    
+#     	samples.filtered <- samples.filtered[order(samples.filtered$sample,samples.filtered$filter),]
+# 	}
+# 	write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
+# 
+# 	# TODO: transfer this to part 3 typewise callrate (better would be a function ^^)
+
+
+# clean up 
+rm(samples.auto.QN, sample.call.auto, samples.callrate.typewise.auto, markers.auto, markersIRed, markersIGreen, markersII)
+```
+
+`r nrow(datsamples)` samples are included in the analysis, identified by the *samplesfilefinal*, existing sample calls and samplewise minimum callrate `r minimum_callrate_QN`. Callrate filtering is performed on autosomes and for sex chromosome QN additionally on sex chromosomes.
+
+```{r}
+#QN autosomes # has to be filtered by samples 
+category=auto
+markers=as.matrix(intersect(rownames(TypeII.Green.All.d), category))
+TypeII.Green = TypeII.Green.All.d[markers,samples]
+TypeII.Red = TypeII.Red.All.d[markers,samples]
+markers=intersect(rownames(TypeI.Green.M.All.d), category)
+TypeI.Green.M = TypeI.Green.M.All.d[markers,samples]
+TypeI.Green.U = TypeI.Green.U.All.d[markers,samples]
+markers=intersect(rownames(TypeI.Red.M.All.d), category)
+TypeI.Red.M = TypeI.Red.M.All.d[markers,samples]
+TypeI.Red.U = TypeI.Red.U.All.d[markers,samples]
+
+TypeII.Green=normalizeQuantiles(TypeII.Green)
+TypeII.Red = normalizeQuantiles(TypeII.Red)
+TypeI.Green.M = normalizeQuantiles(TypeI.Green.M)
+TypeI.Green.U = normalizeQuantiles(TypeI.Green.U)
+TypeI.Red.M = normalizeQuantiles(TypeI.Red.M)
+TypeI.Red.U = normalizeQuantiles(TypeI.Red.U)
+TypeII.betas = TypeII.Green/(TypeII.Red+TypeII.Green+100)
+TypeI.Green.betas = TypeI.Green.M/(TypeI.Green.M+TypeI.Green.U+100)
+TypeI.Red.betas = TypeI.Red.M/(TypeI.Red.M+TypeI.Red.U+100)
+betaQN = as.matrix(rbind(TypeII.betas,TypeI.Green.betas,TypeI.Red.betas))
+marker.callQN =rowSums(!is.na(betaQN))/ncol(betaQN) # this line is added; if problems occur, maybe delete it and rechange all lines where marker.callQN occurs to marker.call
+
+# sex chromosomes ------------------------------------------------------------------
+women <- datsamples[datsamples$Gender==1,"Sentrix_Code"]
+men <- datsamples[datsamples$Gender==0,"Sentrix_Code"]
+category=c(sexchrX,sexchrY)
+```
+
+Of the persons from whom samples are processed, `r length(women)` are women and `r length(men)` men.   
+
+
+
+```{r}
+
+# minimum callrate filtering on samples
+markersII=as.matrix(intersect(rownames(TypeII.Green.All.d), category))
+markersIGreen=intersect(rownames(TypeI.Green.M.All.d), category)
+markersIRed=intersect(rownames(TypeI.Red.M.All.d), category)
+markers.sex <- list(II = markersII, IG = markersIGreen, IR = markersIRed)
+samples.callrate.typewise.sex <- do.call("rbind", lapply(markers.sex, function(m){colSums(!is.na(beta.raw.sex[m,]))/nrow(beta.raw.sex[m,])}))
+
+sample.call.sex = apply(samples.callrate.typewise.sex, 2, min)
+samples.sex.QN <- colnames(samples.callrate.typewise.sex)[sample.call.sex > minimum_callrate_QN]
+bufout.callrate.typewise.sex <- unique(samples[!samples %in% samples.sex.QN])
+
+if(length(bufout.callrate.typewise.sex) > 0){
+# report QN sample filter to samples.filtered
+if(!exists("samples.filtered")){samples.filtered <- NA}
+	QN.filter.sex.df = data.frame(sample = bufout.callrate.typewise.sex, filter = paste0("for Quantile Normalisation: callrate.typewise.sexchromosomes < ", 1 - minimum_callrate_QN), stringsAsFactors= F)
+ 	QN.filter.sex.df <- merge(QN.filter.sex.df,datsamples,all.x=T,by.x="sample",by.y="Sentrix_Code")
+	samples.filtered <- merge(samples.filtered,QN.filter.sex.df,all=T)	
+  	write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
+}
+
+
+
+women <- unique(women[women %in% samples.sex.QN])
+men <- unique(men[men %in% samples.sex.QN])
+
+# clean up 
+rm(samples.sex.QN, sample.call.sex, samples.callrate.typewise.sex, markers.sex, markersIRed, markersIGreen, markersII)
+
+
+
+```
 
