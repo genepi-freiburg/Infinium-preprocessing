@@ -480,15 +480,18 @@ bufout.callrate.typewise.auto <- unique(samples[!samples %in% samples.auto.QN])
 # update datsamples information # for sex chromosome QN datsamples is additionally filtered to samples.sex, but not globally
 datsamples <- datsamplesfinal[datsamplesfinal$Sentrix_Code %in% samples,]
 
+if(length(bufout.callrate.typewise.auto) > 0){
+# report QN sample filter to samples.filtered
+cat(length(bufout.callrate.typewise.auto), " samples are excluded and reported due to low callrate on autosomes.\n")
+if(!exists("samples.filtered")){samples.filtered <- NA}
+	QN.filter.auto.df = data.frame(sample = bufout.callrate.typewise.auto, filter = paste0("for Quantile Normalisation: callrate.typewise.autosomes < ", 1 - minimum_callrate_QN), stringsAsFactors= F)
+ 	QN.filter.auto.df <- merge(QN.filter.auto.df,datsamples,all.x=T,by.x="sample",by.y="Sentrix_Code")
+	samples.filtered <- merge(samples.filtered,QN.filter.auto.df,all=T)	
+  	write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
+}
+
+
 # alternative version of reporting - apply or delete 
-# if(length(bufout.callrate.typewise.auto) > 0){
-# # report QN sample filter to samples.filtered
-# 	if(!exists("samples.filtered")){samples.filtered <- NA}
-# 	QN.filter.df = data.frame(sample = bufout.callrate.typewise.auto, filter = paste0("for Quantile Normalisation: callrate.typewise.autosomes <= ", minimum_callrate_QN), stringsAsFactors= F)
-#  	QN.filter.df <- merge(QN.filter.df,datsamples,all.x=T,by.x="sample",by.y="Sentrix_Code")
-# 	samples.filtered <- merge(samples.filtered,QN.filter.df,all=T)	
-#   write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
-# }
 # 
 # # add sex callrate filtered samples to samplesfile
 #   	bufout.sex.callrate <- data.frame(sample = sex.callrate.filtered.samples, filter = paste0("sex chromosome callrate <= ", sex.mismatch.callrate.minimum ), sex.chr.callrate = countsexna.relative[sex.callrate.filtered.samples])
@@ -569,6 +572,7 @@ bufout.callrate.typewise.sex <- unique(samples[!samples %in% samples.sex.QN])
 
 if(length(bufout.callrate.typewise.sex) > 0){
 # report QN sample filter to samples.filtered
+cat(length(bufout.callrate.typewise.sex), " samples are excluded and reported due to low callrate on sex chromosomes.\n")
 if(!exists("samples.filtered")){samples.filtered <- NA}
 	QN.filter.sex.df = data.frame(sample = bufout.callrate.typewise.sex, filter = paste0("for Quantile Normalisation: callrate.typewise.sexchromosomes < ", 1 - minimum_callrate_QN), stringsAsFactors= F)
  	QN.filter.sex.df <- merge(QN.filter.sex.df,datsamples,all.x=T,by.x="sample",by.y="Sentrix_Code")
