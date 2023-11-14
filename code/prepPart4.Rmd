@@ -4,7 +4,7 @@
 The inter-quartile range of a set of values is the difference between its 0.75-quartile and its 0.25-quartile. 
 In the following, these quartiles are calculated for all quantile-normalized autosomal beta values per probe. Beta values whose difference to the median is greater than 3 times the inter-quartile range are marked as outliers and set to missing (NA) in betaQN.all.3IQR.
 
-```{r}
+```{r, label = IQR_calc}
   # outliers
   IQRrange <- 1.5
   betaQN.all.3IQR <- betaQN.all
@@ -42,7 +42,7 @@ In the following, these quartiles are calculated for all quantile-normalized aut
    marker.outlier.all$callrate<-marker.outlier.all$nprobes/length(samples)
 ```
 
-```{r}
+```{r, label = IQR_Nprobes}
 Nprobes = (nrow(betaQN.all)*ncol(betaQN.all))
 Nprobes.nocall = length(betaQN.all[which(is.na(betaQN.all))])
 Nprobes.call = length(betaQN.all.3IQR[which(is.na(betaQN.all.3IQR))])
@@ -54,17 +54,17 @@ total                   | `r Nprobes`           | 100\%
 noCall                  | `r Nprobes.nocall`    |`r (Nprobes.nocall/Nprobes)/100 `\%
 noCall with filter 3IQR | `r Nprobes.call`  	|`r (Nprobes.call/Nprobes)/100 `\%
 
-```{r}   
+```{r, label = IQR_histogram1}   
    hist(marker.outlier.all$outlier3_IQR,breaks=50,main="#Probes Outlier 3 IQR",xlab="#outliers per probe",ylab="#probes")
 ```
   
 
-```{r}
+```{r, label = IQR_histogram2}
    hist(marker.outlier.all$nprobes,breaks=50,main="#Calls per Probe (QN Dataset)",xlab="#calls per probe",ylab="#probes")
 ```
   
 
-```{r}
+```{r, label = IQR_histogram3}
    hist(marker.outlier.all$callrate,breaks=50,main="#Callrate per Probe (QN Dataset)",xlab="callrate",ylab="#probes")
    
  # reformat output for analysis pipeline

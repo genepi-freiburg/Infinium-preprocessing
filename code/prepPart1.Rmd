@@ -1,6 +1,6 @@
 ## PART 1: Data and parameters
 
-```{r, message = FALSE, echo = FALSE, warning = FALSE}
+```{r, label='read-in', message = FALSE, echo = FALSE, warning = FALSE}
 #####################
 
  #read data
@@ -382,7 +382,7 @@ In our further calculations beta value data always is processed separately for a
 
 * Detection p-values are illustrated in the following plots. Low p-values indicate that the signal is unlikely to be background noise. 
 
-```{r}
+```{r, label='detection_p-values'}
 # test
 dpvec <- dp.all
 dim(dpvec) <- c(nrow(dp.all)*ncol(dp.all),1)
@@ -397,7 +397,7 @@ if(sum(dpvec>0)>0){
 
 
 
-```{r}
+```{r, label='detection_p-values_zero'}
 hist(-log10(dpvecplot),breaks=30, main = "detection p-values: zero values set to 1E-20")
 rm(dpvecplot)
 ```
@@ -498,7 +498,7 @@ beta values:   | autosomes           |  sex chromosomes
 ---------------|---------------------|----------------------------
 dimension:     | $`r dim(beta.raw)`$ | $`r dim(beta.raw.sex)`$
 
-````{r}
+````{r, label='beta-densities'}
 if(length(samplesinclude)<101){
 	cat("\nThe sample names of the included samples:\n")
 	datsamples$Sample_Name[datsamples$Sentrix_Code %in%samplesinclude]
@@ -538,17 +538,17 @@ if (length(bufout)>0) samples.filtered <- data.frame(sample=bufout,x=NA,y=NA,fil
 * $`r length(bufout)`$ samples were tagged for exclusion because the call-rate was below the threshold $`r callrate.thres`$.
 
 
-```{r}
+```{r, label = 'sample_call'}
 # plot sample call rates
 hist(sample.call,breaks=100, main = "sample call rates")
 ```
 
-```{r}
+```{r, label = sample_call_zoomx}
 # plot sample call rates
 hist(sample.call,breaks=100, main = "sample call rates zoomed x-axis", xlim = c(0.85,1), sub = "zoomed x-axis is fixed to 0.85 to 1")
 ```
 
-```{r}
+```{r, label = sample_call_zoomy}
 # plot sample call rates
 hist(sample.call,breaks=100, main = "sample call rates zoomed y-axis", ylim = c(0,30), sub = "zoomed y axis is fixed to 0 to 30")
 ```
@@ -560,12 +560,12 @@ $`r max(0,length(sample.call[which(sample.call<=0.98)]))`$ of all sample call ra
 We have a look at the marker call rates as well:
 
 
-```{r}
+```{r, label = marker_call}
 hist(marker.call,breaks=100, main = "marker call rates")
 ```
 
 
-```{r}
+```{r, label = marker_call_zoom}
 hist(marker.call,breaks=100, main = "marker call rates zoomed y-axis", ylim = c(0,500), sub = "zoomed y axis is fixed to 0 to 500")
 ```  
 
