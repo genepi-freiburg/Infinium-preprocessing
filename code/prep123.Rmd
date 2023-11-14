@@ -30,42 +30,78 @@ This is a pipeline for preprocessing EPIC-Methylation data using R.
 ```{r}
 analysisfilename = paste0("analysis_ready_",projectname,"_",formatted.time,".Rdata")
 qcfilename=paste0("QC_data_",projectname,"_",formatted.time,".Rdata")
+
+ctrlpre <- "controlprobes_"
+rawtypepre <- "raw_intensitites_"
+detppre <- "detp_intensities"
+rawpre <- "rawdata_"
+
+controlfilename <- paste0(ctrlpre,qcfilename)
+rawtypesfilename <- paste0(rawtypepre,qcfilename)
+detpfilename <- paste0(detppre,qcfilename)
+raw_filename <- paste0(rawpre,qcfilename)
+
 ```
 
-1. The following data is included in the Rdata-file `r qcfilename`:
+The following data is included in the Rdata-files ending in `r qcfilename` ...
+
+1. with prefix `r ctrlpre`:
 \begin{description}
 	\item[ctrl.all, ctrl.complete.Red.all, ctrl.complete.Green.all, control.info] control probe data
 	\item[ctrlprobes.scores] rotated control probe intensities into the coordinates given by principal component analysis
-	\item[dp.all] detection p-values of unfiltered idat data
-	\item[TypeII.Red.All etc] list the corresponding intensity values
+\end{description}
+
+2. with prefix `r rawtypepre`:
+\begin{description}
+	\item[TypeII.Red.All etc] list the corresponding intensity values for TypeI and Type II, each (M \& U) and Green \& Red
+\end{description}
+
+3. with prefix `r detppre`:
+\begin{description}
 	\item[TypeII.Red.All.d etc] list the corresponding intensity values where detection p-values smaller than threshold $`r detPthreshold`$ are set to missing (NA).
+\end{description}
+
+4. with prefix `r rawpre`:
+\begin{description}
+	\item[dp.all] detection p-values of unfiltered idat data
 	\item[sample.call] the sample call rates
 	\item[marker.call] the marker call rates
 	\item[beta.raw] the $\beta$ values calculated for autosomal probes with detection p value filter only
 	\item[beta.raw.sex] the $\beta$ values calculated for sex chromosome probes with detection p value filter only
-	\item[pcaAuto] output of function prcomp conducting PCA of \textbf{betaQN}
-	\item[sample.callY, sample.callX] sample call rates for chromosomes X and Y for quantile normalized filtered samples
-	\item[marker.call.all] marker callrate of all quantile normalized samples incl. the ones excluded by IQR-filter 
+	\item[est.wbc.minfi] the white-blood-cell estimations by minfi method based on RGsets (only if estimateCellCounts is set to TRUE in the parameterfile)
 \end{description}
 
 
-2. The data needed for further analysis is saved as `r analysisfilename`:
+
+```{r}
+	save(ctrl.all, ctrlprobes.scores,ctrl.complete.Red.all, ctrl.complete.Green.all, control.info, file=paste0(outputdir,'/',controlfilename))
+	save(TypeII.Red.All ,TypeII.Green.All , TypeI.Red.M.All ,TypeI.Red.U.All , TypeI.Green.M.All ,TypeI.Green.U.All, file=paste0(outputdir,'/',rawtypesfilename))
+	save(TypeII.Red.All.d ,TypeII.Green.All.d , TypeI.Red.M.All.d ,TypeI.Red.U.All.d , TypeI.Green.M.All.d , TypeI.Green.U.All.d, file=paste0(outputdir,'/',detpfilename))
+
+
+if(exists("est.wbc.minfi")){
+	save(sample.call, marker.call, dp.all,  beta.raw, beta.raw.sex, est.wbc.minfi, file=paste0(outputdir,'/',raw_filename))
+} else {
+	save(sample.call, marker.call, dp.all,  beta.raw, beta.raw.sex, file=paste0(outputdir,'/',raw_filename))
+}
+```
+
+### Analysis Data 
+
+The data needed for further analysis is saved as `r analysisfilename`:
 \begin{description}
-	\item[pcaControls] output of function prcomp conducting the PCA of control probes 
 	\item[betaQN] $\beta$ values calculated for autosomal probes of filtered samples with quantile normalization applied 
 	\item[betaQN.sex] $\beta$ values calculated for sex chromosome probes of filtered samples with quantile normalization applied 
-	\item[betaQN.all] combines \textbf{betaQN} and \textbf{betaQN.sex} 
-	\item[est.wbc.minfi] the white-blood-cell estimations by minfi method based on RGsets
+	\item[est.wbc.minfi] the white-blood-cell estimations by minfi method based on RGsets (if estimateCellCounts is set to TRUE in the parameterfile)
+	\item[pcaControls] output of function prcomp conducting the PCA of control probes 
 \end{description}
 
 
 ```{r}
- save(ctrl.all,ctrlprobes.scores,ctrl.complete.Red.all, ctrl.complete.Green.all, control.info,dp.all, TypeII.Red.All , TypeII.Green.All , TypeI.Red.M.All , TypeI.Red.U.All , TypeI.Green.M.All , TypeI.Green.U.All, TypeII.Red.All.d , TypeII.Green.All.d , TypeI.Red.M.All.d , TypeI.Red.U.All.d , TypeI.Green.M.All.d , TypeI.Green.U.All.d , sample.call, marker.call, beta.raw, beta.raw.sex, pcaAuto, sample.callY, sample.callX,marker.call.all, file=paste0(outputdir,'/',qcfilename))
-
 if(exists("est.wbc.minfi")){
- save(pcaControls, betaQN, betaQN.sex,betaQN.all, est.wbc.minfi, file=paste0(outputdir,"/",analysisfilename))
+ save(pcaControls, betaQN, betaQN.sex, est.wbc.minfi, file=paste0(outputdir,"/",analysisfilename))
 } else { 
- save(pcaControls, betaQN, betaQN.sex,betaQN.all, file=paste0(outputdir,"/",analysisfilename))
+ save(pcaControls, betaQN, betaQN.sex, file=paste0(outputdir,"/",analysisfilename))
 }
 ```
 
