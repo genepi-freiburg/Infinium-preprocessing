@@ -38,6 +38,8 @@ samplesfilefinal="samplesfile_example_postQC"
 ############################
 # Only needed if there are more batch variables then Sample_Plate and Sample_Well that should be tested for batch effects. 
 BatchVariablesFile="additionalBatchVariables.tsv"
+# CHANGE: Mandatory to provide full absolute path. 
+
 
 ############################
 # threshold parameters ###
