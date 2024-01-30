@@ -90,6 +90,8 @@ for(i in 1:nrow(filenames)){ # in code as is needless since i is only 1 and all 
 
 		WBCok = ifelse(exists("estimateWBCs"), estimateWBCs, FALSE)
 		 if(WBCok%in%TRUE){
+		
+		#########################################
 		# if(WBCok%in%TRUE && filenames[i,] %in% filenames_final_vector) { # no this does not work as reduction to final samples; the RGset must be either reduced directly or a RGset_final mst be created as read-in
 
 		#  	filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
@@ -102,12 +104,18 @@ for(i in 1:nrow(filenames)){ # in code as is needless since i is only 1 and all 
  	
 		#  	RGset <- read.metharray(filenames, verbose=TRUE, force=TRUE) # formerly: read.450k()
 		#  	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
- 	
+ 		
+ 		
+ 		# comment by Lucas Salas on github: If you are using the latest version of FlowSorted.Blood.EPIC (>=v.2.0) you do not need to specify any of those options.
+ 		############################################
+ 		
+ 		
+ 		
  		est_wbc <- estimateCellCounts(RGset, compositeCellType = "Blood", cellTypes = c("CD8T","CD4T", "NK","Bcell","Mono","Gran"),
- 				 sex = datsamples$MFGender[match(sample_names,datsamples$Sentrix_Code)]) # , # )
- 	                              # referencePlatform=arraytype)
+ 				 sex = datsamples$MFGender[match(sample_names,datsamples$Sentrix_Code)])
+ 				 # referencePlatform = arraytype)
  	                              
- 		if(exists("est.wbc.minfi")){ # in code as is needless since i is only 1 and all files are read simultaneously
+ 		if(exists("est.wbc.minfi")){ # in code as is this is needless since i is only 1 and all files are read simultaneously
  			est.wbc.minfi = rbind(est.wbc.minfi, est_wbc)
  		} else {
  			est.wbc.minfi = as.data.frame(est_wbc)
