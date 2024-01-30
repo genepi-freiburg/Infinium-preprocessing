@@ -25,7 +25,7 @@ colnames(ctrlprobes.scores) = paste(colnames(ctrlprobes.scores), '_cp', sep='')
 #control probe based QC
 # Details are given in the ILMN HD methylation assay protocol guide (15019519)
 
-# bisulfate conversion: a non-CpG sequence with only one C at the target site will be converter to T by BS conversion. Therefore, converted control probes should be expressed (for each red/green channel) and unconverted not.
+# bisulfate conversion: a non-CpG sequence with only one C at the target site will be converted to T by BS conversion. Therefore, converted control probes should be expressed (for each red/green channel) and unconverted not.
 # BS-I
 cprobes <- control.info[control.info$Type=="BISULFITE CONVERSION I" & (control.info$Color %in% c("Green","LimeGreen","Lime")),"Address"] # select converted green
 controlQC <- data.frame(Cgreen=colMeans(ctrl.complete.Green.all[cprobes,]))
