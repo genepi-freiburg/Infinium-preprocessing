@@ -12,7 +12,7 @@ projectname="CHANGE"
 # CHANGE: any string; date and time are appended in the code to prevent overwriting
 
 idatdir="idats"
-# CHANGE: directory containing all idat files, absolute path, no / at the end
+# CHANGE: directory containing all idat files, absolute path, no / at the end, for several idat directories concatenate them by ";" like "a;b"
 
 outputdir="output"
 # CHANGE: output directory for RData files, absolute path, no / at the end

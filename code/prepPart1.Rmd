@@ -6,14 +6,21 @@
  #read data
  cwd<-getwd()
 
- setwd(idatdir)
-#  filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))[1:10]
- filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
+scandata <- strsplit(idatdir,";")[[1]]
 
-length.of.folder = sapply(gregexpr2("/",filenames), max) 
-# can be used to replace the nchar - 18 # TODO
+filenames <- NULL
+for(path in scandata){
+	 setwd(path)
+		
+	files_here <- dir(pattern="\\.idat$",recursive=TRUE, full.names=TRUE, path = getwd()) # this path handling ensures correct number of / in path name
+	filenames_tmp <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",files_here,ignore.case=T),ignore.case=T))
+	
+	filenames <- c(filenames, filenames_tmp)
+	rm(files_here,filenames_tmp)
+}
 
-sample_names = sapply(filenames, function(s){substring(s, first = (nchar(s) - 18))})
+sample_names = sapply(filenames, function(s){sub(".+/","",s)})
+
 # dim(filenames) <- c(1,length(filenames))
 # as list : sample_names = apply(filenames, c(1,2), function(s){substring(s, first = (nchar(s) - 18))})
 
@@ -37,8 +44,8 @@ datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$
 # filter filenames list with combined samples of samplesfile and samplesfile_final
  filenames_idx <- sapply(union(datsamplesfinal$Sentrix_Code,datsamples$Sentrix_Code), function(x){grep(x,filenames)})
   
- filenames_final_idx <- sapply(datsamplesfinal$Sentrix_Code, function(x){grep(x,filenames)})
- filenames_final_vector <- filenames[filenames_final_idx]
+#  filenames_final_idx <- sapply(datsamplesfinal$Sentrix_Code, function(x){grep(x,filenames)})
+#  filenames_final_vector <- filenames[filenames_final_idx]
  
  filenames = filenames[filenames_idx] # !! this changes filenames object! 
  dim(filenames) <- c(1,length(filenames))
@@ -79,8 +86,8 @@ for(i in 1:nrow(filenames)){ # in code as is needless since i is only 1 and all 
 # for(i in 1:5){ # test version
 	# print(i)
 	### 1 line here different
-	# RGset <- read.metharray(filenames[i,], verbose=TRUE) # formerly: read.450k()
-	RGset <- read.metharray(paste0(idatdir,"/",filenames[i,]), verbose=TRUE, force=TRUE) #
+	RGset <- read.metharray(filenames[i,], verbose=TRUE, force = TRUE) # formerly: read.450k()
+	# RGset <- read.metharray(paste0(idatdir,"/",filenames[i,]), verbose=TRUE, force=TRUE) #
 	
 
 	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
