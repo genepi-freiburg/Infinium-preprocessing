@@ -42,8 +42,17 @@ datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$
 
 
 # filter filenames list with combined samples of samplesfile and samplesfile_final
- filenames_idx <- sapply(union(datsamplesfinal$Sentrix_Code,datsamples$Sentrix_Code), function(x){grep(x,filenames)})
-  
+ filenames_idx_list <- sapply(union(datsamplesfinal$Sentrix_Code,datsamples$Sentrix_Code), function(x){grep(x,filenames)})
+## this returns a list, we need an index
+	 filenames_idx <-  as.integer(filenames_idx_list)
+	 
+#		# we need to handle samples without idat file
+	missing_idat <- names(filenames_idx_list[is.na(filenames_idx)])
+	write.table(missing_idat, file = "missing_idat_files.tsv", row.names = FALSE, col.names = TRUE)
+	
+#		# need unique NA-free index 
+	filenames_idx <- filenames_idx[!is.na(filenames_idx)]
+
 #  filenames_final_idx <- sapply(datsamplesfinal$Sentrix_Code, function(x){grep(x,filenames)})
 #  filenames_final_vector <- filenames[filenames_final_idx]
  
@@ -513,7 +522,7 @@ beta values:   | autosomes           |  sex chromosomes
 ---------------|---------------------|----------------------------
 dimension:     | $`r dim(beta.raw)`$ | $`r dim(beta.raw.sex)`$
 
-````{r, label='beta-densities'}
+```{r, label='beta-densities'}
 if(length(samplesinclude)<101){
 	cat("\nThe sample names of the included samples:\n")
 	datsamples$Sample_Name[datsamples$Sentrix_Code %in%samplesinclude]

@@ -35,7 +35,7 @@ if (arraytype=="IlluminaHumanMethylationEPIC") {
 	# which one can download from 
 	# https://support.illumina.com/array/array_kits/infinium-methylationepic-beadchip-kit/downloads.html 
 	
-} else if  (arraytype=="IlluminaHumanMethylation450k") {
+} else if (arraytype=="IlluminaHumanMethylation450k") {
 
 # 	annotationfile="/data/programs/pipelines/CPACOR-EPIC_pipeline/annotationfile450k.csv"
 	annotationfile="/data/programs/pipelines/CPACOR-EPIC_pipeline/HumanMethylation450_15017482_v1-2.csv"
