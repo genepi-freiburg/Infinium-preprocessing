@@ -268,7 +268,7 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 	colnames(EV)[match("Row.names",colnames(EV))] <- "Sentrix_Code"
 
 	# plot first males, then females: find female outlier
-	idx = which(EV$Gender%in%c(1)) # 1 is female
+	idx = which(EV$Sex_female%in%c(1)) # 1 is female
 	plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"]) + 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 	points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
 	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
@@ -327,7 +327,7 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 	colnames(EV)[match("Row.names",colnames(EV))] <- "Sentrix_Code"
 
 	# plot first males, then females: find female outlier
-	idx = which(EV$Gender%in%c(1)) # 1 is female
+	idx = which(EV$Sex_female%in%c(1)) # 1 is female
 	plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"]) + 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 	points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
 	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
@@ -360,7 +360,7 @@ The second plot shows the principle components of the PCA on the samples in the 
 
 ```{r, label = pca_sexmismatch}
 if(exists("EV")){
-	resSexCheck <- data.frame(Sentrix_Code=EV$Sentrix_Code, Sex=EV$Gender, EV1=EV[,"PC1"], EV2=EV[,"PC2"])
+	resSexCheck <- data.frame(Sentrix_Code=EV$Sentrix_Code, Sex=EV$Sex_female, EV1=EV[,"PC1"], EV2=EV[,"PC2"])
 } else {
 	resSexCheck <- NULL
 }
@@ -376,7 +376,7 @@ if(min(dim(na.omit(betaPCA))) > 0){
 	colnames(EV)[match("Row.names",colnames(EV))] <- "Sentrix_Code"
 
 	# plot first males, then females: find female outlier
-	idx = which(EV$Gender%in%c(1)) # 1 is female
+	idx = which(EV$Sex_female%in%c(1)) # 1 is female
 	plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*( max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 	points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
 	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
@@ -407,7 +407,7 @@ if(min(dim(na.omit(betaPCA))) > 0){
 		colnames(EV)[match("Row.names",colnames(EV))] <- "Sentrix_Code"
 
 		# plot first males, then females: find female outlier
-		idx = which(EV$Gender%in%c(1)) # 1 is female
+		idx = which(EV$Sex_female%in%c(1)) # 1 is female
 		plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*( max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 		points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
 		legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
@@ -559,8 +559,8 @@ betaQN = as.matrix(rbind(TypeII.betas,TypeI.Green.betas,TypeI.Red.betas))
 marker.callQN =rowSums(!is.na(betaQN))/ncol(betaQN) # this line is added; if problems occur, maybe delete it and rechange all lines where marker.callQN occurs to marker.call
 
 # sex chromosomes ------------------------------------------------------------------
-women <- datsamples[datsamples$Gender==1,"Sentrix_Code"]
-men <- datsamples[datsamples$Gender==0,"Sentrix_Code"]
+women <- datsamples[datsamples$Sex_female==1,"Sentrix_Code"]
+men <- datsamples[datsamples$Sex_female==0,"Sentrix_Code"]
 category=c(sexchrX,sexchrY)
 ```
 
