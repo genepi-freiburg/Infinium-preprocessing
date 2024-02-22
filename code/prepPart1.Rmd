@@ -1,65 +1,4 @@
-## PART 1: Data and parameters
-
-```{r, label='read-in', message = FALSE, echo = FALSE, warning = FALSE}
-#####################
-
- #read data
- cwd<-getwd()
-
-scandata <- strsplit(idatdir,";")[[1]]
-
-filenames <- NULL
-for(path in scandata){
-	 setwd(path)
-		
-	files_here <- dir(pattern="\\.idat$",recursive=TRUE, full.names=TRUE, path = getwd()) # this path handling ensures correct number of / in path name
-	filenames_tmp <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",files_here,ignore.case=T),ignore.case=T))
-	
-	filenames <- c(filenames, filenames_tmp)
-	rm(files_here,filenames_tmp)
-}
-
-sample_names = sapply(filenames, function(s){sub(".+/","",s)})
-
-# dim(filenames) <- c(1,length(filenames))
-# as list : sample_names = apply(filenames, c(1,2), function(s){substring(s, first = (nchar(s) - 18))})
-
-# read samples
-datsamples <- read.table(file=samplesfile,header=T,as.is=T,sep="\t", colClasses = "character")
-datsamples$Gender = as.numeric(datsamples$Gender)
-# provide a new column with sample identifier
-if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamples))){stop("samplesfile must provide Sentrix_ID and Sentrix_Position.")}
-datsamples$Sentrix_Code = paste(datsamples$Sentrix_ID,datsamples$Sentrix_Position,sep = "_")
-datsamples$MFGender = ifelse(datsamples$Gender == 0, "M","F")
-
-# read final samples
-datsamplesfinal <- read.table(file=samplesfilefinal,header=T,as.is=T,sep="\t", colClasses = "character")
-datsamplesfinal$Gender = as.numeric(datsamplesfinal$Gender)
-# provide a new column with sample identifier
-if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamplesfinal))){stop("Final samplesfile must provide Sentrix_ID and Sentrix_Position.")}
-datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$Sentrix_Position,sep = "_")
-# datsamplesfinal$MFGender = ifelse(datsamplesfinal$Gender == 0, "M","F")
-
-
-# filter filenames list with combined samples of samplesfile and samplesfile_final
- filenames_idx_list <- sapply(union(datsamplesfinal$Sentrix_Code,datsamples$Sentrix_Code), function(x){grep(x,filenames)})
-## this returns a list, we need an index
-	 filenames_idx <-  as.integer(filenames_idx_list)
-	 
-#		# we need to handle samples without idat file
-	missing_idat <- names(filenames_idx_list[is.na(filenames_idx)])
-	write.table(missing_idat, file = "missing_idat_files.tsv", row.names = FALSE, col.names = TRUE)
-	
-#		# need unique NA-free index 
-	filenames_idx <- filenames_idx[!is.na(filenames_idx)]
-
-#  filenames_final_idx <- sapply(datsamplesfinal$Sentrix_Code, function(x){grep(x,filenames)})
-#  filenames_final_vector <- filenames[filenames_final_idx]
- 
- filenames = filenames[filenames_idx] # !! this changes filenames object! 
- dim(filenames) <- c(1,length(filenames))
-
-
+```{r, label = declare_function, echo = FALSE}
 detectionP.local <- function (rgSet, type = "m+u")
 {
     locusNames <- getManifestInfo(rgSet, "locusNames")
@@ -90,19 +29,106 @@ detectionP.local <- function (rgSet, type = "m+u")
     }
     detP
 }
+```
 
-for(i in 1:nrow(filenames)){ # in code as is needless since i is only 1 and all files are read simultaneously
-# for(i in 1:5){ # test version
-	# print(i)
-	### 1 line here different
-	RGset <- read.metharray(filenames[i,], verbose=TRUE, force = TRUE) # formerly: read.450k()
-	# RGset <- read.metharray(paste0(idatdir,"/",filenames[i,]), verbose=TRUE, force=TRUE) #
+## PART 1: Data and parameters
+
+```{r, label='read-in', message = FALSE, echo = FALSE, warning = FALSE}
+
+##########################################
+# read samples ###########################
+datsamples <- read.table(file=samplesfile,header=T,as.is=T,sep="\t", colClasses = "character")
+datsamples$Sex_female = as.numeric(datsamples$Sex_female)
+# provide a new column with sample identifier
+if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamples))){stop("samplesfile must provide Sentrix_ID and Sentrix_Position.")}
+datsamples$Sentrix_Code = paste(datsamples$Sentrix_ID,datsamples$Sentrix_Position,sep = "_")
+datsamples$MFSex_female = ifelse(datsamples$Sex_female == 0, "M","F")
+
+# read final samples #####################
+datsamplesfinal <- read.table(file=samplesfilefinal,header=T,as.is=T,sep="\t", colClasses = "character")
+datsamplesfinal$Sex_female = as.numeric(datsamplesfinal$Sex_female)
+# provide a new column with sample identifier
+if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamplesfinal))){stop("Final samplesfile must provide Sentrix_ID and Sentrix_Position.")}
+datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$Sentrix_Position,sep = "_")
+datsamplesfinal$MFSex_female = ifelse(datsamplesfinal$Sex_female == 0, "M","F")
+##########################################
+
+#read data ###############################
+ 
+cwd<-getwd()
+
+scandata <- strsplit(idatdir,";")[[1]]
+
+filenames_pathwise <- vector(mode = "list", length = length(scandata))
+names(filenames_pathwise) <- scandata
+
+RGset_pathwise <- vector(mode = "list", length = length(scandata))
+names(RGset_pathwise) <- scandata
+
+sample_names <- NA
+missing_idat <- NA
+
+for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
+	 setwd(path)
+		
+	files_here <- dir(pattern="\\.idat$",recursive=TRUE, full.names=TRUE, path = getwd()) # this path handling ensures correct number of / in path name
+	filenames_pathwise[[path]] <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",files_here,ignore.case=T),ignore.case=T))
+
+	sample_names = c(sample_names, sapply(filenames_pathwise[[path]], function(s){sub(".+/","",s)}))
 	
+	rm(files_here)
+
+	filenames <- filenames_pathwise[[path]]
+
+	# filter filenames list with combined samples of samplesfile and samplesfile_final
+ 	 filenames_idx_list <- sapply(union(datsamplesfinal$Sentrix_Code,datsamples$Sentrix_Code), function(x){grep(x,filenames)})
+	 filenames_idx <-  as.integer(filenames_idx_list)
+	 
+	# we need to handle samples without idat file
+	 missing_idat <- c(missing_idat, names(filenames_idx_list[is.na(filenames_idx)]))
+	 write.table(missing_idat, file = "missing_idat_files.tsv", row.names = FALSE, col.names = TRUE) # need overwrite = TRUE?
+	
+	# need unique NA-free index 
+	 filenames_idx <- filenames_idx[!is.na(filenames_idx)]
+
+# 	 filenames_final_idx <- as.integer(sapply(datsamplesfinal$Sentrix_Code, function(x){grep(x,filenames)}))
+# 	 filenames_final_idx <- filenames_final_idx[!is.na(filenames_final_idx)]
+ 
+ 	filenames = filenames[filenames_idx] # !! this changes filenames object! 
+ 	filenames_pathwise[[path]] <- filenames
+	# filenames <- filenames[1:5] # test version
+# 	dim(filenames) <- c(1,length(filenames))
+
+	### read data ###################################################
+#	RGset <- read.metharray(filenames[1,], verbose=TRUE, force = TRUE) 
+	RGset <- read.metharray(filenames, verbose=TRUE, force = TRUE) 
 
 	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
 	
+	RGset_pathwise[[path]] <- RGset
+	
+	rm(RGset, filenames)
+
+} ######## data read-in 
+
+# if there are several paths; function can only handle two objects
+
+RGset <- RGset_pathwise[[1]]
+
+if(length(scandata) > 1){
+	
+	for(i in 2:length(scandata)){
+		RGset <- combineArrays(RGset, RGset_pathwise[[i]],
+                  outType = c("IlluminaHumanMethylationEPIC"), # == arraytype
+                  verbose = TRUE)	
+	}
+}
+
+rm(RGset_pathwise)
+
+######## WBC and SNP extraction ####################
+	
 	# add: make WBC estimation with samples from *final* samplesfile
-	# integrated into for loop 18th of November 2022 FGC
 
 		WBCok = ifelse(exists("estimateWBCs"), estimateWBCs, FALSE)
 		 if(WBCok%in%TRUE){
@@ -128,7 +154,7 @@ for(i in 1:nrow(filenames)){ # in code as is needless since i is only 1 and all 
  		
  		
  		est_wbc <- estimateCellCounts(RGset, compositeCellType = "Blood", cellTypes = c("CD8T","CD4T", "NK","Bcell","Mono","Gran"),
- 				 sex = datsamples$MFGender[match(sample_names,datsamples$Sentrix_Code)])
+ 				 sex = datsamples$MFSex_female[match(sample_names,datsamples$Sentrix_Code)])
  				 # referencePlatform = arraytype)
  	                              
  		if(exists("est.wbc.minfi")){ # in code as is this is needless since i is only 1 and all files are read simultaneously
@@ -151,7 +177,11 @@ for(i in 1:nrow(filenames)){ # in code as is needless since i is only 1 and all 
        		 }
 	}
     }
-	
+
+
+########### PROBE INFO & DATA SPLIT ###############################################
+
+
 	# Type II probes
 	TypeII.Name <- getProbeInfo(RGset, type = "II")$Name
 	TypeII.Green <- getGreen(RGset)[getProbeInfo(RGset, type = "II")$AddressA,]
@@ -178,6 +208,8 @@ for(i in 1:nrow(filenames)){ # in code as is needless since i is only 1 and all 
 	rownames(TypeI.Red.U) <- TypeI.Red.Name
 	colnames(TypeI.Red.U) <- sampleNames(RGset)
 
+
+	##### how to handle different array types? are these different? 
 	### until next ### different: control defined 
 	control=getProbeInfo(RGset, type = "Control") # needed also for lowlevel QC
 
@@ -212,7 +244,7 @@ for(i in 1:nrow(filenames)){ # in code as is needless since i is only 1 and all 
 
 	### the upper selection of information of extended type is in a more condensed form by AT ; normalization has to be added by hand 
 
-	#Normalisation
+	# Normalisation
 	normC.Green.Name=control[control[,2]=='NORM_C',4]
 	normC.Green <- matrix(NA_real_, ncol = ncol(RGset), nrow = length(normC.Green.Name), dimnames = list(normC.Green.Name, sampleNames(RGset)))
 	normC.Green[normC.Green.Name,] <- getGreen(RGset)[control[control[,2]=='NORM_C',1],]
@@ -246,10 +278,11 @@ for(i in 1:nrow(filenames)){ # in code as is needless since i is only 1 and all 
         ctrl = rbind(as.matrix(BSCI.Green), as.matrix(BSCI.Red), as.matrix(BSCII.Red), (ctlext.Red), (ctlext.Green),as.matrix(normC.Green),as.matrix(normG.Green), as.matrix(normA.Red),as.matrix(normT.Red))
 
 	#detection p-values
-	dp = detectionP.local(RGset, type = "m+u") ### formerly: detectionP(RGset, type = "m+u")
+	dp = detectionP.local(RGset, type = "m+u") 
 
+	#### TODO merge all data of different EPIC versions later ### 
+	# add data for the new samples
 	
-	#add data for the new samples
 	if(exists("TypeII.Red.All")) {
 	TypeII.Red.All <- cbind(TypeII.Red.All,TypeII.Red)
 	TypeII.Green.All <- cbind(TypeII.Green.All,TypeII.Green)
@@ -257,26 +290,36 @@ for(i in 1:nrow(filenames)){ # in code as is needless since i is only 1 and all 
 	TypeI.Red.U.All <- cbind(TypeI.Red.U.All,TypeI.Red.U)
 	TypeI.Green.M.All <- cbind(TypeI.Green.M.All,TypeI.Green.M)
 	TypeI.Green.U.All <- cbind(TypeI.Green.U.All,TypeI.Green.U)
+	
 	ctrl.all <- rbind(ctrl.all, t(ctrl))
 	## added for lowlevel QC by AT 
 	ctrl.complete.Red.all <- cbind(ctrl.complete.Red.all, ctrl.complete.Red) # added for lowlevel QC
-        ctrl.complete.Green.all <- cbind(ctrl.complete.Green.all, ctrl.complete.Green) # added for lowlevel QC
+    ctrl.complete.Green.all <- cbind(ctrl.complete.Green.all, ctrl.complete.Green) # added for lowlevel QC
+    
 	dp.all <- cbind(dp.all, dp)
+	
 	} else {
 	TypeII.Red.All <- TypeII.Red                                                                                                                                  
 	TypeII.Green.All <- TypeII.Green 
 	TypeI.Red.M.All <- TypeI.Red.M 
 	TypeI.Red.U.All <- TypeI.Red.U 
 	TypeI.Green.M.All <- TypeI.Green.M 
-	TypeI.Green.U.All <- TypeI.Green.U     
+	TypeI.Green.U.All <- TypeI.Green.U    
+	 
 	ctrl.all <- t(ctrl)
 	ctrl.complete.Red.all <- ctrl.complete.Red # added for lowlevel QC
-        ctrl.complete.Green.all <- ctrl.complete.Green # added for lowlevel QC
-        dp.all <- dp
+    ctrl.complete.Green.all <- ctrl.complete.Green # added for lowlevel QC
+    
+    dp.all <- dp
 	}
-}
 
-	
+# list(ls()) # remove what is not needed anymore - save space 
+rm(BSCI.Green ,BSCI.Red ,BSCII.Red ,ctlext.Red ,ctlext.Green ,normC.Green ,normG.Green ,normA.Red ,normT.Red)
+rm(bufR, bufG, control_ok.Red, control_ok.Green, ctrl.complete.Red, ctrl.complete.Green, TypeII.Red, TypeII.Green, TypeI.Red.M, TypeI.Red.U, TypeI.Green.M, TypeI.Green.U)
+rm(dp, detppre, controlExtRed, controlExtGreen, extendedTypeGreen, extendedTypeRed, filenames_idx_list, filenames_idx, i, idatdir, rawtypepre)
+rm(BSCI.Green.Name, BSCI.Red.Name, BSCII.Red.Name, ctlext.Red.Name, ctlext.Green.Name, normC.Green.Name, normG.Green.Name, normA.Red.Name, normT.Red.Name)
+rm(detectionP.local)
+rm(RGset)
 
 setwd(cwd)	
 
@@ -310,7 +353,7 @@ InterQuartileRangeCalculation | `r InterQuartileRangeCalculation`
 estimateWBCs                  | `r ifelse(exists("estimateWBCs"),estimateWBCs, "not provided, assumed FALSE")`
 extractSNPs                   |  `r ifelse(exists("extractSNPs"),extractSNPs, "not provided, assumed FALSE")`
 
-Further we interpret the values for the gender in the samplesfile as **1=female** and **0=male**. 
+Further we interpret the values for the Sex_female in the samplesfile as **1=female** and **0=male**. 
 
 InterQuartileRange calculation depends on QuantileNormalisation, therefore Quantile Normalize is set to TRUE, if InterQuartileRangeCalculation is requested. 
 
@@ -449,7 +492,9 @@ TypeI.Green.U.All.d = ifelse(d<thres,TypeI.Green.U.All,NA)
 d=dp.all[rownames(TypeI.Red.M.All),colnames(TypeI.Red.M.All)]
 TypeI.Red.M.All.d = ifelse(d<thres,TypeI.Red.M.All,NA)
 TypeI.Red.U.All.d = ifelse(d<thres,TypeI.Red.U.All,NA)
+
 #rm(dp.all,d)
+rm(TypeII.Red.All, TypeII.Green.All, TypeI.Red.M.All, TypeI.Red.U.All, TypeI.Green.M.All, TypeI.Green.U.All) 
 
 samples=colnames(TypeI.Red.M.All)
 ```
@@ -497,6 +542,8 @@ TypeII.betas = TypeII.Green/(TypeII.Red+TypeII.Green+100)
 TypeI.Green.betas = TypeI.Green.M/(TypeI.Green.M+TypeI.Green.U+100)
 TypeI.Red.betas = TypeI.Red.M/(TypeI.Red.M+TypeI.Red.U+100)
 beta.raw.sex = as.matrix(rbind(TypeII.betas,TypeI.Green.betas,TypeI.Red.betas))
+ 
+rm(TypeII.Red, TypeII.Green, TypeI.Red.M, TypeI.Red.U, TypeI.Green.M, TypeI.Green.U) 
  
 ```
 
