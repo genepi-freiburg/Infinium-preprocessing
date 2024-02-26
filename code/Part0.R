@@ -7,7 +7,8 @@
 # BiocManager::install("minfi")
 # BiocManager::install("limma")
 # BiocManager::install("IlluminaHumanMethylationEPICmanifest") # for EPIC array
-# BiocManager::install("IlluminaHumanMethylation450kmanifest") # for 450k array and Houseman
+# BiocManager::install("IlluminaHumanMethylationEPICmanifest") # for EPIC array version 2
+# BiocManager::install("IlluminaHumanMethylation450kmanifestv2anno.20a1.hg38") # for 450k array and Houseman
 # BiocManager::install("FlowSorted.Blood.450k") 
 # BiocManager::install("FlowSorted.Blood.EPIC") 
 # BiocManager::install("IlluminaHumanMethylation450kanno.ilmn12.hg19")
