@@ -1,3 +1,41 @@
+```{r, label = declare_remOutlier_function, echo = FALSE}
+
+removeOutlier <- function(val1,val2,labels=NULL,xname="val1",yname="val2",title="",filterYout=1, SDrange=4 ,nullOffs=0.0001 ) {
+    # SDrange is  range to define outliers
+    # nullOffs is offset to avoid division by zero, log 0, etc.
+
+    x <- log2(sqrt(val1*val2)+nullOffs)
+    y <- log2((val1+nullOffs)/(val2+nullOffs))
+    x.w <- x[which(x>log2(nullOffs))] # remove extreme values that are zero, i.e. for staining
+    y.w <- y[which(x>log2(nullOffs))] # remove extreme values that are zero, i.e. for staining, remove them also from y (based on x-extremes)
+    x.w <- Winsorize(x.w)
+    y.w <- Winsorize(y.w)
+    out <- which(x>mean(x.w)+sd(x.w)*SDrange) # upper X
+    out <- c(out,which(x<mean(x.w)-sd(x.w)*SDrange)) # lower X
+    if (filterYout==2) { out <- c(out,which(y>mean(y.w)+sd(y.w)*SDrange)) } # upper Y 
+    out <- unique(c(out,which(y<mean(y.w)-sd(y.w)*SDrange))) # lower Y
+
+    plot(x,y,xlab=bquote(log[2](sqrt(.(xname)%*%.(yname)))),ylab=bquote(log[2](.(xname)/.(yname))),main=title,xlim=c(min(x),max(x)+7))
+
+	# Add SD-range rectangle in grey and label SD=5
+	rxright <- mean(x.w) + sd(x.w)* (SDrange + 1)
+	rxleft <- mean(x.w) - sd(x.w)* (SDrange + 1)
+	ryup <- mean(y.w) + sd(y.w)* (SDrange + 1)
+	rybottom <- mean(y.w) - sd(y.w)* (SDrange + 1)
+	rect(rxleft, rybottom, rxright, ryup, border = "grey")
+	text(rxleft, rybottom,label=paste("SD", as.character(SDrange + 1)),col="grey",adj=c(0,0),cex=0.7)
+
+	# mark exclusion samples
+    points(x[out],y[out],col="red")
+    if (length(out)>0) {
+        text(x[out],y[out],label=labels[out],col="red",adj=c(0,0),cex=0.7)
+    }
+
+    ret <- data.frame(sample=labels[out],x=x[out],y=y[out])
+    return(ret)
+}
+```
+
 ## PART 2: Low-Level Quality Control
 
 
@@ -20,8 +58,10 @@ colnames(ctrlprobes.scores) = paste(colnames(ctrlprobes.scores), '_cp', sep='')
  control.info <- data.frame(control)
 ```
 
-* Then we look at the controls.
+* Then we look at the controls (if FilterOutlierQC == TRUE).
 ```{r, label = controlprobe_QC}
+if(filterOutlierCtrlQC){
+
 #control probe based QC
 # Details are given in the ILMN HD methylation assay protocol guide (15019519)
 
@@ -80,54 +120,23 @@ cprobes <- control.info[grep("DNP (Bkg)",control.info$ExtendedType,value=F,fixed
 controlQC <- cbind(controlQC,data.frame(StainingRedB=ctrl.complete.Red.all[cprobes,]))
 cprobes <- control.info[grep("Biotin (Bkg)",control.info$ExtendedType,value=F,fixed=T),"Address"] # select staining green background
 controlQC <- cbind(controlQC,data.frame(StainingGreenB=ctrl.complete.Green.all[cprobes,]))
-
+}
 ```
 
 The first 3 rows of control probes information from QC contain the following information:
 
 ```{r}
-controlQC[1:3,]
+if(exists("controlQC")){
+	controlQC[1:3,]
+}
 ```
 
 In the following control probes are checked. For a more detailed description see e.g. the [ILMN HD methylation assay protocol guide (15019519)](https://support.illumina.com/downloads/infinium_hd_methylation_assay_protocol_guide_(15019519_b).html) or the [Illumina BeadArray Controls Reporter Software Guide ](https://support.illumina.com/downloads/beadarray-controls-reporter-software-guide-1000000004009.html),pages 6-8. Probes are evaluated by MA plots. BS-I and BS-II control probes check the DNA bisulfite conversion step.
 
 ```{r, label = controlprobeQC_bisulfite}
-labels <- rownames(controlQC)
-removeOutlier <- function(val1,val2,labels=NULL,xname="val1",yname="val2",title="",filterYout=1, SDrange=4 ,nullOffs=0.0001 ) {
-    # SDrange is  range to define outliers
-    # nullOffs is offset to avoid division by zero, log 0, etc.
 
-    x <- log2(sqrt(val1*val2)+nullOffs)
-    y <- log2((val1+nullOffs)/(val2+nullOffs))
-    x.w <- x[which(x>log2(nullOffs))] # remove extreme values that are zero, i.e. for staining
-    y.w <- y[which(x>log2(nullOffs))] # remove extreme values that are zero, i.e. for staining, remove them also from y (based on x-extremes)
-    x.w <- Winsorize(x.w)
-    y.w <- Winsorize(y.w)
-    out <- which(x>mean(x.w)+sd(x.w)*SDrange) # upper X
-    out <- c(out,which(x<mean(x.w)-sd(x.w)*SDrange)) # lower X
-    if (filterYout==2) { out <- c(out,which(y>mean(y.w)+sd(y.w)*SDrange)) } # upper Y 
-    out <- unique(c(out,which(y<mean(y.w)-sd(y.w)*SDrange))) # lower Y
-
-    plot(x,y,xlab=bquote(log[2](sqrt(.(xname)%*%.(yname)))),ylab=bquote(log[2](.(xname)/.(yname))),main=title,xlim=c(min(x),max(x)+7))
-
-	# Add SD-range rectangle in grey and label SD=5
-	rxright <- mean(x.w) + sd(x.w)* (SDrange + 1)
-	rxleft <- mean(x.w) - sd(x.w)* (SDrange + 1)
-	ryup <- mean(y.w) + sd(y.w)* (SDrange + 1)
-	rybottom <- mean(y.w) - sd(y.w)* (SDrange + 1)
-	rect(rxleft, rybottom, rxright, ryup, border = "grey")
-	text(rxleft, rybottom,label=paste("SD", as.character(SDrange + 1)),col="grey",adj=c(0,0),cex=0.7)
-
-	# mark exclusion samples
-    points(x[out],y[out],col="red")
-    if (length(out)>0) {
-        text(x[out],y[out],label=labels[out],col="red",adj=c(0,0),cex=0.7)
-    }
-
-	
-
-    ret <- data.frame(sample=labels[out],x=x[out],y=y[out])
-    return(ret)
+if(exists("controlQC")){
+	labels <- rownames(controlQC)
 }
 
 if(filterOutlierCtrlQC){
@@ -148,6 +157,7 @@ if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout
 We also check the Hybridisation of the amplified DNA to the array:
 
 ```{r, label = controlprobeQC_other}
+
 if(filterOutlierCtrlQC){
 # Hyb + TR
 bufout <- removeOutlier(controlQC$HybH,controlQC$TR,labels,"HybH","TargetRemoval","Hybridization (green)")
@@ -194,6 +204,7 @@ if (nrow(samples.filtered)>0) {
     samples.filtered <- merge(samples.filtered,data.frame(callrate=sample.call),all.x=T,by.x="sample",by.y=0)    
     samples.filtered <- samples.filtered[order(samples.filtered$sample,samples.filtered$filter),]
 }
+
 write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
 
 ```
@@ -471,7 +482,7 @@ To ensure correct performance of quantile normalisation samples with a callrate 
 
 
 
-```{r, label = typewise_callrate}
+```{r, label = typewise_callrate.QNfilter_auto}
 
 minimum_callrate_QN <- 0
 
@@ -533,42 +544,20 @@ rm(samples.auto.QN, sample.call.auto, samples.callrate.typewise.auto, markers.au
 
 `r nrow(datsamples)` samples are included in the analysis, identified by the *samplesfilefinal*, existing sample calls and samplewise minimum callrate `r minimum_callrate_QN`. Callrate filtering is performed on autosomes and for sex chromosome QN additionally on sex chromosomes.
 
-```{r, label = QuantileNormalisation_autosomes_prapare}
-#QN autosomes # has to be filtered by samples 
-category=auto
-markers=as.matrix(intersect(rownames(TypeII.Green.All.d), category))
-TypeII.Green = TypeII.Green.All.d[markers,samples]
-TypeII.Red = TypeII.Red.All.d[markers,samples]
-markers=intersect(rownames(TypeI.Green.M.All.d), category)
-TypeI.Green.M = TypeI.Green.M.All.d[markers,samples]
-TypeI.Green.U = TypeI.Green.U.All.d[markers,samples]
-markers=intersect(rownames(TypeI.Red.M.All.d), category)
-TypeI.Red.M = TypeI.Red.M.All.d[markers,samples]
-TypeI.Red.U = TypeI.Red.U.All.d[markers,samples]
-
-TypeII.Green=normalizeQuantiles(TypeII.Green)
-TypeII.Red = normalizeQuantiles(TypeII.Red)
-TypeI.Green.M = normalizeQuantiles(TypeI.Green.M)
-TypeI.Green.U = normalizeQuantiles(TypeI.Green.U)
-TypeI.Red.M = normalizeQuantiles(TypeI.Red.M)
-TypeI.Red.U = normalizeQuantiles(TypeI.Red.U)
-TypeII.betas = TypeII.Green/(TypeII.Red+TypeII.Green+100)
-TypeI.Green.betas = TypeI.Green.M/(TypeI.Green.M+TypeI.Green.U+100)
-TypeI.Red.betas = TypeI.Red.M/(TypeI.Red.M+TypeI.Red.U+100)
-betaQN = as.matrix(rbind(TypeII.betas,TypeI.Green.betas,TypeI.Red.betas))
-marker.callQN =rowSums(!is.na(betaQN))/ncol(betaQN) # this line is added; if problems occur, maybe delete it and rechange all lines where marker.callQN occurs to marker.call
+```{r, label = men.women}
 
 # sex chromosomes ------------------------------------------------------------------
 women <- datsamples[datsamples$Sex_female==1,"Sentrix_Code"]
 men <- datsamples[datsamples$Sex_female==0,"Sentrix_Code"]
-category=c(sexchrX,sexchrY)
 ```
 
-Of the persons from whom samples are processed, `r length(women)` are women and `r length(men)` men.   
+Of the persons from whom samples are processed, `r length(women)` are women and `r length(men)` men according to the samplesfile.   
 
 
 
-```{r, label = QN_filters}
+```{r, label = QNfilters_sex}
+
+category=c(sexchrX,sexchrY)
 
 # minimum callrate filtering on samples
 markersII=as.matrix(intersect(rownames(TypeII.Green.All.d), category))
@@ -602,4 +591,6 @@ rm(samples.sex.QN, sample.call.sex, samples.callrate.typewise.sex, markers.sex, 
 
 
 ```
+Of the persons from whom samples are processed, `r length(women)` are women and `r length(men)` men have usable sex chromosome data.   
+
 

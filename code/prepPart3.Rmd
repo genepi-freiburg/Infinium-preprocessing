@@ -27,7 +27,38 @@ samples <- unique(samples[samples %in% datsamplesfinal$Sentrix_Code])
 
 ```{r, label = QN_calculation}
 
-# ---- QN ---------------------------------
+# ---- QN AUTOSOMES ---------------------------------
+
+#QN autosomes # has to be filtered by samples 
+category=auto
+
+markers=as.matrix(intersect(rownames(TypeII.Green.All.d), category))
+TypeII.Green = TypeII.Green.All.d[markers,samples]
+TypeII.Red = TypeII.Red.All.d[markers,samples]
+markers=intersect(rownames(TypeI.Green.M.All.d), category)
+TypeI.Green.M = TypeI.Green.M.All.d[markers,samples]
+TypeI.Green.U = TypeI.Green.U.All.d[markers,samples]
+markers=intersect(rownames(TypeI.Red.M.All.d), category)
+TypeI.Red.M = TypeI.Red.M.All.d[markers,samples]
+TypeI.Red.U = TypeI.Red.U.All.d[markers,samples]
+
+TypeII.Green=normalizeQuantiles(TypeII.Green)
+TypeII.Red = normalizeQuantiles(TypeII.Red)
+TypeI.Green.M = normalizeQuantiles(TypeI.Green.M)
+TypeI.Green.U = normalizeQuantiles(TypeI.Green.U)
+TypeI.Red.M = normalizeQuantiles(TypeI.Red.M)
+TypeI.Red.U = normalizeQuantiles(TypeI.Red.U)
+TypeII.betas = TypeII.Green/(TypeII.Red+TypeII.Green+100)
+TypeI.Green.betas = TypeI.Green.M/(TypeI.Green.M+TypeI.Green.U+100)
+TypeI.Red.betas = TypeI.Red.M/(TypeI.Red.M+TypeI.Red.U+100)
+betaQN = as.matrix(rbind(TypeII.betas,TypeI.Green.betas,TypeI.Red.betas))
+marker.callQN =rowSums(!is.na(betaQN))/ncol(betaQN) # this line is added; if problems occur, maybe delete it and rechange all lines where marker.callQN occurs to marker.call
+
+
+# ---- QN SEXCHROMOSOMES ---------------------------------
+
+category=c(sexchrX,sexchrY)
+
 
 #QN men
 markers=as.matrix(intersect(rownames(TypeII.Green.All.d), category))
