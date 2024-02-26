@@ -1,4 +1,4 @@
-```{r, label = declare_function, echo = FALSE}
+```{r, label = declare_detP_function, echo = FALSE}
 detectionP.local <- function (rgSet, type = "m+u")
 {
     locusNames <- getManifestInfo(rgSet, "locusNames")
@@ -38,20 +38,33 @@ detectionP.local <- function (rgSet, type = "m+u")
 ##########################################
 # read samples ###########################
 datsamples <- read.table(file=samplesfile,header=T,as.is=T,sep="\t", colClasses = "character")
+
+# check columns
+if("male"%in%colnames(datsamples)&!"Sex_female"%in%colnames(datsamples)){datsamples$Sex_female <- as.numeric(abs(1 - as.numeric(datsamples$male)))}
+if(!all(c("Sentrix_ID","Sentrix_Position","Sex_female")%in%colnames(datsamples))){stop("samplesfile must provide Sex_female, Sentrix_ID and Sentrix_Position.")}
+
 datsamples$Sex_female = as.numeric(datsamples$Sex_female)
 # provide a new column with sample identifier
-if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamples))){stop("samplesfile must provide Sentrix_ID and Sentrix_Position.")}
 datsamples$Sentrix_Code = paste(datsamples$Sentrix_ID,datsamples$Sentrix_Position,sep = "_")
-datsamples$MFSex_female = ifelse(datsamples$Sex_female == 0, "M","F")
+# datsamples$MFSex_female = ifelse(datsamples$Sex_female == 0, "M","F")
 
 # read final samples #####################
 datsamplesfinal <- read.table(file=samplesfilefinal,header=T,as.is=T,sep="\t", colClasses = "character")
+
+# check columns
+if("male"%in%colnames(datsamplesfinal)&!"Sex_female"%in%colnames(datsamplesfinal)){datsamplesfinal$Sex_female <- as.numeric(abs(1 - as.numeric(datsamplesfinal$male)))}
+if(!all(c("Sentrix_ID","Sentrix_Position","Sex_female")%in%colnames(datsamplesfinal))){stop("Final samplesfile must provide Sex_female, Sentrix_ID and Sentrix_Position.")}
+
 datsamplesfinal$Sex_female = as.numeric(datsamplesfinal$Sex_female)
 # provide a new column with sample identifier
-if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamplesfinal))){stop("Final samplesfile must provide Sentrix_ID and Sentrix_Position.")}
 datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$Sentrix_Position,sep = "_")
-datsamplesfinal$MFSex_female = ifelse(datsamplesfinal$Sex_female == 0, "M","F")
+# datsamplesfinal$MFSex_female = ifelse(datsamplesfinal$Sex_female == 0, "M","F")
 ##########################################
+
+```
+
+
+```{r, label='read-in.Part2', message = FALSE, echo = FALSE, warning = FALSE}
 
 #read data ###############################
  
@@ -96,10 +109,19 @@ for(path in scandata){ # all files in the same path have to have identical array
  
  	filenames = filenames[filenames_idx] # !! this changes filenames object! 
  	filenames_pathwise[[path]] <- filenames
-	# filenames <- filenames[1:5] # test version
+	#filenames <- filenames[1:5] # test version
 # 	dim(filenames) <- c(1,length(filenames))
 
 	### read data ###################################################
+	
+	### TODO RGset = read.metharray.exp(samplesheet,...)
+
+	if-clause if(arraytype == "IlluminaHumanMethylationEPICv2")
+	### annotation(RGset)["array"] = "IlluminaHumanMethylationEPICv2" # doesnt work for EPICv2 yet 
+	# explained in the IlluminaHumanMethylationEPICv2anno.20a1.hg38 package
+	# annotation(RGset)["annotation"] = "20a1.hg38"
+
+	
 #	RGset <- read.metharray(filenames[1,], verbose=TRUE, force = TRUE) 
 	RGset <- read.metharray(filenames, verbose=TRUE, force = TRUE) 
 
@@ -417,7 +439,7 @@ if(exists("extractSNPs") && extractSNPs%in%"TRUE"){
 The probes are divided by chromosome type: autosomal probes, chromosome X probes and chromosome Y probes.
 For this step we need the annotationfile.
 
-```{r}
+```{r, label = 'annotation'}
 anno=read.csv(annotationfile,as.is=TRUE, skip = 7) 
  anno=anno[,c('Infinium_Design_Type','Color_Channel', 'CHR', 'MAPINFO', 'Name')]
 # get autosomal probes
@@ -493,10 +515,10 @@ d=dp.all[rownames(TypeI.Red.M.All),colnames(TypeI.Red.M.All)]
 TypeI.Red.M.All.d = ifelse(d<thres,TypeI.Red.M.All,NA)
 TypeI.Red.U.All.d = ifelse(d<thres,TypeI.Red.U.All,NA)
 
-#rm(dp.all,d)
+rm(dp.all,d)
 rm(TypeII.Red.All, TypeII.Green.All, TypeI.Red.M.All, TypeI.Red.U.All, TypeI.Green.M.All, TypeI.Green.U.All) 
 
-samples=colnames(TypeI.Red.M.All)
+samples=colnames(TypeI.Red.M.All.d)
 ```
 
 $`r length(which(dpvec>detPthreshold))`$   ($`r round(length(which(dpvec>detPthreshold))/length(dpvec), digits = 3)*100`$ \%)   measurements are excluded because their detection p-value is bigger than $`r detPthreshold`$. Only values with a detection p-value strictly smaller the threshold are kept.
@@ -548,7 +570,7 @@ rm(TypeII.Red, TypeII.Green, TypeI.Red.M, TypeI.Red.U, TypeI.Green.M, TypeI.Gree
 ```
 
 
-```{r}
+```{r, label = 'samplecall.markercall'}
 # calculate sample and marker calls without filter -- used for sample filter 
 sample.call=colSums(!is.na(beta.raw))/nrow(beta.raw)
 marker.call=rowSums(!is.na(beta.raw))/ncol(beta.raw)
@@ -560,6 +582,8 @@ ctrl.complete.Green.all <- ctrl.complete.Green.all[,samplesinclude]
 ctrl.complete.Red.all <- ctrl.complete.Red.all[,samplesinclude]
 beta.raw.sex <- beta.raw.sex[,samplesinclude]
 beta.raw <- beta.raw[,samplesinclude]
+
+# save.image("test_runbyhand.Rdata")
 ```
 
 * Identified by the samplefile, $`r length(samplesinclude)`$ samples are included in the analysis.
