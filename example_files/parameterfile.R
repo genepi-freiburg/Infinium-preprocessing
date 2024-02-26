@@ -1,9 +1,5 @@
 # for using this pipeline, please install all packages listed in the code file "prepPart0.R"
 
-arraytype<-"IlluminaHumanMethylationEPIC"
-# SELECT  between "IlluminaHumanMethylation450k" and "IlluminaHumanMethylationEPIC"
-# (see minfi array names)
-
 ##################################
 # define files and directories ###
 
@@ -14,6 +10,12 @@ projectname="CHANGE"
 idatdir="idats"
 # CHANGE: directory containing all idat files, absolute path, no / at the end, for several idat directories concatenate them by ";" like "a;b"
 # in one directory all files must be of same array built e.g. same EPIC version
+
+arraytype<-"IlluminaHumanMethylationEPIC"
+# SELECT  between "IlluminaHumanMethylation450k" and "IlluminaHumanMethylationEPIC" and "IlluminaHumanMethylationEPICv2"
+# (see minfi array names)
+# if there are different idatdir, make a list arraytype<-list(one = "IlluminaHumanMethylationEPIC", two = "IlluminaHumanMethylationEPICv2")
+names(arraytype) <- idatdir
 
 outputdir="output"
 # CHANGE: output directory for RData files, absolute path, no / at the end
