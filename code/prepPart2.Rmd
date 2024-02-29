@@ -324,7 +324,6 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 	}
 	write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
 
-	# TODO: transfer this to part 3 typewise callrate (better would be a function ^^)
 
 	################# now proceed calculations on filtered data ######################
 
@@ -362,7 +361,7 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 
 The samples whose loadings are more than three standard deviations from the mean of the loadings with same assigned sex according to the first two principal components:
 
-````{r, label = printsexmismatch}
+```{r, label = printsexmismatch}
 print(sex.mismatches)
 rm(sex.mismatches)
 ```
@@ -446,7 +445,7 @@ if(min(dim(na.omit(betaPCA))) > 0){
 
 The samples whose values are more than three standard deviations from the mean of the samples with same assigned sex according to the first two principal components:
 
-````{r, label = report_sexmismatch}
+```{r, label = report_sexmismatch}
 if(length(sex.mismatches) > 0 && !is.na(sex.mismatches)){
 	print(sex.mismatches)
 	if(exists("countsexna.relative")){
@@ -512,32 +511,6 @@ if(!exists("samples.filtered")){samples.filtered <- NA}
   	write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
 }
 
-
-# alternative version of reporting - apply or delete 
-# 
-# # add sex callrate filtered samples to samplesfile
-#   	bufout.sex.callrate <- data.frame(sample = sex.callrate.filtered.samples, filter = paste0("sex chromosome callrate <= ", sex.mismatch.callrate.minimum ), sex.chr.callrate = countsexna.relative[sex.callrate.filtered.samples])
-# 
-# 	if (nrow(samples.filtered)>0) {
-# 	# reduce samples.filtered top bufout information without datsamples and callrate
-# 		general.columns <- c(colnames(datsamples),"callrate")
-#     	samples.filter.list <- samples.filtered[,!colnames(samples.filtered) %in% general.columns]
-# 	# merge the filter informations
-# 		samples.filtered <- merge(samples.filter.list, bufout.sex.callrate, all = T)
-# 	} else {
-# 		samples.filtered <- bufout.sex.callrate
-# 	}
-# 	# remerge the general information on datsamples and callrate 
-# 	if (nrow(samples.filtered)>0) {
-#     	samples.filtered <- merge(samples.filtered,datsamples,all.x=T,by.x="sample",by.y="Sentrix_Code")
-#     	samples.filtered <- merge(samples.filtered,data.frame(callrate=sample.call),all.x=T,by.x="sample",by.y=0)    
-#     	samples.filtered <- samples.filtered[order(samples.filtered$sample,samples.filtered$filter),]
-# 	}
-# 	write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
-# 
-# 	# TODO: transfer this to part 3 typewise callrate (better would be a function ^^)
-
-
 # clean up 
 rm(samples.auto.QN, sample.call.auto, samples.callrate.typewise.auto, markers.auto, markersIRed, markersIGreen, markersII)
 ```
@@ -587,10 +560,8 @@ men <- unique(men[men %in% samples.sex.QN])
 
 # clean up 
 rm(samples.sex.QN, sample.call.sex, samples.callrate.typewise.sex, markers.sex, markersIRed, markersIGreen, markersII)
-
-
-
 ```
+
 Of the persons from whom samples are processed, `r length(women)` are women and `r length(men)` men have usable sex chromosome data.   
 
 
