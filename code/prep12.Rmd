@@ -75,7 +75,7 @@ The following data is included in the Rdata-files ending in `r qcfilename` ...
 
 ```{r}
 	save(ctrl.all, ctrlprobes.scores,ctrl.complete.Red.all, ctrl.complete.Green.all, control.info, file=paste0(outputdir,'/',controlfilename))
-	save(TypeII.Red.All ,TypeII.Green.All , TypeI.Red.M.All ,TypeI.Red.U.All , TypeI.Green.M.All ,TypeI.Green.U.All, file=paste0(outputdir,'/',rawtypesfilename))
+#	save(TypeII.Red.All ,TypeII.Green.All , TypeI.Red.M.All ,TypeI.Red.U.All , TypeI.Green.M.All ,TypeI.Green.U.All, file=paste0(outputdir,'/',rawtypesfilename))
 	save(TypeII.Red.All.d ,TypeII.Green.All.d , TypeI.Red.M.All.d ,TypeI.Red.U.All.d , TypeI.Green.M.All.d , TypeI.Green.U.All.d, file=paste0(outputdir,'/',detpfilename))
 
 
