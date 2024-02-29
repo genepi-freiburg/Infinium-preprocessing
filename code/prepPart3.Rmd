@@ -13,7 +13,7 @@ For this analysis, `r paste(strsplit(samplesfilefinal, split = "/")[[1]][-1], co
 # extended by Alexander Teumer (University Medicine Greifswald/ Erasmus MC Rotterdam)
 # last change: 05/16/2016
 
-samples <- colnames(TypeI.Red.M.All)
+samples <- colnames(TypeI.Red.M.All.d)
 samples <- unique(samples[samples %in% datsamplesfinal$Sentrix_Code])
 
 # --- minimum callrate filtering on samples is necessary -----------
@@ -353,7 +353,7 @@ write.csv(batch.effect.samples,file = paste0(outputdir,"/samples-with-batch-effe
 
 Next, we plot with respect to *Sample_Plate*:
 
-````{r, label = plots_batcheffects_postQN_plate}
+```{r, label = plots_batcheffects_postQN_plate}
 make.fancy.PCA.plots("Sample_Plate")
 
 ```
