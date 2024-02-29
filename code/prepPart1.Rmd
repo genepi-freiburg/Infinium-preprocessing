@@ -116,7 +116,7 @@ for(path in scandata){ # all files in the same path have to have identical array
 	
 	### TODO RGset = read.metharray.exp(samplesheet,...)
 
-	if-clause if(arraytype == "IlluminaHumanMethylationEPICv2")
+	# if-clause if(arraytype == "IlluminaHumanMethylationEPICv2")
 	### annotation(RGset)["array"] = "IlluminaHumanMethylationEPICv2" # doesnt work for EPICv2 yet 
 	# explained in the IlluminaHumanMethylationEPICv2anno.20a1.hg38 package
 	# annotation(RGset)["annotation"] = "20a1.hg38"
@@ -129,7 +129,7 @@ for(path in scandata){ # all files in the same path have to have identical array
 	
 	RGset_pathwise[[path]] <- RGset
 	
-	rm(RGset, filenames)
+	rm(RGset)
 
 } ######## data read-in 
 
@@ -152,8 +152,9 @@ rm(RGset_pathwise)
 	
 	# add: make WBC estimation with samples from *final* samplesfile
 
-		WBCok = ifelse(exists("estimateWBCs"), estimateWBCs, FALSE)
-		 if(WBCok%in%TRUE){
+WBCok = ifelse(exists("estimateWBCs"), estimateWBCs, FALSE)
+
+if(WBCok%in%TRUE){
 		
 		#########################################
 		# if(WBCok%in%TRUE && filenames[i,] %in% filenames_final_vector) { # no this does not work as reduction to final samples; the RGset must be either reduced directly or a RGset_final mst be created as read-in
@@ -184,13 +185,12 @@ rm(RGset_pathwise)
  		} else {
  			est.wbc.minfi = as.data.frame(est_wbc)
  		}
-	} # end of WBC estimation
+} # end of WBC estimation
 
-	
-	# refine and create methylation data objects 
-	
-    if(exists("extractSNPs")){
-	if(extractSNPs%in%"TRUE"){
+#### SNP extraction
+		
+if(exists("extractSNPs")){
+if(extractSNPs%in%"TRUE"){
         	snps <- getSnpBeta(RGset)
        		 if(exists("snp.extraction")){
        		     snp.extraction <- cbind(snp.extraction, snps)
@@ -302,10 +302,9 @@ rm(RGset_pathwise)
 	#detection p-values
 	dp = detectionP.local(RGset, type = "m+u") 
 
-	#### TODO merge all data of different EPIC versions later ### 
-	# add data for the new samples
+# if data is handled successively (not in current code version)
 	
-	if(exists("TypeII.Red.All")) {
+if(exists("TypeII.Red.All")) {
 	TypeII.Red.All <- cbind(TypeII.Red.All,TypeII.Red)
 	TypeII.Green.All <- cbind(TypeII.Green.All,TypeII.Green)
 	TypeI.Red.M.All <- cbind(TypeI.Red.M.All,TypeI.Red.M)
@@ -321,6 +320,7 @@ rm(RGset_pathwise)
 	dp.all <- cbind(dp.all, dp)
 	
 	} else {
+	
 	TypeII.Red.All <- TypeII.Red                                                                                                                                  
 	TypeII.Green.All <- TypeII.Green 
 	TypeI.Red.M.All <- TypeI.Red.M 
@@ -333,12 +333,12 @@ rm(RGset_pathwise)
     ctrl.complete.Green.all <- ctrl.complete.Green # added for lowlevel QC
     
     dp.all <- dp
-	}
+}
 
 # list(ls()) # remove what is not needed anymore - save space 
 rm(BSCI.Green ,BSCI.Red ,BSCII.Red ,ctlext.Red ,ctlext.Green ,normC.Green ,normG.Green ,normA.Red ,normT.Red)
 rm(bufR, bufG, control_ok.Red, control_ok.Green, ctrl.complete.Red, ctrl.complete.Green, TypeII.Red, TypeII.Green, TypeI.Red.M, TypeI.Red.U, TypeI.Green.M, TypeI.Green.U)
-rm(dp, detppre, controlExtRed, controlExtGreen, extendedTypeGreen, extendedTypeRed, filenames_idx_list, filenames_idx, i, idatdir, rawtypepre)
+rm(dp, detppre, controlExtRed, controlExtGreen, extendedTypeGreen, extendedTypeRed, filenames_idx_list, filenames_idx, i, rawtypepre)
 rm(BSCI.Green.Name, BSCI.Red.Name, BSCII.Red.Name, ctlext.Red.Name, ctlext.Green.Name, normC.Green.Name, normG.Green.Name, normA.Red.Name, normT.Red.Name)
 rm(detectionP.local)
 rm(RGset)
@@ -430,7 +430,7 @@ if(exists("extractSNPs") && extractSNPs%in%"TRUE"){
         cat("\nAn error occurres during SNP extraction. No results are exported.\n")
     }
 }
-# rm(RGset, snp.extraction)
+
 ```
 
 
@@ -515,7 +515,7 @@ d=dp.all[rownames(TypeI.Red.M.All),colnames(TypeI.Red.M.All)]
 TypeI.Red.M.All.d = ifelse(d<thres,TypeI.Red.M.All,NA)
 TypeI.Red.U.All.d = ifelse(d<thres,TypeI.Red.U.All,NA)
 
-rm(dp.all,d)
+rm(d)
 rm(TypeII.Red.All, TypeII.Green.All, TypeI.Red.M.All, TypeI.Red.U.All, TypeI.Green.M.All, TypeI.Green.U.All) 
 
 samples=colnames(TypeI.Red.M.All.d)
