@@ -7,7 +7,7 @@
 # BiocManager::install("minfi")
 # BiocManager::install("limma")
 # BiocManager::install("IlluminaHumanMethylationEPICmanifest") # for EPIC array
-# BiocManager::install("IlluminaHumanMethylationEPICmanifest") # for EPIC array version 2
+##  BiocManager::install("IlluminaHumanMethylationEPICmanifest") # for EPIC array version 2 no pakage exists
 # BiocManager::install("IlluminaHumanMethylation450kmanifestv2anno.20a1.hg38") # for 450k array and Houseman
 # BiocManager::install("FlowSorted.Blood.450k") 
 # BiocManager::install("FlowSorted.Blood.EPIC") 
@@ -36,6 +36,14 @@ if (arraytype=="IlluminaHumanMethylationEPIC") {
 	# which one can download from 
 	# https://support.illumina.com/array/array_kits/infinium-methylationepic-beadchip-kit/downloads.html 
 	
+} else if (arraytype=="IlluminaHumanMethylationEPICv2") {
+
+	library(FlowSorted.Blood.EPIC)
+	
+	annotationfile="/data/programs/pipelines/CPACOR-EPIC_pipeline/MethylationEPIC_v2.0_Files/EPIC-8v2-0_A1.csv"
+	# download from 
+	# https://support.illumina.com/array/array_kits/infinium-methylationepic-beadchip-kit/downloads.html
+		
 } else if (arraytype=="IlluminaHumanMethylation450k") {
 
 # 	annotationfile="/data/programs/pipelines/CPACOR-EPIC_pipeline/annotationfile450k.csv"
@@ -49,6 +57,6 @@ if (arraytype=="IlluminaHumanMethylationEPIC") {
 	
 	
 } else {
-    stop("Unsupported array type: ",arraytype,".\n Supported array types are:\n IlluminaHumanMethylationEPIC\n IlluminaHumanMethylation450k\n Exiting...\n")
+    stop("Unsupported array type: ",arraytype,".\n Supported array types are:\n IlluminaHumanMethylationEPIC versions 1.0 and 2.0 \nand IlluminaHumanMethylation450k.\n Exiting...\n")
 }
 
