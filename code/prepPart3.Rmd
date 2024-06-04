@@ -168,6 +168,8 @@ The following plots show the call rates of the sex chromosomes stratified per se
 
 ```{r, echo = FALSE, label = sexchr_callrates}
 
+sexchrY <- intersect(sexchrY,rownames(betaQN.sex))
+sexchrX <- intersect(sexchrX,rownames(betaQN.sex))
 
 # sex-check
 sample.callY=colSums(!is.na(betaQN.sex[sexchrY,]))/nrow(betaQN.sex[sexchrY,])
