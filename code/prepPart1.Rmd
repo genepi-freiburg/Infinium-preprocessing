@@ -33,7 +33,7 @@ detectionP.local <- function (rgSet, type = "m+u")
 
 ## PART 1: Data and parameters
 
-```{r, label='read-in', message = FALSE, echo = FALSE, warning = FALSE}
+```{r, label='read-in.samples', message = FALSE, echo = FALSE, warning = FALSE}
 
 ##########################################
 # read samples ###########################
@@ -64,13 +64,17 @@ datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$
 ```
 
 
-```{r, label='read-in.Part2', message = FALSE, echo = FALSE, warning = FALSE}
+```{r, label='read-in.methylation', message = FALSE, echo = FALSE, warning = FALSE}
 
-#read data ###############################
+# read data ###############################
  
 cwd<-getwd()
 
 scandata <- strsplit(idatdir,";")[[1]]
+# this could be a way to get arraytypes 
+# arraytypes_pathwise <- strsplit(arraytypes_pathwise,";")[[1]]
+# names(arraytypes_pathwise) <- scandata
+
 
 filenames_pathwise <- vector(mode = "list", length = length(scandata))
 names(filenames_pathwise) <- scandata
@@ -80,11 +84,14 @@ names(RGset_pathwise) <- scandata
 
 sample_names <- NA
 missing_idat <- NA
+samplesheet_combined <- merge(datsamples, datsamplesfinal)
+
+######## FILENAMES ###################
 
 for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
 	 setwd(path)
 		
-	files_here <- dir(pattern="\\.idat$",recursive=TRUE, full.names=TRUE, path = getwd()) # this path handling ensures correct number of / in path name
+	files_here <- dir(path = path, pattern="\\.idat$",recursive=TRUE, full.names=TRUE) # this path handling ensures correct number of / in path name
 	filenames_pathwise[[path]] <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",files_here,ignore.case=T),ignore.case=T))
 
 	sample_names = c(sample_names, sapply(filenames_pathwise[[path]], function(s){sub(".+/","",s)}))
@@ -94,38 +101,52 @@ for(path in scandata){ # all files in the same path have to have identical array
 	filenames <- filenames_pathwise[[path]]
 
 	# filter filenames list with combined samples of samplesfile and samplesfile_final
+	# look which samples of all are in this path
  	 filenames_idx_list <- sapply(union(datsamplesfinal$Sentrix_Code,datsamples$Sentrix_Code), function(x){grep(x,filenames)})
 	 filenames_idx <-  as.integer(filenames_idx_list)
-	 
-	# we need to handle samples without idat file
-	 missing_idat <- c(missing_idat, names(filenames_idx_list[is.na(filenames_idx)]))
-	 write.table(missing_idat, file = "missing_idat_files.tsv", row.names = FALSE, col.names = TRUE) # need overwrite = TRUE?
-	
+	 	
 	# need unique NA-free index 
 	 filenames_idx <- filenames_idx[!is.na(filenames_idx)]
 
-# 	 filenames_final_idx <- as.integer(sapply(datsamplesfinal$Sentrix_Code, function(x){grep(x,filenames)}))
-# 	 filenames_final_idx <- filenames_final_idx[!is.na(filenames_final_idx)]
- 
  	filenames = filenames[filenames_idx] # !! this changes filenames object! 
  	filenames_pathwise[[path]] <- filenames
-	#filenames <- filenames[1:5] # test version
-# 	dim(filenames) <- c(1,length(filenames))
+	# filenames <- filenames[1:5] # test version
+	#OLD: 	dim(filenames) <- c(1,length(filenames)) #	RGset <- read.metharray(filenames[1,], verbose=TRUE, force = TRUE) 
+}
 
-	### read data ###################################################
+# make one filenames object to merge # Test
+	filenames_all <- unlist(filenames_pathwise)
+	samplesheet_combined$filename <- as.character(sapply(samplesheet_combined$Sentrix_Code, function(x){grep(x,filenames_all, value = TRUE)})) 
+
+	# we need to handle samples without idat file
+	 filenames_all_idx_list <- sapply(union(datsamplesfinal$Sentrix_Code,datsamples$Sentrix_Code), function(x){grep(x,filenames_all)})
+	 filenames_all_idx <-  as.integer(filenames_all_idx_list)
+	 missing_idat <- names(filenames_all_idx_list[is.na(filenames_all_idx)])
+
+	 write.table(missing_idat, file = paste0(outputdir,"/missing_idat_files","_",projectname,"-",formatted.time,".tsv"), row.names = FALSE, col.names = TRUE, append = TRUE) 
+
+
+
+####### METHYLATION READ-IN #####################
+
+for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
 	
-	### TODO RGset = read.metharray.exp(samplesheet,...)
+	# restrict the samplesheet to the samples we found in this path 
+  	samplesheet_local <- samplesheet_combined[grep(path, samplesheet_combined$filename),]
+ 	samplesheet_local$Basename <- samplesheet_local$filename
+	RGset = read.metharray.exp(targets = samplesheet_local, recursive = TRUE, force = TRUE) # do we want to force? occured in EPIC(v1) idats only, not a v1-v2 problem
 
-	# if-clause if(arraytype == "IlluminaHumanMethylationEPICv2")
-	### annotation(RGset)["array"] = "IlluminaHumanMethylationEPICv2" # doesnt work for EPICv2 yet 
-	# explained in the IlluminaHumanMethylationEPICv2anno.20a1.hg38 package
-	# annotation(RGset)["annotation"] = "20a1.hg38"
-
+ 	# if(annotation(RGset)["array"] == "IlluminaHumanMethylationEPICv2"){
+		# explained in the IlluminaHumanMethylationEPICv2anno.20a1.hg38 package https://jokergoo.github.io/IlluminaHumanMethylationEPICv2manifest/
+    	# not longer necessary with minfi update
+ 		#	annotation(RGset)["array"] = "IlluminaHumanMethylationEPICv2" # doesnt work for EPICv2 yet
+ 		#	annotation(RGset)["annotation"] = "20a1.hg38"
+ 		
+ 		annotation(RGset)["array"] = "IlluminaHumanMethylationEPIC" # switch to EPIC only to make bgcorrect.illumina and wbc.est work; the function should work exactly as it should be because the arraytype only determines the name of the column of probes, it seems. Having the right column name, the probes are EPICv2-specific not EPIC (v1) downgrade. 
+ 	
+ 	# }
 	
-#	RGset <- read.metharray(filenames[1,], verbose=TRUE, force = TRUE) 
-	RGset <- read.metharray(filenames, verbose=TRUE, force = TRUE) 
-
-	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
+	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction # doesnt work on minfi 1.50.0 EPIC v2 (yet) # since the control descriptor seems to be the only difference between arrays, but is the same for EPIC and EPICv2 I state that handling the EPICv2 RGset as an EPIC in bgcorrect returns the correct result; see function details and getProbeInfo(dat, "Control")
 	
 	RGset_pathwise[[path]] <- RGset
 	
@@ -141,7 +162,7 @@ if(length(scandata) > 1){
 	
 	for(i in 2:length(scandata)){
 		RGset <- combineArrays(RGset, RGset_pathwise[[i]],
-                  outType = c("IlluminaHumanMethylationEPIC"), # == arraytype
+                   outType = c("IlluminaHumanMethylationEPIC"), # == arraytype # currently tries to downgrade to 450k which is not good
                   verbose = TRUE)	
 	}
 }
@@ -150,46 +171,25 @@ rm(RGset_pathwise)
 
 ######## WBC and SNP extraction ####################
 	
-	# add: make WBC estimation with samples from *final* samplesfile
+	# NOTE No need to make WBC estimation on final samples only since WBC estimation is sample-wise?
+	# But I recommend to do it in last-but-one cleanup step with final samples as only input to save computational effort.
 
 WBCok = ifelse(exists("estimateWBCs"), estimateWBCs, FALSE)
 
-if(WBCok%in%TRUE){
+if(WBCok%in%TRUE){ # use EPIC (v1) reference platform to get the best to-date estimation; should be fairly ok esp. for the combined analysis
 		
 		#########################################
-		# if(WBCok%in%TRUE && filenames[i,] %in% filenames_final_vector) { # no this does not work as reduction to final samples; the RGset must be either reduced directly or a RGset_final mst be created as read-in
-
-		#  	filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
-		#  	length.of.folder = max(gregexpr2("/", filenames[1])[[1]]) # we assume the pattern is identical for all measurements
-		#  	length.of.folder = sapply(gregexpr2("/",filenames), max)  # different paths 
-		#  	sample_names = substring(filenames, first = length.of.folder + 1)
-		#  	filenames = filenames[sample_names%in%datsamplesfinal$Sentrix_Code]
- 	
- 		# added 18.04.18 by FGC: minfi WBC estimation based on RGsets only 
- 	
-		#  	RGset <- read.metharray(filenames, verbose=TRUE, force=TRUE) # formerly: read.450k()
-		#  	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
- 		
- 		
  		# comment by Lucas Salas on github: If you are using the latest version of FlowSorted.Blood.EPIC (>=v.2.0) you do not need to specify any of those options.
  		############################################
- 		
- 		
- 		
+
  		est_wbc <- estimateCellCounts(RGset, compositeCellType = "Blood", cellTypes = c("CD8T","CD4T", "NK","Bcell","Mono","Gran"),
  				 sex = datsamples$MFSex_female[match(sample_names,datsamples$Sentrix_Code)])
- 				 # referencePlatform = arraytype)
  	                              
- 		if(exists("est.wbc.minfi")){ # in code as is this is needless since i is only 1 and all files are read simultaneously
- 			est.wbc.minfi = rbind(est.wbc.minfi, est_wbc)
- 		} else {
- 			est.wbc.minfi = as.data.frame(est_wbc)
- 		}
 } # end of WBC estimation
 
 #### SNP extraction
 		
-if(exists("extractSNPs")){
+if(exists("extractSNPs")){ ## this works on EPICv2 !! :)
 if(extractSNPs%in%"TRUE"){
         	snps <- getSnpBeta(RGset)
        		 if(exists("snp.extraction")){
@@ -202,7 +202,7 @@ if(extractSNPs%in%"TRUE"){
 
 
 ########### PROBE INFO & DATA SPLIT ###############################################
-
+# rest of this chunk works fine on EPICv2
 
 	# Type II probes
 	TypeII.Name <- getProbeInfo(RGset, type = "II")$Name
@@ -440,17 +440,23 @@ The probes are divided by chromosome type: autosomal probes, chromosome X probes
 For this step we need the annotationfile.
 
 ```{r, label = 'annotation'}
-anno=read.csv(annotationfile,as.is=TRUE, skip = 7) 
- anno=anno[,c('Infinium_Design_Type','Color_Channel', 'CHR', 'MAPINFO', 'Name')]
+# works fine on EPICv2
+anno=read.csv(annotationfile,as.is=TRUE, skip = 7) # skip=7 is true for EPICv2 as well 
+ 
+anno=anno[,c('Infinium_Design_Type','Color_Channel', 'CHR', 'MAPINFO', 'Name')]
+ chrX_descr <- grep('X', anno$CHR, value = T)[1]
+ chrY_descr <- grep('Y', anno$CHR, value = T)[1]
+ 
 # get autosomal probes
- cas=anno[substr(anno$Name, 1,3)=='ch.' & !(anno$CHR %in% c('X','Y')),]
- cgs=anno[substr(anno$Name, 1,2)=='cg'& !(anno$CHR %in% c('X','Y')),]
+ cas=anno[substr(anno$Name, 1,3)=='ch.' & !(anno$CHR %in% c(chrX_descr,chrY_descr)),]
+ cgs=anno[substr(anno$Name, 1,2)=='cg'& !(anno$CHR %in% c(chrX_descr,chrY_descr)),]
  auto = c(cgs$Name, cas$Name)
  auto=as.matrix(auto)
 
-# get chrX probes
- xcas=anno[substr(anno$Name, 1,3)=='ch.' & (anno$CHR %in% c('X')),]
- xcgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% c('X')),]
+# get chrX probes # changed to work also on EPICv2
+ 
+ xcas=anno[substr(anno$Name, 1,3)=='ch.' & (anno$CHR %in% c(chrX_descr)),]
+ xcgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% c(chrX_descr)),]
  sexchrX = c(xcgs$Name, xcas$Name)
  sexchrX=as.matrix(sexchrX)
 
@@ -471,7 +477,8 @@ In our further calculations beta value data always is processed separately for a
 
 * Detection p-values are illustrated in the following plots. Low p-values indicate that the signal is unlikely to be background noise. 
 
-```{r, label='detection_p-values'}
+```{r, label='detection_p-values'} 
+# works fine on EPICv2
 # test
 dpvec <- dp.all
 dim(dpvec) <- c(nrow(dp.all)*ncol(dp.all),1)
