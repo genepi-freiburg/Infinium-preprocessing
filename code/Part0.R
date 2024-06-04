@@ -1,28 +1,44 @@
 # PART 0 (Settings)
 
 # install packages
-# if (!requireNamespace("BiocManager", quietly = TRUE))
-#     install.packages("BiocManager")
+#  if (!requireNamespace("BiocManager", quietly = TRUE))
+#      install.packages("BiocManager")
+# 
+#  BiocManager::install("minfi")
+#  BiocManager::install("limma")
+#  BiocManager::install("IlluminaHumanMethylationEPICmanifest") # for EPIC array
+#  # .libPaths( c( "~/userLibrary" , .libPaths() ) )
 
-# BiocManager::install("minfi")
-# BiocManager::install("limma")
-# BiocManager::install("IlluminaHumanMethylationEPICmanifest") # for EPIC array
-##  BiocManager::install("IlluminaHumanMethylationEPICmanifest") # for EPIC array version 2 no pakage exists
-# BiocManager::install("IlluminaHumanMethylation450kmanifestv2anno.20a1.hg38") # for 450k array and Houseman
-# BiocManager::install("FlowSorted.Blood.450k") 
-# BiocManager::install("FlowSorted.Blood.EPIC") 
-# BiocManager::install("IlluminaHumanMethylation450kanno.ilmn12.hg19")
-# BiocManager::install("IlluminaHumanMethylationEPICanno.ilm10b4.hg19")
+#  BiocManager::install("IlluminaHumanMethylation450kmanifestv2anno.20a1.hg38") # for 450k array and Houseman
+# package ‘IlluminaHumanMethylation450kmanifestv2anno.20a1.hg38’ is not available for Bioconductor version '3.18' -- WBC estimation fails
+
+
+
+#  BiocManager::install("FlowSorted.Blood.450k")
+#  BiocManager::install("FlowSorted.Blood.EPIC")
+#  BiocManager::install("IlluminaHumanMethylation450kanno.ilmn12.hg19")
+#  BiocManager::install("IlluminaHumanMethylationEPICanno.ilm10b4.hg19")
+#  BiocManager::install("IlluminaHumanMethylationEPICv2anno.20a1.hg38")
+#  # BiocManager::install("jokergoo/IlluminaHumanMethylationEPICv2manifest") # outdated? 
+
+
+# install.packages("caret")
+# install.packages("factoextra")
+# install.packages("matrixStats")
+# install.packages("DescTools")
+# install.packages("ggplot2")
+
 
 library(caret)
 library(minfi)
 library(limma)
 library("factoextra")
 
-
 library(matrixStats)
-library(DescTools)
+# library(DescTools)
 library(ggplot2)
+
+# get arraytype variables in case of multiple arraytypes 
 
 if (arraytype=="IlluminaHumanMethylationEPIC") {
 
