@@ -8,8 +8,8 @@ removeOutlier <- function(val1,val2,labels=NULL,xname="val1",yname="val2",title=
     y <- log2((val1+nullOffs)/(val2+nullOffs))
     x.w <- x[which(x>log2(nullOffs))] # remove extreme values that are zero, i.e. for staining
     y.w <- y[which(x>log2(nullOffs))] # remove extreme values that are zero, i.e. for staining, remove them also from y (based on x-extremes)
-#     x.w <- Winsorize(x.w)# TODO re-add to code 
-#     y.w <- Winsorize(y.w)
+     x.w <- Winsorize(x.w) # only works with DescTools
+     y.w <- Winsorize(y.w)
     out <- which(x>mean(x.w)+sd(x.w)*SDrange) # upper X
     out <- c(out,which(x<mean(x.w)-sd(x.w)*SDrange)) # lower X
     if (filterYout==2) { out <- c(out,which(y>mean(y.w)+sd(y.w)*SDrange)) } # upper Y 
