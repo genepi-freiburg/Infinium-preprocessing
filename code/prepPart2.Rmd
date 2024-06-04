@@ -8,8 +8,8 @@ removeOutlier <- function(val1,val2,labels=NULL,xname="val1",yname="val2",title=
     y <- log2((val1+nullOffs)/(val2+nullOffs))
     x.w <- x[which(x>log2(nullOffs))] # remove extreme values that are zero, i.e. for staining
     y.w <- y[which(x>log2(nullOffs))] # remove extreme values that are zero, i.e. for staining, remove them also from y (based on x-extremes)
-    x.w <- Winsorize(x.w)
-    y.w <- Winsorize(y.w)
+#     x.w <- Winsorize(x.w)# TODO re-add to code 
+#     y.w <- Winsorize(y.w)
     out <- which(x>mean(x.w)+sd(x.w)*SDrange) # upper X
     out <- c(out,which(x<mean(x.w)-sd(x.w)*SDrange)) # lower X
     if (filterYout==2) { out <- c(out,which(y>mean(y.w)+sd(y.w)*SDrange)) } # upper Y 
@@ -267,7 +267,8 @@ sex.mismatch.callrate.minimum <- 0.001 # in case there are too many missing sex 
 
 
 # Raw betas
-sexprobes <- c(sexchrX,sexchrY) # chr X+Y
+sexprobes <- intersect(rownames(beta.raw.sex), c(sexchrX,sexchrY)) # chr X+Y # this is necessary fro stability if different arrays are involved and e.g. EPICv2 array is only processed on EPIC v1 sites.
+
 
 # EV NA omit
 betaPCA <- beta.raw.sex[sexprobes,]
