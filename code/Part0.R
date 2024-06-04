@@ -35,7 +35,7 @@ library(limma)
 library("factoextra")
 
 library(matrixStats)
-# library(DescTools)
+library(DescTools)
 library(ggplot2)
 
 # get arraytype variables in case of multiple arraytypes 
