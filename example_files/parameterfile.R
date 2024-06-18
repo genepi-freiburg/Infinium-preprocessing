@@ -14,8 +14,6 @@ idatdir="idats"
 arraytype<-"IlluminaHumanMethylationEPIC"
 # SELECT  between "IlluminaHumanMethylation450k" and "IlluminaHumanMethylationEPIC" and "IlluminaHumanMethylationEPICv2"
 # (see minfi array names)
-# if there are different idatdir, make a list arraytype<-list(one = "IlluminaHumanMethylationEPIC", two = "IlluminaHumanMethylationEPICv2")
-names(arraytype) <- idatdir
 
 outputdir="output"
 # CHANGE: output directory for RData files, absolute path, no / at the end
