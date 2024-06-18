@@ -33,10 +33,31 @@ library(caret)
 library(minfi)
 library(limma)
 library("factoextra")
-
-library(matrixStats)
-library(DescTools)
 library(ggplot2)
+library(matrixStats)
+
+##################################### 
+## DescTools package waiting for C++ update on cluster
+# this is the only function we need
+
+# library(DescTools)
+
+Winsorize <- function (x, minval = NULL, maxval = NULL, probs = c(0.05, 0.95), 
+    na.rm = FALSE, type = 7) 
+{
+    if (is.null(minval) || is.null(maxval)) {
+        xq <- quantile(x = x, probs = probs, na.rm = na.rm, type = type)
+        if (is.null(minval)) 
+            minval <- xq[1L]
+        if (is.null(maxval)) 
+            maxval <- xq[2L]
+    }
+    x[x < minval] <- minval
+    x[x > maxval] <- maxval
+    return(x)
+}
+#####################################
+
 
 # get arraytype variables in case of multiple arraytypes 
 
