@@ -71,7 +71,8 @@ datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$
 cwd<-getwd()
 
 scandata <- strsplit(idatdir,";")[[1]]
-# this could be a way to get arraytypes 
+
+# this could be a way to sort arraytypes to data paths // assumingly not necessary as updated functions will be able to detect arraytype themselves
 # arraytypes_pathwise <- strsplit(arraytypes_pathwise,";")[[1]]
 # names(arraytypes_pathwise) <- scandata
 
@@ -111,20 +112,21 @@ for(path in scandata){ # all files in the same path have to have identical array
  	filenames = filenames[filenames_idx] # !! this changes filenames object! 
  	filenames_pathwise[[path]] <- filenames
 	# filenames <- filenames[1:5] # test version
-	#OLD: 	dim(filenames) <- c(1,length(filenames)) #	RGset <- read.metharray(filenames[1,], verbose=TRUE, force = TRUE) 
+
 }
 
-# make one filenames object to merge # Test
+# make one filenames object to merge 
 	filenames_all <- unlist(filenames_pathwise)
 	samplesheet_combined$filename <- as.character(sapply(samplesheet_combined$Sentrix_Code, function(x){grep(x,filenames_all, value = TRUE)})) 
 
-	# we need to handle samples without idat file
+	 # protocol samples without idat file
 	 filenames_all_idx_list <- sapply(union(datsamplesfinal$Sentrix_Code,datsamples$Sentrix_Code), function(x){grep(x,filenames_all)})
 	 filenames_all_idx <-  as.integer(filenames_all_idx_list)
 	 missing_idat <- names(filenames_all_idx_list[is.na(filenames_all_idx)])
 
-	 write.table(missing_idat, file = paste0(outputdir,"/missing_idat_files","_",projectname,"-",formatted.time,".tsv"), row.names = FALSE, col.names = TRUE, append = TRUE) 
-
+	if(length(missing_idat) > 0){
+		write.table(missing_idat, file = paste0(outputdir,"/missing_idat_files","_",projectname,"-",formatted.time,".tsv"), row.names = FALSE, append = TRUE) 
+	}
 
 
 ####### METHYLATION READ-IN #####################
@@ -134,19 +136,20 @@ for(path in scandata){ # all files in the same path have to have identical array
 	# restrict the samplesheet to the samples we found in this path 
   	samplesheet_local <- samplesheet_combined[grep(path, samplesheet_combined$filename),]
  	samplesheet_local$Basename <- samplesheet_local$filename
-	RGset = read.metharray.exp(targets = samplesheet_local, recursive = TRUE, force = TRUE) # do we want to force? occured in EPIC(v1) idats only, not a v1-v2 problem
-
- 	# if(annotation(RGset)["array"] == "IlluminaHumanMethylationEPICv2"){
-		# explained in the IlluminaHumanMethylationEPICv2anno.20a1.hg38 package https://jokergoo.github.io/IlluminaHumanMethylationEPICv2manifest/
-    	# not longer necessary with minfi update
- 		#	annotation(RGset)["array"] = "IlluminaHumanMethylationEPICv2" # doesnt work for EPICv2 yet
- 		#	annotation(RGset)["annotation"] = "20a1.hg38"
+	RGset = read.metharray.exp(targets = samplesheet_local, recursive = TRUE, force = TRUE) # need force in EPIC(v1) idats only, not a v1-v2 problem
  		
- 		annotation(RGset)["array"] = "IlluminaHumanMethylationEPIC" # switch to EPIC only to make bgcorrect.illumina and wbc.est work; the function should work exactly as it should be because the arraytype only determines the name of the column of probes, it seems. Having the right column name, the probes are EPICv2-specific not EPIC (v1) downgrade. 
- 	
- 	# }
+ 		 annotation(RGset)["array"] = "IlluminaHumanMethylationEPIC" 
+ 		# switch to EPIC only to make bgcorrect.illumina and wbc.est work; however it then loads the wrong manifest in future functions; EPICv2 seems not defined
+ 		# the function should work exactly as it should be because the arraytype only determines the name of the column of probes.
+ 		# Having the right column name, the probes are still EPICv2-specific not EPIC (v1) downgrade. 
+ 		
+	## process RGset object seperately for EPIC v1.3 and v2.0 (background correction, samplewise functions like WBC estimation, SNP extraction, control probe quality control)
+	## arrays are merged at PROBE INFO & DATA SPLIT
 	
-	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction # doesnt work on minfi 1.50.0 EPIC v2 (yet) # since the control descriptor seems to be the only difference between arrays, but is the same for EPIC and EPICv2 I state that handling the EPICv2 RGset as an EPIC in bgcorrect returns the correct result; see function details and getProbeInfo(dat, "Control")
+	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction # doesnt work on minfi 1.50.0 EPIC v2 (yet, 06/2024) 
+	# since the control descriptor seems to be the only difference between arrays, but 
+	# is the same for EPIC and EPICv2 I state that handling the EPICv2 RGset as an EPIC in bgcorrect returns the correct result;
+	# see function details and getProbeInfo(dat, "Control")
 	
 	RGset_pathwise[[path]] <- RGset
 	
@@ -154,58 +157,190 @@ for(path in scandata){ # all files in the same path have to have identical array
 
 } ######## data read-in 
 
-# if there are several paths; function can only handle two objects
-
-RGset <- RGset_pathwise[[1]]
-
-if(length(scandata) > 1){
-	
-	for(i in 2:length(scandata)){
-		RGset <- combineArrays(RGset, RGset_pathwise[[i]],
-                   outType = c("IlluminaHumanMethylationEPIC"), # == arraytype # currently tries to downgrade to 450k which is not good
-                  verbose = TRUE)	
-	}
-}
-
-rm(RGset_pathwise)
 
 ######## WBC and SNP extraction ####################
 	
-	# NOTE No need to make WBC estimation on final samples only since WBC estimation is sample-wise?
+	# NOTE No need to make WBC estimation on final samples only since WBC estimation is sample-wise.
 	# But I recommend to do it in last-but-one cleanup step with final samples as only input to save computational effort.
 
 WBCok = ifelse(exists("estimateWBCs"), estimateWBCs, FALSE)
 
+# produces Error in get(referencePkg) : object 'FlowSorted.Blood.EPIC' not found >> run manually on lower R version? update estimateCellCounts function? 
 if(WBCok%in%TRUE){ # use EPIC (v1) reference platform to get the best to-date estimation; should be fairly ok esp. for the combined analysis
-		
-		#########################################
- 		# comment by Lucas Salas on github: If you are using the latest version of FlowSorted.Blood.EPIC (>=v.2.0) you do not need to specify any of those options.
- 		############################################
+	print("WBC estimation is currently disabled.") }
+# 		
+# # do this pathwise == arraywise 
+# estwbc_pathwise <- vector(mode = "list", length = length(scandata))
+# names(estwbc_pathwise) <- scandata
+# 
+# 
+# for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
+# 
+# 	RGset <- RGset_pathwise[[path]] 
+# 
+#  	estwbc_pathwise[[path]] <- estimateCellCounts(RGset, compositeCellType = "Blood", cellTypes = c("CD8T","CD4T", "NK","Bcell","Mono","Gran"),
+#  				 sex = datsamples$MFSex_female[match(sample_names,datsamples$Sentrix_Code)],
+#  				 referencePlatform = c("IlluminaHumanMethylationEPIC")
+#  				 )
+# 		########################################
+#  		# comment by Lucas Salas on github: If you are using the latest version of FlowSorted.Blood.EPIC (>=v.2.0) you do not need to specify any of those options.
+#  		# >> update to estimateCellCounts2
+#  		###########################################
+# 
+#  				 
+#  	rm(RGset)
+#  
+# } # end of RGset-wise wbc est 
+# 
+# # combine wbc estimation
+# 
+# est_wbc <- do.call("rbind", estwbc_pathwise)
+#  	                              
+# } # end of WBC estimation
 
- 		est_wbc <- estimateCellCounts(RGset, compositeCellType = "Blood", cellTypes = c("CD8T","CD4T", "NK","Bcell","Mono","Gran"),
- 				 sex = datsamples$MFSex_female[match(sample_names,datsamples$Sentrix_Code)])
- 	                              
-} # end of WBC estimation
-
-#### SNP extraction
+#### SNP extraction ## EPICv2 comment: works theoretically, but too low output
 		
-if(exists("extractSNPs")){ ## this works on EPICv2 !! :)
-if(extractSNPs%in%"TRUE"){
-        	snps <- getSnpBeta(RGset)
+if(exists("extractSNPs")){ 
+	if(extractSNPs%in%"TRUE"){
+
+	## do this pathwise == arraywise 
+	snps_pathwise <- vector(mode = "list", length = length(scandata))
+	names(snps_pathwise) <- scandata
+
+	 for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
+ 
+	 	RGset <- RGset_pathwise[[path]] 
+	 
+	  	snps_pathwise[[path]] <- getSnpBeta(RGset) 
+	  	snps_pathwise[[path]] <- as.data.frame(snps_pathwise[[path]])
+	  	snps_pathwise[[path]]$rsID <- rownames(snps_pathwise[[path]])
+
        		 if(exists("snp.extraction")){
-       		     snp.extraction <- cbind(snp.extraction, snps)
+       		     snp.extraction <- merge(snp.extraction, snps_pathwise[[path]] , by = "rsID", all = TRUE)
        		 } else {
-       		     snp.extraction <- snps
+       		     snp.extraction <- snps_pathwise[[path]]
        		 }
-	}
-    }
+       	 	
+	 	rm(RGset)
+	 
+	 } # end of RGset-wise snp extraction for loop
+       		 
+	} # end of TRUE snp extraction
+} # end of exists snp extraction
 
 
 ########### PROBE INFO & DATA SPLIT ###############################################
-# rest of this chunk works fine on EPICv2
 
+# this is what we need and merge in the end 
+
+	TypeII.Red_pathwise <- vector(mode = "list", length = length(scandata))
+		names(TypeII.Red_pathwise) <- scandata
+	TypeII.Green_pathwise <- vector(mode = "list", length = length(scandata))
+		names(TypeII.Green_pathwise) <- scandata
+	TypeI.Green.M_pathwise <- vector(mode = "list", length = length(scandata))
+		names(TypeI.Green.M_pathwise) <- scandata
+	TypeI.Green.U_pathwise <- vector(mode = "list", length = length(scandata))
+		names(TypeI.Green.U_pathwise) <- scandata
+	TypeI.Red.U_pathwise <- vector(mode = "list", length = length(scandata))
+		names(TypeI.Red.U_pathwise) <- scandata
+	TypeI.Red.M_pathwise <- vector(mode = "list", length = length(scandata))
+		names(TypeI.Red.M_pathwise) <- scandata
+
+# control probes for lowlevel QC - might be processed seperately or together
+
+	ctrl_pathwise <- vector(mode = "list", length = length(scandata))
+		names(ctrl_pathwise) <- scandata
+	ctrl.complete.Red_pathwise <- vector(mode = "list", length = length(scandata))
+		names(ctrl.complete.Red_pathwise) <- scandata
+	ctrl.complete.Green_pathwise <- vector(mode = "list", length = length(scandata))
+		names(ctrl.complete.Green_pathwise) <- scandata
+	
+	dp_pathwise <- vector(mode = "list", length = length(scandata))
+		names(dp_pathwise) <- scandata
+
+
+for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
+ 
+	RGset <- RGset_pathwise[[path]] 
+ 
 	# Type II probes
 	TypeII.Name <- getProbeInfo(RGset, type = "II")$Name
+	
+	# manual data reading of rg set object : head(assay(rg, "Green")) 
+	# is the same kind of data (below: rg = EPIC2, RGset = EPIC1), matching the names needs the annotation file
+	# this is AddressA_ID / AddressB_ID column in annotationfile 
+	# delete potentially leading zeros or expect leading zeros in annotationfile
+	
+	# first column number of TypeII.Green down there:
+	# franziskag-c@Franziskas-MacBook-Air CPACOR-EPIC_pipeline % grep 85713262 annotationfileB4_2017-09-15.csv 
+	# cg07881041,cg07881041,0085713262,CTACAAATACAACACCCTCAACCCATATTTCATATATTATCTCATTTAAC,,,II,,,CTGC..[etc,etc]
+	
+	# and respectively for EPICv2
+# 	franziskag-c@Franziskas-MacBook-Air CPACOR-EPIC_pipeline % grep ,1600157, MethylationEPIC_v2.0_Files/EPIC-8v2-0_A1.csv 
+#   cg08151515_TC21,cg08151515,1600157,CACCTCRTACTCATCAAAATAACCTCTATCAAAAATCCAAAAACAACAAC,,,,,,cg,R,T,C,2,II,chr6,2636911,Human,GRCh38,CGTTGTTGTTTCTGGATTTTTGACAGAGG
+
+# > head(assay(rg, "Green")) # this in TypeI and TypeII !
+#         207810890008_R01C01 207810890120_R01C01 207831660084_R01C01
+# 1600157                7807                7351                7782
+# 1600179                3691                4366                5991
+# 1600219                4207                6208                7367
+# 1600225                6667                5721                6145
+# 1600283                 213                 303                 442
+# 1600411                4914                6001                7018
+
+# this is the object we want to build, read-in from EPICv1
+# RGset <- RGset_pathwise[[1]] 
+# > TypeII.Green <- getGreen(RGset)[getProbeInfo(RGset, type = "II")$AddressA,]
+# > head(TypeII.Green)
+#          202073180065_R05C01 202073200086_R06C01 205537620061_R06C01
+# 85713262               10321               12052                4200
+# 21717843                3980                4452                1441
+# 29622133                5695                5883                2451
+# 16681196                 318                 538                 168
+# 7767973                 5017                5365                1963
+# 25809572                  65                  84                  47
+# TypeII.Name <- getProbeInfo(RGset, type = "II")$Name
+# rownames(TypeII.Green) <- TypeII.Name
+
+# try building it on EPICv1: 
+### what we do in EPICv2 is TypeII.Green <- assay(RGset, "Green") 
+# TypeII.Green <- getGreen(RGset)[getProbeInfo(RGset, type = "II")$AddressA,]
+# t2g <- as.data.frame(TypeII.Green)
+# t2g$cg <- TypeII.Name
+# annotationfile
+# [1] "/data/programs/pipelines/CPACOR-EPIC_pipeline/annotationfileB4_2017-09-15.csv"
+# > anno=read.csv("/data/programs/pipelines/CPACOR-EPIC_pipeline/annotationfileB4_2017-09-15.csv",as.is=TRUE, skip = 7)
+# t2g$Name <- anno$Name[match(rownames(t2g),gsub("^.[0]","", anno$AddressA_ID))]
+# > sum(is.na(t2g$Name))
+# [1] 84563
+# > sum(is.na(t2g$cg)) # == TypeII.Name the sites which the built-in function returns
+# [1] 0
+# > identical(t2g$Name[!is.na(t2g$Name)],t2g$cg[!is.na(t2g$Name)])
+# [1] TRUE
+# >>> works, but not for all sites, on EPICv1
+# t2g$IlmnID <- anno$IlmnID[match(rownames(t2g),gsub("^.[0]","", anno$AddressA_ID))] # has identical missings
+
+
+# try on EPICv2
+# anno = read.csv("/data/programs/pipelines/CPACOR-EPIC_pipeline/MethylationEPIC_v2.0_Files/EPIC-8v2-0_A1.csv", as.is=TRUE, skip = 7)
+# 	rg <- RGset_pathwise[[2]]
+# 	TypeII.Green <- getGreen(rg)[getProbeInfo(rg, type = "II")$AddressA,] # >> Error in getGreen(rg)[getProbeInfo(rg, type = "II")$AddressA, ] : subscript out of bounds
+# TypeII.probe <- anno$AddressA_ID[anno$Infinium_Design_Type == "II"]
+# TypeII.probe.number <- gsub("^.[0]","", TypeII.probe)
+# available <- intersect(rownames(assay(rg, "Green")),TypeII.probe.number)
+# TypeII.Green <- assay(rg, "Green")[available,]
+# t2g2 <- as.data.frame(TypeII.Green)
+# t2g2$Name <- anno$Name[match(rownames(t2g2),gsub("^.[0]","", anno$AddressA_ID))]
+# sum(is.na(t2g2$Name))
+
+
+----------
+# works for one type, it should work for all types
+# hint on control data: annotationfile has a list of probes with Ilmn_ID etc and then an empty line which only says "CONTROLS" or "CONTROL" in the first column; the following probes are the control probes;
+# actually it may be easier for manual handling to split the annotationfile into data and controls in the first place and read them in separately
+# then they dont get mixed up in the pipelines
+----------
+	
 	TypeII.Green <- getGreen(RGset)[getProbeInfo(RGset, type = "II")$AddressA,]
 	TypeII.Red <- getRed(RGset)[getProbeInfo(RGset, type = "II")$AddressA,]
 	rownames(TypeII.Red) <- TypeII.Name
@@ -230,9 +365,19 @@ if(extractSNPs%in%"TRUE"){
 	rownames(TypeI.Red.U) <- TypeI.Red.Name
 	colnames(TypeI.Red.U) <- sampleNames(RGset)
 
+	TypeII.Red_pathwise[[path]] <- TypeII.Red
+	TypeII.Green_pathwise[[path]] <- TypeII.Green
+	TypeI.Red.M_pathwise[[path]] <- TypeI.Red.M
+	TypeI.Red.U_pathwise[[path]] <- TypeI.Red.U
+	TypeI.Green.M_pathwise[[path]] <- TypeI.Green.M
+	TypeI.Green.U_pathwise[[path]] <- TypeI.Green.U
 
-	##### how to handle different array types? are these different? 
-	### until next ### different: control defined 
+}
+
+for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
+ 
+	RGset <- RGset_pathwise[[path]] 
+
 	control=getProbeInfo(RGset, type = "Control") # needed also for lowlevel QC
 
 	#BSC1 control probes - 450k: 16:18 ### 1:18 sind f??r 45ok die Zeilen control$Type=="BISULFITE CONVERSION I" & (control$Color %in% c("Green","LimeGreen","Lime")) 
@@ -249,7 +394,7 @@ if(extractSNPs%in%"TRUE"){
         BSCII.Red <- matrix(NA_real_, ncol = ncol(RGset), nrow = length(BSCII.Red.Name), dimnames = list(BSCII.Red.Name, sampleNames(RGset)))
         BSCII.Red[BSCII.Red.Name,] <- getRed(RGset)[control[control$Type=="BISULFITE CONVERSION II",]$Address,]
 	
-	# select control probes green channel by ExtendedType:
+		# select control probes green channel by ExtendedType:
         # STAINING, EXTENSION, HYBRIDISATION, TARGET REMOVAL, Specificity I+II, NON POLYMORPHIC
         extendedTypeGreen=c("Biotin (High)","Extension (C)","Extension (G)","Hyb (High)","Hyb (Medium)","Hyb (Low)","Target Removal 1","Target Removal 2","GT Mismatch 1 (PM)","GT Mismatch 2 (PM)","GT Mismatch 3 (PM)","NP (C)","NP (G)")
         extendedTypeRed=c("DNP (High)","Extension (A)","Extension (T)","GT Mismatch 4 (PM)","GT Mismatch 5 (PM)","GT Mismatch 6 (PM)","Specificity 1","Specificity 2","Specificity 3","NP (A)","NP (T)")
@@ -298,44 +443,41 @@ if(extractSNPs%in%"TRUE"){
 	
 	#combine ctrl probe intensities ### shorter 
         ctrl = rbind(as.matrix(BSCI.Green), as.matrix(BSCI.Red), as.matrix(BSCII.Red), (ctlext.Red), (ctlext.Green),as.matrix(normC.Green),as.matrix(normG.Green), as.matrix(normA.Red),as.matrix(normT.Red))
+		ctrl <- t(ctrl)
 
 	#detection p-values
-	dp = detectionP.local(RGset, type = "m+u") 
+		dp = detectionP.local(RGset, type = "m+u") 
+	
+	# save
+	ctrl_pathwise[[path]] <- ctrl
+	ctrl.complete.Red_pathwise[[path]] <- ctrl.complete.Red
+	ctrl.complete.Green_pathwise[[path]] <- ctrl.complete.Green
+	
+	dp_pathwise[[path]] <- dp
 
-# if data is handled successively (not in current code version)
-	
-if(exists("TypeII.Red.All")) {
-	TypeII.Red.All <- cbind(TypeII.Red.All,TypeII.Red)
-	TypeII.Green.All <- cbind(TypeII.Green.All,TypeII.Green)
-	TypeI.Red.M.All <- cbind(TypeI.Red.M.All,TypeI.Red.M)
-	TypeI.Red.U.All <- cbind(TypeI.Red.U.All,TypeI.Red.U)
-	TypeI.Green.M.All <- cbind(TypeI.Green.M.All,TypeI.Green.M)
-	TypeI.Green.U.All <- cbind(TypeI.Green.U.All,TypeI.Green.U)
-	
-	ctrl.all <- rbind(ctrl.all, t(ctrl))
-	## added for lowlevel QC by AT 
-	ctrl.complete.Red.all <- cbind(ctrl.complete.Red.all, ctrl.complete.Red) # added for lowlevel QC
-    ctrl.complete.Green.all <- cbind(ctrl.complete.Green.all, ctrl.complete.Green) # added for lowlevel QC
-    
-	dp.all <- cbind(dp.all, dp)
-	
-	} else {
-	
-	TypeII.Red.All <- TypeII.Red                                                                                                                                  
-	TypeII.Green.All <- TypeII.Green 
-	TypeI.Red.M.All <- TypeI.Red.M 
-	TypeI.Red.U.All <- TypeI.Red.U 
-	TypeI.Green.M.All <- TypeI.Green.M 
-	TypeI.Green.U.All <- TypeI.Green.U    
-	 
-	ctrl.all <- t(ctrl)
-	ctrl.complete.Red.all <- ctrl.complete.Red # added for lowlevel QC
-    ctrl.complete.Green.all <- ctrl.complete.Green # added for lowlevel QC
-    
-    dp.all <- dp
 }
 
+#### MERGE #####
+# Todo need to merge instead of cbind, because dimensions differ
+
+TypeII.Red.All <- do.call("cbind",TypeII.Red_pathwise)
+TypeII.Green.All <- do.call("cbind",TypeII.Green_pathwise)
+TypeI.Green.M.All <- do.call("cbind",TypeI.Green.M_pathwise)
+TypeI.Green.U.All <- do.call("cbind",TypeI.Green.U_pathwise)
+TypeI.Red.M.All <- do.call("cbind",TypeI.Red.M_pathwise)
+TypeI.Red.U.All <- do.call("cbind",TypeI.Red.U_pathwise)
+
+ctrl.all <- do.call("rbind",ctrl_pathwise) # need to transpose? 
+
+## added for lowlevel QC by AT 
+ctrl.complete.Red.all <- do.call("cbind", ctrl.complete.Red_pathwise) # added for lowlevel QC
+ctrl.complete.Green.all <- do.call("cbind", ctrl.complete.Green_pathwise) # added for lowlevel QC
+    
+dp.all <- do.call("cbind",dp_pathwise)
+
+
 # list(ls()) # remove what is not needed anymore - save space 
+# rm( # list=ls(*_pathwise) # )
 rm(BSCI.Green ,BSCI.Red ,BSCII.Red ,ctlext.Red ,ctlext.Green ,normC.Green ,normG.Green ,normA.Red ,normT.Red)
 rm(bufR, bufG, control_ok.Red, control_ok.Green, ctrl.complete.Red, ctrl.complete.Green, TypeII.Red, TypeII.Green, TypeI.Red.M, TypeI.Red.U, TypeI.Green.M, TypeI.Green.U)
 rm(dp, detppre, controlExtRed, controlExtGreen, extendedTypeGreen, extendedTypeRed, filenames_idx_list, filenames_idx, i, rawtypepre)
@@ -427,7 +569,7 @@ if(exists("extractSNPs") && extractSNPs%in%"TRUE"){
     if(exists("snp.extraction")){
         write.csv(snp.extraction, file = paste0(outputdir,"/extracted-snps","_",projectname,"-",formatted.time,".csv"),row.names=T)
     } else {
-        cat("\nAn error occurres during SNP extraction. No results are exported.\n")
+        cat("\nAn error occurs during SNP extraction. No results are exported.\n")
     }
 }
 
@@ -441,36 +583,48 @@ For this step we need the annotationfile.
 
 ```{r, label = 'annotation'}
 # works fine on EPICv2
-anno=read.csv(annotationfile,as.is=TRUE, skip = 7) # skip=7 is true for EPICv2 as well 
- 
-anno=anno[,c('Infinium_Design_Type','Color_Channel', 'CHR', 'MAPINFO', 'Name')]
+
+anno=read.csv(annotationfile,as.is=TRUE, skip = 7) 
+
+# problem: Name is not unique in merged annotationfile if we use MAPINFO which differs between arrays
+# anno=anno[,c('Infinium_Design_Type','Color_Channel', 'CHR', 'MAPINFO', 'Name')]
+# currently we only seem to use CHR and Name; because MAPINFO is different in EPIC v1 and v2, we dismiss this variable as long as we don't use it anyway
+
+# also there are CHR values "","M","chr0" in the original file; those are dismissed in being not selected as neither autosome nor sexchromosome
+
+anno=anno[,c('Infinium_Design_Type','Color_Channel', 'CHR', 'Name')]
+
+ # align chromosome notation 
+ anno$CHR <- gsub("chr","",as.character(anno$CHR))
+
+ # this is a bit redundant since we align the chromosome notation
  chrX_descr <- grep('X', anno$CHR, value = T)[1]
  chrY_descr <- grep('Y', anno$CHR, value = T)[1]
  
-# get autosomal probes
- cas=anno[substr(anno$Name, 1,3)=='ch.' & !(anno$CHR %in% c(chrX_descr,chrY_descr)),]
- cgs=anno[substr(anno$Name, 1,2)=='cg'& !(anno$CHR %in% c(chrX_descr,chrY_descr)),]
+ # get autosomal probes
+ cas=anno[substr(anno$Name, 1,3)=='ch.' & (anno$CHR %in% c(as.character(1:22),"M")),] # M is mitochondrial
+ cgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% c(as.character(1:22),"M"))),]
  auto = c(cgs$Name, cas$Name)
  auto=as.matrix(auto)
 
-# get chrX probes # changed to work also on EPICv2
- 
+ # get chrX probes 
  xcas=anno[substr(anno$Name, 1,3)=='ch.' & (anno$CHR %in% c(chrX_descr)),]
  xcgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% c(chrX_descr)),]
  sexchrX = c(xcgs$Name, xcas$Name)
  sexchrX=as.matrix(sexchrX)
 
  # get chrY probes
- ycas=anno[substr(anno$Name, 1,3)=='ch.' & (anno$CHR %in% c('Y')),]
- ycgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% c('Y')),]
+ ycas=anno[substr(anno$Name, 1,3)=='ch.' & (anno$CHR %in% chrY_descr),]
+ ycgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% chrY_descr),]
  sexchrY = c(ycgs$Name, ycas$Name)
  sexchrY=as.matrix(sexchrY)
+
 ```
 
 ### High-level quality control
 
 
-High level quality control includes detection p-value filter, restriction the the samples listed in the samplesfile and call rate filtering.
+High level quality control includes detection p-value filter, restriction to the samples listed in the samplesfile and call rate filtering.
 
 We calculate raw beta values for both autosomal and sex chromosome data.
 In our further calculations beta value data always is processed separately for autosomes and gametes. 
@@ -479,7 +633,6 @@ In our further calculations beta value data always is processed separately for a
 
 ```{r, label='detection_p-values'} 
 # works fine on EPICv2
-# test
 dpvec <- dp.all
 dim(dpvec) <- c(nrow(dp.all)*ncol(dp.all),1)
 
