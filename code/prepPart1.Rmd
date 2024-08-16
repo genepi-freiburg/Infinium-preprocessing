@@ -603,7 +603,7 @@ anno=anno[,c('Infinium_Design_Type','Color_Channel', 'CHR', 'Name')]
  
  # get autosomal probes
  cas=anno[substr(anno$Name, 1,3)=='ch.' & (anno$CHR %in% c(as.character(1:22),"M")),] # M is mitochondrial
- cgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% c(as.character(1:22),"M"))),]
+ cgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% c(as.character(1:22),"M")),]
  auto = c(cgs$Name, cas$Name)
  auto=as.matrix(auto)
 
