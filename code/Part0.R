@@ -20,6 +20,8 @@
 #  BiocManager::install("IlluminaHumanMethylationEPICanno.ilm10b4.hg19")
 #  BiocManager::install("IlluminaHumanMethylationEPICv2anno.20a1.hg38")
 #  # BiocManager::install("jokergoo/IlluminaHumanMethylationEPICv2manifest") # outdated? 
+#  BiocManager::install("IlluminaHumanMethylationEPICv2manifest")
+
 
 
 # install.packages("caret")

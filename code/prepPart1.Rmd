@@ -31,9 +31,32 @@ detectionP.local <- function (rgSet, type = "m+u")
 }
 ```
 
+
+```{r, label = remove_pattern_function, echo = FALSE}
+remove_pattern <- function(df) {
+  if (any(grepl("_", rownames(df)))) {
+    rownames(df) <- sub("_.*", "", rownames(df))
+  }
+  return(df)
+}
+```
+
+```{r, label = combine_data, echo = FALSE}
+combine_data <- function(df_list) {
+  df_list <- lapply(df_list, remove_pattern)
+  combined_df <- Reduce(function(x, y) merge(x, y, by = "row.names", all = FALSE), df_list)
+  rownames(combined_df) <- combined_df$Row.names
+  combined_df <- combined_df[, -1]
+  return(combined_df)
+}
+```
+
 ## PART 1: Data and parameters
 
 ```{r, label='read-in.samples', message = FALSE, echo = FALSE, warning = FALSE}
+
+#Arraytype name
+arraytype_names <- Reduce(function(x, y) paste0(x, " ,", y), arraytype)
 
 ##########################################
 # read samples ###########################
@@ -70,7 +93,7 @@ datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$
  
 cwd<-getwd()
 
-scandata <- strsplit(idatdir,";")[[1]]
+scandata <- unlist(idatdir)
 
 # this could be a way to sort arraytypes to data paths // assumingly not necessary as updated functions will be able to detect arraytype themselves
 # arraytypes_pathwise <- strsplit(arraytypes_pathwise,";")[[1]]
@@ -137,8 +160,10 @@ for(path in scandata){ # all files in the same path have to have identical array
   	samplesheet_local <- samplesheet_combined[grep(path, samplesheet_combined$filename),]
  	samplesheet_local$Basename <- samplesheet_local$filename
 	RGset = read.metharray.exp(targets = samplesheet_local, recursive = TRUE, force = TRUE) # need force in EPIC(v1) idats only, not a v1-v2 problem
- 		
- 		 annotation(RGset)["array"] = "IlluminaHumanMethylationEPIC" 
+		arraytype.r <- RGset@annotation["array"]
+ 			if (arraytype.r == "IlluminaHumanMethylationEPICv2") {
+ 		 annotation(RGset)["array"] = "IlluminaHumanMethylationEPIC"
+ 			}
  		# switch to EPIC only to make bgcorrect.illumina and wbc.est work; however it then loads the wrong manifest in future functions; EPICv2 seems not defined
  		# the function should work exactly as it should be because the arraytype only determines the name of the column of probes.
  		# Having the right column name, the probes are still EPICv2-specific not EPIC (v1) downgrade. 
@@ -146,17 +171,54 @@ for(path in scandata){ # all files in the same path have to have identical array
 	## process RGset object seperately for EPIC v1.3 and v2.0 (background correction, samplewise functions like WBC estimation, SNP extraction, control probe quality control)
 	## arrays are merged at PROBE INFO & DATA SPLIT
 	
-	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction # doesnt work on minfi 1.50.0 EPIC v2 (yet, 06/2024) 
+	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction # doesnt work on minfi 1.50.0 EPIC v2 (yet, 20/08/2024) 
 	# since the control descriptor seems to be the only difference between arrays, but 
 	# is the same for EPIC and EPICv2 I state that handling the EPICv2 RGset as an EPIC in bgcorrect returns the correct result;
 	# see function details and getProbeInfo(dat, "Control")
-	
+	RGset@annotation["array"]<-arraytype.r # reset to original arraytype
+
 	RGset_pathwise[[path]] <- RGset
 	
 	rm(RGset)
 
 } ######## data read-in 
 
+	 
+	 	##Potential modified bgcorrect.illumina function:
+	
+# library(DelayedArray)
+# 
+# bgcorrect.illumina <- function(rgSet) {
+#   minfi:::`.isRGOrStop`(rgSet)
+#   Green <- getGreen(rgSet)
+#   Red <- getRed(rgSet)
+#   # if (.is450k(rgSet) || .isEPIC(rgSet) || .isAllergy(rgSet)) {
+#     NegControls <- getControlAddress(rgSet, controlType = "NEGATIVE")
+#   # }
+#   # if (.is27k(rgSet)) {
+#   #   NegControls <- getControlAddress(rgSet, controlType = "Negative")
+#   # }
+#   Green.bg <- apply(Green[NegControls, , drop = FALSE], 2, function(xx) {
+#     sort(as.vector(xx))[31]
+#   })
+#   Red.bg <- apply(Red[NegControls, , drop = FALSE], 2, function(xx) {
+#     sort(as.vector(xx))[31]
+#   })
+#   Green <- pmax2(sweep(Green, 2, Green.bg), 0)
+#   Red <- pmax2(sweep(Red, 2, Red.bg), 0)
+#   assay(rgSet, "Green") <- Green
+#   assay(rgSet, "Red") <- Red
+#   rgSet
+# }
+# 
+# 
+# GreenMatrix_new <- assay(rgSet, "Green")
+# GreenMatrix_old <- assay(RGset, "Green")
+# 
+# RedMatrix_new <- assay(rgSet, "Red")
+# RedMatrix_old <- assay(RGset, "Red")
+# 
+# print(RedMatrix)
 
 ######## WBC and SNP extraction ####################
 	
@@ -264,7 +326,7 @@ for(path in scandata){ # all files in the same path have to have identical array
 	RGset <- RGset_pathwise[[path]] 
  
 	# Type II probes
-	TypeII.Name <- getProbeInfo(RGset, type = "II")$Name
+	TypeII.Name <- getProbeInfo(RGset, type = "II")$Name #lenght: V1; V2--> ;808719
 	
 	# manual data reading of rg set object : head(assay(rg, "Green")) 
 	# is the same kind of data (below: rg = EPIC2, RGset = EPIC1), matching the names needs the annotation file
@@ -334,23 +396,24 @@ for(path in scandata){ # all files in the same path have to have identical array
 # sum(is.na(t2g2$Name))
 
 
-----------
+#----------
 # works for one type, it should work for all types
 # hint on control data: annotationfile has a list of probes with Ilmn_ID etc and then an empty line which only says "CONTROLS" or "CONTROL" in the first column; the following probes are the control probes;
 # actually it may be easier for manual handling to split the annotationfile into data and controls in the first place and read them in separately
 # then they dont get mixed up in the pipelines
-----------
+#----------
 	
-	TypeII.Green <- getGreen(RGset)[getProbeInfo(RGset, type = "II")$AddressA,]
-	TypeII.Red <- getRed(RGset)[getProbeInfo(RGset, type = "II")$AddressA,]
+	TypeII.Green <- getGreen(RGset)[getProbeInfo(RGset, type = "II")$AddressA,] 
+	#dim: V1; V2--> ;808719      4
+	TypeII.Red <- getRed(RGset)[getProbeInfo(RGset, type = "II")$AddressA,] #dim: V1; V2--> ;808719      4
 	rownames(TypeII.Red) <- TypeII.Name
 	colnames(TypeII.Red) <- sampleNames(RGset)
 	rownames(TypeII.Green) <- TypeII.Name
 	colnames(TypeII.Green) <- sampleNames(RGset)
 
 	# Type I probes, split into green and red channels
-	TypeI.Green.Name <- getProbeInfo(RGset, type = "I-Green")$Name
-	TypeI.Green.M <- getGreen(RGset)[getProbeInfo(RGset, type = "I-Green")$AddressB,]
+	TypeI.Green.Name <- getProbeInfo(RGset, type = "I-Green")$Name #lenght: V1; V2--> ;45226
+	TypeI.Green.M <- getGreen(RGset)[getProbeInfo(RGset, type = "I-Green")$AddressB,] 
 	rownames(TypeI.Green.M) <- TypeI.Green.Name
 	colnames(TypeI.Green.M) <- sampleNames(RGset)
 	TypeI.Green.U <- getGreen(RGset)[getProbeInfo(RGset, type = "I-Green")$AddressA,]
@@ -365,13 +428,29 @@ for(path in scandata){ # all files in the same path have to have identical array
 	rownames(TypeI.Red.U) <- TypeI.Red.Name
 	colnames(TypeI.Red.U) <- sampleNames(RGset)
 
-	TypeII.Red_pathwise[[path]] <- TypeII.Red
-	TypeII.Green_pathwise[[path]] <- TypeII.Green
-	TypeI.Red.M_pathwise[[path]] <- TypeI.Red.M
-	TypeI.Red.U_pathwise[[path]] <- TypeI.Red.U
-	TypeI.Green.M_pathwise[[path]] <- TypeI.Green.M
-	TypeI.Green.U_pathwise[[path]] <- TypeI.Green.U
-
+	TypeII.Red_pathwise[[path]] <- TypeII.Red # dim V1 vs V2 --> 723722;11  vs  808719;4
+	TypeII.Green_pathwise[[path]] <- TypeII.Green # dim V1 vs V2 --> 723722;11  vs  808719;4
+	TypeI.Red.M_pathwise[[path]] <- TypeI.Red.M # dim V1 vs V2 --> 92198;11  vs  83045;4
+	TypeI.Red.U_pathwise[[path]] <- TypeI.Red.U # dim V1 vs V2 --> 92198;11  vs  83045;4
+	TypeI.Green.M_pathwise[[path]] <- TypeI.Green.M # dim V1 vs V2 --> 49939;11  vs  45226;4
+	TypeI.Green.U_pathwise[[path]] <- TypeI.Green.U # dim V1 vs V2 --> 49939;11  vs  45226;4
+	
+	#problem
+# 	head(TypeII.Red_pathwise[[1]])
+#            202073180065_R05C01 202073200086_R06C01 205537620061_R06C01 205537620061_R07C01
+# cg07881041                 740                1144                 395                 161
+# cg23229610                 175                 320                 118                  53
+# cg03513874                 327                 466                 237                 161
+# 
+# head(TypeII.Red_pathwise[[2]])
+#                 207810890008_R01C01 207810890120_R01C01 207831660084_R01C01 207810890008_R02C01
+# cg25335775_BC21                8053                8947                8347                8136
+# cg25341653_BC21                1526                1758                1966                1214
+# cg25372195_BC21                1462                1444                2518                1305
+# v1<-rownames(TypeII.Red_pathwise[[1]])
+# v2<-rownames(TypeII.Red_pathwise[[2]])
+# v2_2<-sub("_.*", "", v2)	
+# length(intersect(v1,v2_2)) #612824
 }
 
 for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
@@ -459,21 +538,20 @@ for(path in scandata){ # all files in the same path have to have identical array
 
 #### MERGE #####
 # Todo need to merge instead of cbind, because dimensions differ
-
-TypeII.Red.All <- do.call("cbind",TypeII.Red_pathwise)
-TypeII.Green.All <- do.call("cbind",TypeII.Green_pathwise)
-TypeI.Green.M.All <- do.call("cbind",TypeI.Green.M_pathwise)
-TypeI.Green.U.All <- do.call("cbind",TypeI.Green.U_pathwise)
-TypeI.Red.M.All <- do.call("cbind",TypeI.Red.M_pathwise)
-TypeI.Red.U.All <- do.call("cbind",TypeI.Red.U_pathwise)
+TypeII.Red.All <-combine_data(TypeII.Red_pathwise) #612824
+TypeII.Green.All <- combine_data(TypeII.Green_pathwise) #612824
+TypeI.Green.M.All <- combine_data(TypeI.Green.M_pathwise) #38706    
+TypeI.Green.U.All <- combine_data(TypeI.Green.U_pathwise) #38706
+TypeI.Red.M.All <- combine_data(TypeI.Red.M_pathwise) #70203    
+TypeI.Red.U.All <- combine_data(TypeI.Red.U_pathwise) #70203 
 
 ctrl.all <- do.call("rbind",ctrl_pathwise) # need to transpose? 
 
 ## added for lowlevel QC by AT 
-ctrl.complete.Red.all <- do.call("cbind", ctrl.complete.Red_pathwise) # added for lowlevel QC
-ctrl.complete.Green.all <- do.call("cbind", ctrl.complete.Green_pathwise) # added for lowlevel QC
+ctrl.complete.Red.all <- combine_data(ctrl.complete.Red_pathwise) #633
+ctrl.complete.Green.all <- combine_data(ctrl.complete.Green_pathwise) # added for lowlevel QC  633
     
-dp.all <- do.call("cbind",dp_pathwise)
+dp.all <- combine_data(dp_pathwise) #721745
 
 
 # list(ls()) # remove what is not needed anymore - save space 
@@ -508,7 +586,7 @@ As given in *parameterfile.R*, the following parameters were used:
 
 parameter                     | value
 ------------------------------|-------------------------------------
-arraytype                     | `r arraytype`
+arraytype                     | `r arraytype_names`
 detPthreshold                 | $`r detPthreshold`$
 callrate.thres                | $`r callrate.thres`$
 filterOutlierCtrlQC           | `r filterOutlierCtrlQC`

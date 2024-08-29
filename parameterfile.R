@@ -1,6 +1,8 @@
 # for using this pipeline, please install all packages listed in the code file "prepPart0.R"
 
-arraytype<-"IlluminaHumanMethylationEPIC"
+arraytype<-list(idatdir1 = "IlluminaHumanMethylationEPIC", 
+                idatdir2 = "IlluminaHumanMethylationEPICv2")
+# arraytype<-"IlluminaHumanMethylationEPIC"
 # SELECT  between "IlluminaHumanMethylation450k" and "IlluminaHumanMethylationEPIC"
 # (see minfi array names)
 
@@ -11,8 +13,11 @@ arraytype<-"IlluminaHumanMethylationEPIC"
 projectname="GCKD_batch1and2and3_test"
 # CHANGE: any string; date and time are appended in the code to prevent overwriting
 
-idatdir="/data/studies/00_GCKD/00_data/02_methylation/00_raw_data/EPIC_batch1and2/ScanData;/data/studies/00_GCKD/00_data/02_methylation/00_raw_data/EPIC_batch3/M01157_Köttgen/idat"
-# CHANGE: directory containing all idat files, absolute path, no / at the end, separate paths with ;
+idatdir<-list(idatdir1 = "/data/studies/00_GCKD/00_data/02_methylation/00_raw_data/EPIC_batch1and2/ScanData", 
+                idatdir2 = "/data/studies/00_GCKD/00_data/02_methylation/00_raw_data/EPIC_batch3/M01157_Köttgen/idat")
+
+#idatdir="/data/studies/00_GCKD/00_data/02_methylation/00_raw_data/EPIC_batch1and2/ScanData;/data/studies/00_GCKD/00_data/02_methylation/00_raw_data/EPIC_batch3/M01157_Köttgen/idat"
+# CHANGE: directory containing all idat files, absolute path, no / at the end
 
 outputdir="/data/studies/00_GCKD/00_data/02_methylation/01_QC/03_DNAm_preprocessing_batches123/tests_ZRH"
 # CHANGE: output directory for RData files, absolute path, no / at the end
