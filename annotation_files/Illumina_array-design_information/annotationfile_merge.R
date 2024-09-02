@@ -1,45 +1,72 @@
+
+###############################################################
+#     Goal: Create annotation file for both EPIC V1 and V2    #
+###############################################################
+#------------------------#
+#         TODO           #
+#------------------------#
+# 1. Fix genomic buid problem. V1=37 and V2=38
+
+
+
 setwd("/data/programs/pipelines/CPACOR-EPIC_pipeline")
+#STEP 1. Read annotation files 
+e1 <- read.csv("annotationfileB4_2017-09-15.csv", as.is=TRUE, skip = 7); dim(e1) #866554     48
+e2 <- read.csv("annotation_files/MethylationEPIC_v2.0_Files/EPIC-8v2-0_A1.csv",as.is=TRUE, skip = 7); dim(e2) #937691     49
+used_columns <- c("IlmnID",'Name', "AddressA_ID", 'Infinium_Design_Type','Color_Channel', 'CHR')
+ 
+#STEP 2. Work with controls
+#A. Extract controls probes
+c1 <- e1[which(e1$IlmnID%in%"[Controls]")+1:nrow(e1),]; dim(c1) #866554    48 --> No controls
+c2 <- e2[which(e2$IlmnID%in%"[Controls]")+1:nrow(e2),];dim(c2) #937691     49 --> No controls
 
-e2 <- read.csv("MethylationEPIC_v2.0_Files/EPIC-8v2-0_A1.csv",as.is=TRUE, skip = 7)
-e1 <- read.csv("annotationfileB4_2017-09-15.csv", as.is=TRUE, skip = 7)
-
-which(e2$IlmnID%in%"[Controls]")
-which(e1$IlmnID%in%"[Controls]")
-
-
-# used_columns <- c('Infinium_Design_Type','Color_Channel', 'CHR', 'MAPINFO', 'Name')
-used_columns <- c('Infinium_Design_Type','Color_Channel', 'CHR', 'Name')
-
-# controls
-c1 <- e1[which(e1$IlmnID%in%"[Controls]")+1:nrow(e1),]
-c2 <- e2[which(e2$IlmnID%in%"[Controls]")+1:nrow(e2),]
-
-# apply(c1,2,function(x){sum(is.na(x))})
 apply(c1,1,function(x){all(is.na(x))}) -> idx
-c1 <- c1[!idx,]
+# FALSE   TRUE
+# 635 865919 --------------> 635 Controls
+c1 <- c1[!idx, ]; dim(c1) #635   48 --> Controls
 
-# apply(c2,2,function(x){sum(is.na(x))})
 apply(c2,1,function(x){all(is.na(x))}) -> idx
-c2 <- c2[!idx,]
+# FALSE   TRUE
+# 635 937056 --------------> 635 Controls
+c2 <- c2[!idx, ];dim(c2) #635  49 ---> 635 Controls
 
-cb <- merge(c1,c2, all = TRUE)
-cb <- cb[,used_columns]
-cb <- cb[!duplicated(cb),]
+#B. Check differences
+dim(c1[!duplicated(c1),]) # 635  48 --> not duplicated
+dim(c2[!duplicated(c2),]) # 635  49 --> not duplicated
+ctr_col<-c("IlmnID", "Name", "AddressA_ID", "AlleleA_ProbeSeq")
+c1.c<-c1[, ctr_col]; dim(c1.c)
+c2.c<-c2[, ctr_col]; dim(c2.c)
+identical(`rownames<-`(c1.c, NULL), `rownames<-`(c2.c, NULL)) #Same controls
 
-# separation line
+#C. Merge controls
+c1<-c1[order(c1$Name), used_columns]; dim(c1) #635  6
+c2<-c2[order(c2$Name), used_columns]; dim(c2) #635  6
+colnames(c1)<-ifelse(colnames(c1) == "Name", colnames(c1), paste0(colnames(c1), "_EPICv1"))
+colnames(c2)<-ifelse(colnames(c2) == "Name", colnames(c2), paste0(colnames(c2), "_EPICv2"))
+
+if (!all(c1$Name == c2$Name)) {
+  stop("Not sorted")
+}
+cb <- cbind(c1, c2[ , -which(names(c2) == "Name")]); dim(cb) #635 11
+cb$EPIC_version<-"v1_v2"
+
+#STEP 3. Create separation line as the original annotation file
 s <- cb[1:2,]
-s[1,"IlmnID"] <- "[Controls]"
+s[1,"IlmnID_EPICv1"] <- "[Controls]"
 s[1,2:ncol(s)] <- NA
-s <- s[,used_columns]
 
+#STEP 4. Work with Probes
+#Types of probes:
+#------------------------------------------------------
+#   1) Name" match but not "IlmnID" --> Repeated in EPICv2 by adding a sufix --> TO DISCUSS
+#   2) "IlmnID" and "Name"  match among EPIC versions
+#   3) Those EPIC version specific --> We will treat them 
 
-# probes
-p1 <- e1[1:which(e1$IlmnID%in%"[Controls]")-1,]
-p2 <- e2[1:which(e2$IlmnID%in%"[Controls]")-1,]
+#A. Extract Probes
+p1 <- e1[1:which(e1$IlmnID%in%"[Controls]")-1,]; dim(p1) #865918     48
+p2 <- e2[1:which(e2$IlmnID%in%"[Controls]")-1,]; dim(p2) #937055     49
 
-# apply(p1,2,function(x){sum(is.na(x))})
-
-# align chromosome notation 
+# Align chromosome notation 
 p1$CHR <- gsub("chr","",p1$CHR)
 p2$CHR <- gsub("chr","",p2$CHR)
 
@@ -48,27 +75,73 @@ p2$CHR <- gsub("chr","",p2$CHR)
 # pb0 <- merge(p1,p2,all = TRUE, by = c("Name"), suffixes = c(".EPICv1",".EPICv2"))
 # this is what we use in the pipeline: anno[,c('Infinium_Design_Type','Color_Channel', 'CHR', 'MAPINFO', 'Name')]
 
-p1 <- p1[,used_columns]
-p2 <- p2[,used_columns]
-pb <- merge(p1,p2,all = TRUE)
+p1 <- p1[,used_columns]; dim(p1 )#865918      6
+p2 <- p2[,used_columns]; dim(p2) #937055      6
+
+#B. Check duplicated 
+sum(duplicated(p1$Name)) #No duplicated as expected
+sum(duplicated(p2$Name)) #6397 probes are duplicated (we expected it)
+length(table(p2$Name)[table(p2$Name) >= 2]) #5225 --> problematic probes to study
+
+#C. Extract probes types:
+#Type 1: (PROBLEMATIC) "Name" match but not "IlmnID" --> 5225 problematic EPICv2- specific
+name_counts <- table(p2$Name)
+type1_pb <- names(name_counts[name_counts >= 2]); length(type1_pb) #5225
+
+#Type 2: in common between both EPIC versions (not problematics)
+# Remove problematic probes type 1
+p1_tp2<- p1[!p1$Name %in%type1_pb, ]; dim(p1_tp2) #  862284  6 (removed: 3634)
+p2_tp2<-  p2[!p2$Name %in%type1_pb, ]; dim(p2_tp2) #925433      7 (removed:11622)
+pb_2<-merge(p1_tp2,p2_tp2, by=c('Name'), suffixes = c("_EPICv1", "_EPICv2")); dim(pb_2) #718168     12
+sum(duplicated(pb_2$Name)) # 0  Perfect
+pb_2$EPIC_version<-"v1_v2" #both version
+# No coincidence in all fields
+# pb_t1_type<-merge(p2,p1, by=c('Name', 'Infinium_Design_Type')); dim(pb_t1_type) #726515
+# pb_t1_type_color<-merge(p2,p1, by=c('Name', 'Infinium_Design_Type','Color_Channel')); dim(pb_t1_type_color) #726499
+# pb_t1_type_color_chr<-merge(p2,p1, by=c('Name', 'Infinium_Design_Type','Color_Channel', 'CHR')); dim(pb_t1_type_color_chr) #726026
+# pb_t1_type_color_chr_addressA<-merge(p2,p1, by=c('Name', 'Infinium_Design_Type','Color_Channel', 'CHR', "AddressA_ID")); dim(pb_t1_type_color_chr_addressA) #726026
 
 
-# pb <- pb[!pb$CHR %in% c("0","","M"),]
-d <- duplicated(pb)
-sum(d)
-pb <- pb[!d,]
+#Type 3: EPIC-version specific
+p1_tp3<- p1[!p1$Name %in% pb_2$Name, ]; dim(p1_tp3) #  147750  6  (147750+862284 = dim(p1)[1]=865918)
+p2_tp3<- p2[!p2$Name %in% pb_2$Name, ]; dim(p2_tp3) #  218887  6  (218887+937055 = dim(p2)[1]=937055)
+#Contains the 5225 problematic but we treat as EPIC version specific as we can see below: (comment lines)
+colnames(p1_tp3) <-  ifelse(colnames(p1_tp3) == "Name", colnames(p1_tp3), paste0(colnames(p1_tp3), "_EPICv1"))
+colnames(p2_tp3) <- ifelse(colnames(p2_tp3) == "Name", colnames(p2_tp3), paste0(colnames(p2_tp3), "_EPICv2"))
 
-dim(cb)
-dim(s)
-dim(pb)
+p1_tp3$EPIC_version<-"v1"
+p2_tp3$EPIC_version<-"v2"
 
-identical(colnames(cb),colnames(s))
-identical(colnames(pb),colnames(s))
+#D. Merge probes:
+pb<-pb_2
+for(col in setdiff(colnames(pb), colnames(p1_tp3))) {
+  p1_tp3[[col]] <- NA
+}
 
-eb <- rbind(rbind(pb,s[1,]),cb)
+for(col in setdiff(colnames(pb), colnames(p2_tp3))) {
+  p2_tp3[[col]] <- NA
+}
 
-nrow(pb) + nrow(s) + nrow(cb) - 1
-dim(eb)
+dim(p1_tp3); dim(p2_tp3) #147750   12; 218887    12
+
+combined <- rbind(pb_2, p1_tp3[, colnames(pb_2), drop=FALSE])
+
+# Ahora realizar el rbind que unirá las filas
+pb <- rbind(pb, p1_tp3[, colnames(pb), drop=FALSE]); dim(pb)  # 865918     12 same as dim(p1)
+pb <- rbind(pb, p2_tp3[, colnames(pb), drop=FALSE]); dim(pb)  # 1084805   12   
+pb<-pb[, colnames(cb)]
+
+# d <- duplicated(pb)
+# sum(d) #6296
+# pb <- pb[!d,] #1075312       4
+# 
+# dim(cb) #15  4
+# dim(s) #2 4
+# dim(pb) #1075312       4
+
+#STEP 5. Merge pb, cb and s
+eb <- rbind(rbind(pb[,colnames(s), drop=FALSE],s[1,]),cb); dim(eb) #1085441       4
+nrow(pb) + nrow(s) + nrow(cb) - 1 #1085441 perfect
 
 # add lines to skip, colnames are a line
 hea <- matrix(nrow = 8, ncol = ncol(eb))
@@ -80,4 +153,4 @@ colnames(hea) <- colnames(eb)
 
 fin <- rbind(hea, eb)
 
-write.table(fin, file = "merged_annotationfile_EPICv1v2_for_CPACOR.csv", col.names = FALSE, quote = FALSE, row.names = FALSE, sep = ",")
+write.table(fin, file = "merged_annotationfile_EPICv1v2_for_CPACOR_20240209.csv", col.names = FALSE, quote = FALSE, row.names = FALSE, sep = ",")
