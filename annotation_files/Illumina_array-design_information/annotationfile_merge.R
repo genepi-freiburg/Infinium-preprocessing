@@ -17,17 +17,13 @@ used_columns <- c("IlmnID",'Name', "AddressA_ID", 'Infinium_Design_Type','Color_
  
 #STEP 2. Work with controls
 #A. Extract controls probes
-c1 <- e1[which(e1$IlmnID%in%"[Controls]")+1:nrow(e1),]; dim(c1) #866554    48 --> No controls
-c2 <- e2[which(e2$IlmnID%in%"[Controls]")+1:nrow(e2),];dim(c2) #937691     49 --> No controls
+c1 <- e1[which(e1$IlmnID%in%"[Controls]")+1:nrow(e1),]; dim(c1) 
+c2 <- e2[which(e2$IlmnID%in%"[Controls]")+1:nrow(e2),];dim(c2) #937691  
 
-apply(c1,1,function(x){all(is.na(x))}) -> idx
-# FALSE   TRUE
-# 635 865919 --------------> 635 Controls
+apply(c1,1,function(x){all(is.na(x))}) -> idx; table(idx) # FALSE=635 (Controls); TRUE=865919
 c1 <- c1[!idx, ]; dim(c1) #635   48 --> Controls
 
-apply(c2,1,function(x){all(is.na(x))}) -> idx
-# FALSE   TRUE
-# 635 937056 --------------> 635 Controls
+apply(c2,1,function(x){all(is.na(x))}) -> idx; table(idx) # FALSE=635 (Controls); TRUE=937056
 c2 <- c2[!idx, ];dim(c2) #635  49 ---> 635 Controls
 
 #B. Check differences
@@ -48,12 +44,13 @@ if (!all(c1$Name == c2$Name)) {
   stop("Not sorted")
 }
 cb <- cbind(c1, c2[ , -which(names(c2) == "Name")]); dim(cb) #635 11
-cb$EPIC_version<-"v1_v2"
+cb$EPIC_version<-"v1_v2"; dim(cb) #635  12
 
 #STEP 3. Create separation line as the original annotation file
 s <- cb[1:2,]
 s[1,"IlmnID_EPICv1"] <- "[Controls]"
-s[1,2:ncol(s)] <- NA
+s[1,2:ncol(s)] <- NA; dim(s) #2 12
+
 
 #STEP 4. Work with Probes
 #Types of probes:
@@ -61,7 +58,7 @@ s[1,2:ncol(s)] <- NA
 #   1) Name" match but not "IlmnID" --> Repeated in EPICv2 by adding a sufix --> TO DISCUSS
 #   2) "IlmnID" and "Name"  match among EPIC versions
 #   3) Those EPIC version specific --> We will treat them 
-
+#------------------------------------------------------------
 #A. Extract Probes
 p1 <- e1[1:which(e1$IlmnID%in%"[Controls]")-1,]; dim(p1) #865918     48
 p2 <- e2[1:which(e2$IlmnID%in%"[Controls]")-1,]; dim(p2) #937055     49
@@ -88,7 +85,7 @@ length(table(p2$Name)[table(p2$Name) >= 2]) #5225 --> problematic probes to stud
 name_counts <- table(p2$Name)
 type1_pb <- names(name_counts[name_counts >= 2]); length(type1_pb) #5225
 
-#Type 2: in common between both EPIC versions (not problematics)
+#Type 2: in common between both EPIC versions (not problematic probes)
 # Remove problematic probes type 1
 p1_tp2<- p1[!p1$Name %in%type1_pb, ]; dim(p1_tp2) #  862284  6 (removed: 3634)
 p2_tp2<-  p2[!p2$Name %in%type1_pb, ]; dim(p2_tp2) #925433      7 (removed:11622)
@@ -101,14 +98,12 @@ pb_2$EPIC_version<-"v1_v2" #both version
 # pb_t1_type_color_chr<-merge(p2,p1, by=c('Name', 'Infinium_Design_Type','Color_Channel', 'CHR')); dim(pb_t1_type_color_chr) #726026
 # pb_t1_type_color_chr_addressA<-merge(p2,p1, by=c('Name', 'Infinium_Design_Type','Color_Channel', 'CHR', "AddressA_ID")); dim(pb_t1_type_color_chr_addressA) #726026
 
-
 #Type 3: EPIC-version specific
 p1_tp3<- p1[!p1$Name %in% pb_2$Name, ]; dim(p1_tp3) #  147750  6  (147750+862284 = dim(p1)[1]=865918)
 p2_tp3<- p2[!p2$Name %in% pb_2$Name, ]; dim(p2_tp3) #  218887  6  (218887+937055 = dim(p2)[1]=937055)
 #Contains the 5225 problematic but we treat as EPIC version specific as we can see below: (comment lines)
 colnames(p1_tp3) <-  ifelse(colnames(p1_tp3) == "Name", colnames(p1_tp3), paste0(colnames(p1_tp3), "_EPICv1"))
 colnames(p2_tp3) <- ifelse(colnames(p2_tp3) == "Name", colnames(p2_tp3), paste0(colnames(p2_tp3), "_EPICv2"))
-
 p1_tp3$EPIC_version<-"v1"
 p2_tp3$EPIC_version<-"v2"
 
@@ -124,9 +119,7 @@ for(col in setdiff(colnames(pb), colnames(p2_tp3))) {
 
 dim(p1_tp3); dim(p2_tp3) #147750   12; 218887    12
 
-combined <- rbind(pb_2, p1_tp3[, colnames(pb_2), drop=FALSE])
-
-# Ahora realizar el rbind que unirá las filas
+# Rbind EPIC-version specif probes
 pb <- rbind(pb, p1_tp3[, colnames(pb), drop=FALSE]); dim(pb)  # 865918     12 same as dim(p1)
 pb <- rbind(pb, p2_tp3[, colnames(pb), drop=FALSE]); dim(pb)  # 1084805   12   
 pb<-pb[, colnames(cb)]
