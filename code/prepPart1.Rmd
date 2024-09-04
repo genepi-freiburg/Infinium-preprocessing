@@ -164,62 +164,14 @@ for(path in scandata){ # all files in the same path have to have identical array
  			if (arraytype.r == "IlluminaHumanMethylationEPICv2") {
  		 annotation(RGset)["array"] = "IlluminaHumanMethylationEPIC"
  			}
- 		# switch to EPIC only to make bgcorrect.illumina and wbc.est work; however it then loads the wrong manifest in future functions; EPICv2 seems not defined
- 		# the function should work exactly as it should be because the arraytype only determines the name of the column of probes.
- 		# Having the right column name, the probes are still EPICv2-specific not EPIC (v1) downgrade. 
- 		
-	## process RGset object seperately for EPIC v1.3 and v2.0 (background correction, samplewise functions like WBC estimation, SNP extraction, control probe quality control)
-	## arrays are merged at PROBE INFO & DATA SPLIT
-	
 	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction # doesnt work on minfi 1.50.0 EPIC v2 (yet, 20/08/2024) 
-	# since the control descriptor seems to be the only difference between arrays, but 
-	# is the same for EPIC and EPICv2 I state that handling the EPICv2 RGset as an EPIC in bgcorrect returns the correct result;
-	# see function details and getProbeInfo(dat, "Control")
 	RGset@annotation["array"]<-arraytype.r # reset to original arraytype
-
 	RGset_pathwise[[path]] <- RGset
-	
 	rm(RGset)
-
 } ######## data read-in 
 
 	 
-	 	##Potential modified bgcorrect.illumina function:
-	
-# library(DelayedArray)
-# 
-# bgcorrect.illumina <- function(rgSet) {
-#   minfi:::`.isRGOrStop`(rgSet)
-#   Green <- getGreen(rgSet)
-#   Red <- getRed(rgSet)
-#   # if (.is450k(rgSet) || .isEPIC(rgSet) || .isAllergy(rgSet)) {
-#     NegControls <- getControlAddress(rgSet, controlType = "NEGATIVE")
-#   # }
-#   # if (.is27k(rgSet)) {
-#   #   NegControls <- getControlAddress(rgSet, controlType = "Negative")
-#   # }
-#   Green.bg <- apply(Green[NegControls, , drop = FALSE], 2, function(xx) {
-#     sort(as.vector(xx))[31]
-#   })
-#   Red.bg <- apply(Red[NegControls, , drop = FALSE], 2, function(xx) {
-#     sort(as.vector(xx))[31]
-#   })
-#   Green <- pmax2(sweep(Green, 2, Green.bg), 0)
-#   Red <- pmax2(sweep(Red, 2, Red.bg), 0)
-#   assay(rgSet, "Green") <- Green
-#   assay(rgSet, "Red") <- Red
-#   rgSet
-# }
-# 
-# 
-# GreenMatrix_new <- assay(rgSet, "Green")
-# GreenMatrix_old <- assay(RGset, "Green")
-# 
-# RedMatrix_new <- assay(rgSet, "Red")
-# RedMatrix_old <- assay(RGset, "Red")
-# 
-# print(RedMatrix)
-
+	 
 ######## WBC and SNP extraction ####################
 	
 	# NOTE No need to make WBC estimation on final samples only since WBC estimation is sample-wise.
