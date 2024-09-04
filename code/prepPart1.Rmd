@@ -31,6 +31,26 @@ detectionP.local <- function (rgSet, type = "m+u")
 }
 ```
 
+```{r, label = remove_pattern_function, echo = FALSE}
+estimateWBCs_EPICv2 <- function(RGset) { 
+  #Function based on Lucas Salas approach https://github.com/immunomethylomics/FlowSorted.Blood.EPIC/issues/10  
+  #Use function projectCellType_CP (WBCs estimation based on Houseman et al. 2012.) as estimateCellCounts2 function. 
+  MSet <-preprocessNoob(RGset)
+  Betas<-getBeta(MSet)
+  Betas<- sesame::betasCollapseToPfx(Betas) 
+  
+  IDOLOptimizedCpGsBloodv2<- IDOLOptimizedCpGs[which(IDOLOptimizedCpGs%in%rownames(Betas))]
+  identical(rownames(IDOLOptimizedCpGs.compTable[IDOLOptimizedCpGsBloodv2,]), IDOLOptimizedCpGsBloodv2)
+  propEPIC <- projectCellType_CP(
+    Betas[IDOLOptimizedCpGsBloodv2, ],
+    IDOLOptimizedCpGs.compTable[IDOLOptimizedCpGsBloodv2,],
+    contrastWBC = NULL, nonnegative = TRUE,
+    lessThanOne = FALSE)
+  
+  return(propEPIC)
+}
+```
+
 
 ```{r, label = remove_pattern_function, echo = FALSE}
 remove_pattern <- function(df) {
@@ -173,44 +193,34 @@ for(path in scandata){ # all files in the same path have to have identical array
 	 
 	 
 ######## WBC and SNP extraction ####################
-	
-	# NOTE No need to make WBC estimation on final samples only since WBC estimation is sample-wise.
-	# But I recommend to do it in last-but-one cleanup step with final samples as only input to save computational effort.
-
 WBCok = ifelse(exists("estimateWBCs"), estimateWBCs, FALSE)
+	 
+if(WBCok == TRUE){ 
+  WBCset <- vector(mode = "list", length = length(scandata))
+  names(WBCset) <- scandata
+  
+    for(path in scandata) {
+      RGset <- RGset_pathwise[[path]] 
+      
+      if (RGset@annotation["array"]=="IlluminaHumanMethylationEPIC") {
+             est_wbc <- estimateCellCounts2(RGset, 
+                                    compositeCellType = "Blood", 
+                                    cellTypes = c("CD8T","CD4T","NK","Bcell","Mono","Neu"),
+                                    sex = datsamples$MFSex_female[match(sample_names,datsamples$Sentrix_Code)])
+             
+             	WBCset[[path]] <- est_wbc$prop
 
-# produces Error in get(referencePkg) : object 'FlowSorted.Blood.EPIC' not found >> run manually on lower R version? update estimateCellCounts function? 
-if(WBCok%in%TRUE){ # use EPIC (v1) reference platform to get the best to-date estimation; should be fairly ok esp. for the combined analysis
-	print("WBC estimation is currently disabled.") }
-# 		
-# # do this pathwise == arraywise 
-# estwbc_pathwise <- vector(mode = "list", length = length(scandata))
-# names(estwbc_pathwise) <- scandata
-# 
-# 
-# for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
-# 
-# 	RGset <- RGset_pathwise[[path]] 
-# 
-#  	estwbc_pathwise[[path]] <- estimateCellCounts(RGset, compositeCellType = "Blood", cellTypes = c("CD8T","CD4T", "NK","Bcell","Mono","Gran"),
-#  				 sex = datsamples$MFSex_female[match(sample_names,datsamples$Sentrix_Code)],
-#  				 referencePlatform = c("IlluminaHumanMethylationEPIC")
-#  				 )
-# 		########################################
-#  		# comment by Lucas Salas on github: If you are using the latest version of FlowSorted.Blood.EPIC (>=v.2.0) you do not need to specify any of those options.
-#  		# >> update to estimateCellCounts2
-#  		###########################################
-# 
-#  				 
-#  	rm(RGset)
-#  
-# } # end of RGset-wise wbc est 
-# 
-# # combine wbc estimation
-# 
-# est_wbc <- do.call("rbind", estwbc_pathwise)
-#  	                              
-# } # end of WBC estimation
+      }
+      if (RGset@annotation["array"]=="IlluminaHumanMethylationEPICv2") {
+            WBCset[[path]] <- estimateWBCs_EPICv2(RGset)
+      }
+  } 
+  
+  #Merge data
+  est_wbc <- do.call("rbind", WBCset)
+  rm(WBCset)
+} 
+  
 
 #### SNP extraction ## EPICv2 comment: works theoretically, but too low output
 		
