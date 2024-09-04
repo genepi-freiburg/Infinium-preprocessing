@@ -218,24 +218,38 @@ if(WBCok == TRUE){
   
   #Merge data
   est_wbc <- do.call("rbind", WBCset)
-  rm(WBCset)
+  rm(WBCset, RGset)
 } 
   
 
 #### SNP extraction ## EPICv2 comment: works theoretically, but too low output
 		
 if(exists("extractSNPs")){ 
-	if(extractSNPs%in%"TRUE"){
+	if(extractSNPs == "TRUE"){
 
 	## do this pathwise == arraywise 
 	snps_pathwise <- vector(mode = "list", length = length(scandata))
 	names(snps_pathwise) <- scandata
 
 	 for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
- 
 	 	RGset <- RGset_pathwise[[path]] 
-	 
-	  	snps_pathwise[[path]] <- getSnpBeta(RGset) 
+	 	
+# 	 	RGset_1 <- RGset_pathwise[[path]] 
+# 	 	RGset_2 <- RGset_pathwise[[path]] 
+# 	 	snp.1<- getSnpBeta(RGset_1); dim(snp.1) #59 11
+# 	 	snp.2<- getSnpBeta(RGset_2); dim(snp.2) #65 4
+# 	 	snp.2<- getSnpBeta(RGset_2); dim(snp.2) #65 4
+# 	 	v1<-rownames(snp.1)
+# 	 	v2<-sub("_.*", "", rownames(snp.2))
+# 	 	
+# 	 	v2[which(duplicated(v2))]
+# [1] "rs11249206" "rs133860"   "rs966367" 
+# 	 	
+# 	 	vp<-v2[!v2%in%v1]
+# > vp
+# [1] "rs5931272"  "rs3818562"  "rs1414097"  "rs10774834" "rs5936512"
+	 	
+	  	snps_pathwise[[path]] <- getSnpBeta(RGset) #dim: V1=59
 	  	snps_pathwise[[path]] <- as.data.frame(snps_pathwise[[path]])
 	  	snps_pathwise[[path]]$rsID <- rownames(snps_pathwise[[path]])
 
@@ -284,87 +298,9 @@ if(exists("extractSNPs")){
 
 
 for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
- 
 	RGset <- RGset_pathwise[[path]] 
- 
 	# Type II probes
 	TypeII.Name <- getProbeInfo(RGset, type = "II")$Name #lenght: V1; V2--> ;808719
-	
-	# manual data reading of rg set object : head(assay(rg, "Green")) 
-	# is the same kind of data (below: rg = EPIC2, RGset = EPIC1), matching the names needs the annotation file
-	# this is AddressA_ID / AddressB_ID column in annotationfile 
-	# delete potentially leading zeros or expect leading zeros in annotationfile
-	
-	# first column number of TypeII.Green down there:
-	# franziskag-c@Franziskas-MacBook-Air CPACOR-EPIC_pipeline % grep 85713262 annotationfileB4_2017-09-15.csv 
-	# cg07881041,cg07881041,0085713262,CTACAAATACAACACCCTCAACCCATATTTCATATATTATCTCATTTAAC,,,II,,,CTGC..[etc,etc]
-	
-	# and respectively for EPICv2
-# 	franziskag-c@Franziskas-MacBook-Air CPACOR-EPIC_pipeline % grep ,1600157, MethylationEPIC_v2.0_Files/EPIC-8v2-0_A1.csv 
-#   cg08151515_TC21,cg08151515,1600157,CACCTCRTACTCATCAAAATAACCTCTATCAAAAATCCAAAAACAACAAC,,,,,,cg,R,T,C,2,II,chr6,2636911,Human,GRCh38,CGTTGTTGTTTCTGGATTTTTGACAGAGG
-
-# > head(assay(rg, "Green")) # this in TypeI and TypeII !
-#         207810890008_R01C01 207810890120_R01C01 207831660084_R01C01
-# 1600157                7807                7351                7782
-# 1600179                3691                4366                5991
-# 1600219                4207                6208                7367
-# 1600225                6667                5721                6145
-# 1600283                 213                 303                 442
-# 1600411                4914                6001                7018
-
-# this is the object we want to build, read-in from EPICv1
-# RGset <- RGset_pathwise[[1]] 
-# > TypeII.Green <- getGreen(RGset)[getProbeInfo(RGset, type = "II")$AddressA,]
-# > head(TypeII.Green)
-#          202073180065_R05C01 202073200086_R06C01 205537620061_R06C01
-# 85713262               10321               12052                4200
-# 21717843                3980                4452                1441
-# 29622133                5695                5883                2451
-# 16681196                 318                 538                 168
-# 7767973                 5017                5365                1963
-# 25809572                  65                  84                  47
-# TypeII.Name <- getProbeInfo(RGset, type = "II")$Name
-# rownames(TypeII.Green) <- TypeII.Name
-
-# try building it on EPICv1: 
-### what we do in EPICv2 is TypeII.Green <- assay(RGset, "Green") 
-# TypeII.Green <- getGreen(RGset)[getProbeInfo(RGset, type = "II")$AddressA,]
-# t2g <- as.data.frame(TypeII.Green)
-# t2g$cg <- TypeII.Name
-# annotationfile
-# [1] "/data/programs/pipelines/CPACOR-EPIC_pipeline/annotationfileB4_2017-09-15.csv"
-# > anno=read.csv("/data/programs/pipelines/CPACOR-EPIC_pipeline/annotationfileB4_2017-09-15.csv",as.is=TRUE, skip = 7)
-# t2g$Name <- anno$Name[match(rownames(t2g),gsub("^.[0]","", anno$AddressA_ID))]
-# > sum(is.na(t2g$Name))
-# [1] 84563
-# > sum(is.na(t2g$cg)) # == TypeII.Name the sites which the built-in function returns
-# [1] 0
-# > identical(t2g$Name[!is.na(t2g$Name)],t2g$cg[!is.na(t2g$Name)])
-# [1] TRUE
-# >>> works, but not for all sites, on EPICv1
-# t2g$IlmnID <- anno$IlmnID[match(rownames(t2g),gsub("^.[0]","", anno$AddressA_ID))] # has identical missings
-
-
-# try on EPICv2
-# anno = read.csv("/data/programs/pipelines/CPACOR-EPIC_pipeline/MethylationEPIC_v2.0_Files/EPIC-8v2-0_A1.csv", as.is=TRUE, skip = 7)
-# 	rg <- RGset_pathwise[[2]]
-# 	TypeII.Green <- getGreen(rg)[getProbeInfo(rg, type = "II")$AddressA,] # >> Error in getGreen(rg)[getProbeInfo(rg, type = "II")$AddressA, ] : subscript out of bounds
-# TypeII.probe <- anno$AddressA_ID[anno$Infinium_Design_Type == "II"]
-# TypeII.probe.number <- gsub("^.[0]","", TypeII.probe)
-# available <- intersect(rownames(assay(rg, "Green")),TypeII.probe.number)
-# TypeII.Green <- assay(rg, "Green")[available,]
-# t2g2 <- as.data.frame(TypeII.Green)
-# t2g2$Name <- anno$Name[match(rownames(t2g2),gsub("^.[0]","", anno$AddressA_ID))]
-# sum(is.na(t2g2$Name))
-
-
-#----------
-# works for one type, it should work for all types
-# hint on control data: annotationfile has a list of probes with Ilmn_ID etc and then an empty line which only says "CONTROLS" or "CONTROL" in the first column; the following probes are the control probes;
-# actually it may be easier for manual handling to split the annotationfile into data and controls in the first place and read them in separately
-# then they dont get mixed up in the pipelines
-#----------
-	
 	TypeII.Green <- getGreen(RGset)[getProbeInfo(RGset, type = "II")$AddressA,] 
 	#dim: V1; V2--> ;808719      4
 	TypeII.Red <- getRed(RGset)[getProbeInfo(RGset, type = "II")$AddressA,] #dim: V1; V2--> ;808719      4
@@ -396,25 +332,9 @@ for(path in scandata){ # all files in the same path have to have identical array
 	TypeI.Red.U_pathwise[[path]] <- TypeI.Red.U # dim V1 vs V2 --> 92198;11  vs  83045;4
 	TypeI.Green.M_pathwise[[path]] <- TypeI.Green.M # dim V1 vs V2 --> 49939;11  vs  45226;4
 	TypeI.Green.U_pathwise[[path]] <- TypeI.Green.U # dim V1 vs V2 --> 49939;11  vs  45226;4
-	
-	#problem
-# 	head(TypeII.Red_pathwise[[1]])
-#            202073180065_R05C01 202073200086_R06C01 205537620061_R06C01 205537620061_R07C01
-# cg07881041                 740                1144                 395                 161
-# cg23229610                 175                 320                 118                  53
-# cg03513874                 327                 466                 237                 161
-# 
-# head(TypeII.Red_pathwise[[2]])
-#                 207810890008_R01C01 207810890120_R01C01 207831660084_R01C01 207810890008_R02C01
-# cg25335775_BC21                8053                8947                8347                8136
-# cg25341653_BC21                1526                1758                1966                1214
-# cg25372195_BC21                1462                1444                2518                1305
-# v1<-rownames(TypeII.Red_pathwise[[1]])
-# v2<-rownames(TypeII.Red_pathwise[[2]])
-# v2_2<-sub("_.*", "", v2)	
-# length(intersect(v1,v2_2)) #612824
 }
 
+		
 for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
  
 	RGset <- RGset_pathwise[[path]] 
