@@ -48,6 +48,7 @@ if (!all(c1$Name == c2$Name)) {
 
 cb <- cbind(c1, c2[ , -which(names(c2) == "Name")]); dim(cb) #635 11
 cb$EPIC_version<-"v1_v2"; dim(cb) #635  12
+cb$Type<-"Control"; dim(cb) ##635  13
 
 #STEP 3. Create separation line as the original annotation file
 s <- cb[1:2,]
@@ -124,7 +125,8 @@ dim(p1_tp3); dim(p2_tp3) #147750   12; 218887    12
 
 # Rbind EPIC-version specif probes
 pb <- rbind(pb, p1_tp3[, colnames(pb), drop=FALSE]); dim(pb)  # 865918     12 same as dim(p1)
-pb <- rbind(pb, p2_tp3[, colnames(pb), drop=FALSE]); dim(pb)  # 1084805   12   
+pb <- rbind(pb, p2_tp3[, colnames(pb), drop=FALSE]); dim(pb)  # 1084805   12
+pb$Type<-"Probe"; dim(pb) ##635  13
 pb<-pb[, colnames(cb)]
 
 # d <- duplicated(pb)
