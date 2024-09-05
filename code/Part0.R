@@ -29,6 +29,8 @@
 # install.packages("matrixStats")
 # install.packages("DescTools")
 # install.packages("ggplot2")
+# BiocManager::install("sesame")
+
 
 
 library(caret)
@@ -37,6 +39,7 @@ library(limma)
 library("factoextra")
 library(ggplot2)
 library(matrixStats)
+library(sesame)
 
 ##################################### 
 ## DescTools package waiting for C++ update on cluster
