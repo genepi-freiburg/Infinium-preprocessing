@@ -51,6 +51,29 @@ estimateWBCs_EPICv2 <- function(RGset) {
 }
 ```
 
+```{r, label = remove_pattern_function, echo = FALSE}
+#Create a function to apply to all datasets
+multiply_rows_V1<- function (ls, anno_v2, cgs) {
+  indx<-which(arraytype =="IlluminaHumanMethylationEPIC")
+  dfv1<-ls[[indx]];  dim(dfv1) # 723722     11  
+  matching_rows <- dfv1[rownames(dfv1) %in% cgs, , drop = FALSE]; dim(matching_rows) # 2714   11
+  cg_v2_matches <- anno_v2$IlmnID_EPICv2[anno_v2$Name %in% rownames(matching_rows)]; length(cg_v2_matches) #6246
+  
+  # Create matrix: repeat row according number of coincidente in cg_v2_matches
+  times <- sapply(rownames(matching_rows), function(x) sum(anno_v2$Name == x))
+  expanded_rows <- matching_rows[rep(1:nrow(matching_rows), times = times), , drop = FALSE]; dim(expanded_rows) # 6246   11
+  #Take into account rownames
+  cg_v2_matches_ordered <- unlist(sapply(unique(rownames(expanded_rows)), function(x) {
+    anno_v2$IlmnID_EPICv2[anno_v2$Name == x]
+  }))
+  rownames(expanded_rows) <- cg_v2_matches_ordered
+  #Merge data
+  dfv1 <- rbind(dfv1, expanded_rows)
+  ls[[indx]]<-dfv1
+  
+  return(ls)
+}
+```
 
 ```{r, label = remove_pattern_function, echo = FALSE}
 remove_pattern <- function(df) {
@@ -115,11 +138,6 @@ cwd<-getwd()
 
 scandata <- unlist(idatdir)
 
-# this could be a way to sort arraytypes to data paths // assumingly not necessary as updated functions will be able to detect arraytype themselves
-# arraytypes_pathwise <- strsplit(arraytypes_pathwise,";")[[1]]
-# names(arraytypes_pathwise) <- scandata
-
-
 filenames_pathwise <- vector(mode = "list", length = length(scandata))
 names(filenames_pathwise) <- scandata
 
@@ -173,7 +191,6 @@ for(path in scandata){ # all files in the same path have to have identical array
 
 
 ####### METHYLATION READ-IN #####################
-
 for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
 	
 	# restrict the samplesheet to the samples we found in this path 
@@ -268,9 +285,7 @@ if(exists("extractSNPs")){
 
 
 ########### PROBE INFO & DATA SPLIT ###############################################
-
 # this is what we need and merge in the end 
-
 	TypeII.Red_pathwise <- vector(mode = "list", length = length(scandata))
 		names(TypeII.Red_pathwise) <- scandata
 	TypeII.Green_pathwise <- vector(mode = "list", length = length(scandata))
@@ -285,7 +300,6 @@ if(exists("extractSNPs")){
 		names(TypeI.Red.M_pathwise) <- scandata
 
 # control probes for lowlevel QC - might be processed seperately or together
-
 	ctrl_pathwise <- vector(mode = "list", length = length(scandata))
 		names(ctrl_pathwise) <- scandata
 	ctrl.complete.Red_pathwise <- vector(mode = "list", length = length(scandata))
@@ -419,7 +433,29 @@ for(path in scandata){ # all files in the same path have to have identical array
 }
 
 #### MERGE #####
-# Todo need to merge instead of cbind, because dimensions differ
+# Read annotation file. There are different aspects to take into account to merge probes 
+anno=read.csv(annotationfile,as.is=TRUE, skip = 7); dim(anno)#1085441      13
+
+#--------------------Potential problematic problems: ---------------------------------------------
+# TYPE A) Name" match but not "IlmnID" --> Repeated in EPICv2 
+# TYPE B)"IlmnID" and "Name"  match among EPIC versions but difference in Infinium_Design_Type and Color_Channel
+#--------------------------------------------------------------------------------------------------	
+		
+#For TYPE A: multiply the EPICv1 measurement with all v2 IDs for the merged dataset	
+name_counts <- table(anno[anno$EPIC_version=="v2" & anno$Type=="Probe",]$Name)
+cgs_ta_name <- names(name_counts[name_counts >= 2]); length(cgs_ta_name) #5225
+anno_ta_v2<-anno[anno$Name%in%cgs_ta_name & anno$EPIC_version=="v2",]; dim(anno_ta_v2) #11622  13
+#length(unique(sub("_.*", "", cgs_ta_v2))) # 5225  #Perfect. Only problematics
+
+#Multiply problematic probes(EPICv2) in EPICv1
+TypeII.Red_pathwise<-multiply_rows_V1(TypeII.Red_pathwise, anno_ta_v2, cgs_ta_name)
+TypeII.Green_pathwise<-multiply_rows_V1(TypeII.Green_pathwise, anno_ta_v2, cgs_ta_name)
+TypeI.Red.M_pathwise<-multiply_rows_V1(TypeI.Red.M_pathwise, anno_ta_v2, cgs_ta_name)
+TypeI.Red.U_pathwise<-multiply_rows_V1(TypeI.Red.U_pathwise, anno_ta_v2, cgs_ta_name)
+TypeI.Green.M_pathwise<-multiply_rows_V1(TypeI.Green.M_pathwise, anno_ta_v2, cgs_ta_name)
+TypeI.Green.U_pathwise<-multiply_rows_V1(TypeI.Green.U_pathwise, anno_ta_v2, cgs_ta_name)
+
+#Combine data		
 TypeII.Red.All <-combine_data(TypeII.Red_pathwise) #612824
 TypeII.Green.All <- combine_data(TypeII.Green_pathwise) #612824
 TypeI.Green.M.All <- combine_data(TypeI.Green.M_pathwise) #38706    
