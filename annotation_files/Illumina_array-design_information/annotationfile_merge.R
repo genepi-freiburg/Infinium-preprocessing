@@ -2,22 +2,24 @@
 ###############################################################
 #     Goal: Create annotation file for both EPIC V1 and V2    #
 ###############################################################
-#------------------------#
-#         TODO           #
-#------------------------#
-# 1. Fix genomic buid problem. V1=37 and V2=38
+
+# Now we use Infinium MethylationEPIC v1.0 B5 Manifest File. Apparently in build 38 
 
 
 
 setwd("/data/programs/pipelines/CPACOR-EPIC_pipeline")
 #STEP 1. Read annotation files 
-e1 <- read.csv("annotationfileB4_2017-09-15.csv", as.is=TRUE, skip = 7); dim(e1) #866554     48
+e1 <- read.csv("annotation_files/Methylation_EPICv1/infinium-methylationepic-v-1-0-b5-manifest-file.csv", as.is=TRUE, skip = 7); dim(e1) #866554     52
 e2 <- read.csv("annotation_files/MethylationEPIC_v2.0_Files/EPIC-8v2-0_A1.csv",as.is=TRUE, skip = 7); dim(e2) #937691     49
+
+#Change colname e1
+colnames(e1)[colnames(e1)=="CHR"]<-"CHR_37"
+colnames(e1)[colnames(e1)=="CHR_hg38"]<-"CHR"
 used_columns <- c("IlmnID",'Name', "AddressA_ID", 'Infinium_Design_Type','Color_Channel', 'CHR')
  
 #STEP 2. Work with controls
 #A. Extract controls probes
-c1 <- e1[which(e1$IlmnID%in%"[Controls]")+1:nrow(e1),]; dim(c1) 
+c1 <- e1[which(e1$IlmnID%in%"[Controls]")+1:nrow(e1),]; dim(c1) #866554     52
 c2 <- e2[which(e2$IlmnID%in%"[Controls]")+1:nrow(e2),];dim(c2) #937691  
 
 apply(c1,1,function(x){all(is.na(x))}) -> idx; table(idx) # FALSE=635 (Controls); TRUE=865919
@@ -43,6 +45,7 @@ colnames(c2)<-ifelse(colnames(c2) == "Name", colnames(c2), paste0(colnames(c2), 
 if (!all(c1$Name == c2$Name)) {
   stop("Not sorted")
 }
+
 cb <- cbind(c1, c2[ , -which(names(c2) == "Name")]); dim(cb) #635 11
 cb$EPIC_version<-"v1_v2"; dim(cb) #635  12
 
@@ -60,7 +63,7 @@ s[1,2:ncol(s)] <- NA; dim(s) #2 12
 #   3) Those EPIC version specific --> We will treat them 
 #------------------------------------------------------------
 #A. Extract Probes
-p1 <- e1[1:which(e1$IlmnID%in%"[Controls]")-1,]; dim(p1) #865918     48
+p1 <- e1[1:which(e1$IlmnID%in%"[Controls]")-1,]; dim(p1) #865918     52
 p2 <- e2[1:which(e2$IlmnID%in%"[Controls]")-1,]; dim(p2) #937055     49
 
 # Align chromosome notation 
@@ -146,4 +149,4 @@ colnames(hea) <- colnames(eb)
 
 fin <- rbind(hea, eb)
 
-write.table(fin, file = "merged_annotationfile_EPICv1v2_for_CPACOR_20240209.csv", col.names = FALSE, quote = FALSE, row.names = FALSE, sep = ",")
+write.table(fin, file = "/dsk/data1/programs/pipelines/CPACOR-EPIC_pipeline/annotation_files/Methylation_EPICv1_EPICv2/merged_annotationfile_EPICv1v2_for_CPACOR_20240905.csv", col.names = FALSE, quote = FALSE, row.names = FALSE, sep = ",")
