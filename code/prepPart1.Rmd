@@ -53,26 +53,46 @@ estimateWBCs_EPICv2 <- function(RGset) {
 
 ```{r, label = remove_pattern_function, echo = FALSE}
 #Create a function to apply to all datasets
-multiply_rows_V1<- function (ls, anno_v2, cgs) {
-  indx<-which(arraytype =="IlluminaHumanMethylationEPIC")
-  dfv1<-ls[[indx]];  dim(dfv1) # 723722     11  
-  matching_rows <- dfv1[rownames(dfv1) %in% cgs, , drop = FALSE]; dim(matching_rows) # 2714   11
-  cg_v2_matches <- anno_v2$IlmnID_EPICv2[anno_v2$Name %in% rownames(matching_rows)]; length(cg_v2_matches) #6246
+treatment_ta_problematic<- function (ls, anno_v2, cgs, arraytype) {
   
+  #Work with EPIC V1
+  indx1<-which(arraytype =="IlluminaHumanMethylationEPIC")
+  dfv1<-ls[[indx1]];  dim(dfv1) # 723722     11  
+  dfv1_match <- dfv1[rownames(dfv1) %in% cgs, , drop = FALSE]; dim(dfv1_match) # 2714   11
+
   # Create matrix: repeat row according number of coincidente in cg_v2_matches
-  times <- sapply(rownames(matching_rows), function(x) sum(anno_v2$Name == x))
-  expanded_rows <- matching_rows[rep(1:nrow(matching_rows), times = times), , drop = FALSE]; dim(expanded_rows) # 6246   11
-  #Take into account rownames
-  cg_v2_matches_ordered <- unlist(sapply(unique(rownames(expanded_rows)), function(x) {
+  times <- sapply(rownames(dfv1_match), function(x) sum(anno_v2$Name == x))
+  dfv1_exp <- dfv1_match[rep(1:nrow(dfv1_match), times = times), , drop = FALSE]; dim(dfv1_exp) # 6246   11
+  #Rownames
+    cgs_ordered <- unlist(sapply(unique(rownames(dfv1_exp)), function(x) {
     anno_v2$IlmnID_EPICv2[anno_v2$Name == x]
   }))
-  rownames(expanded_rows) <- cg_v2_matches_ordered
-  #Merge data
-  dfv1 <- rbind(dfv1, expanded_rows)
-  ls[[indx]]<-dfv1
+  rownames(dfv1_exp) <- cgs_ordered
+  #Combine with real EPIC_v1 probes
+  dfv1 <- rbind(dfv1_match, dfv1_exp); dim(dfv1) #8960
   
-  return(ls)
+  #Work with EPIC V2 --> Extract specific probes
+  indx2<-which(arraytype =="IlluminaHumanMethylationEPICv2")
+  dfv2<-ls[[indx2]];  dim(dfv2) # 808719     4 
+  #Subset data
+  dfv2<-as.data.frame(dfv2[rownames(dfv2) %in% rownames(dfv1_exp),]); dim(dfv2) #6176  4
+  
+  #Subset dfv1 according to the probes present in dfv2
+  cgs_subset<-c(rownames(dfv2), 
+                rownames(dfv1_match)[rownames(dfv1_match)%in% unique(sub("_.*", "", rownames(dfv2)))]); length(cgs_subset) #8890
+  
+  dfv1<-as.data.frame(dfv1[rownames(dfv1) %in% cgs_subset,]); dim(dfv1) # 8890   11
+  
+  #Merge data in a single df
+  dfv1$ID <- rownames(dfv1)
+  dfv2$ID <- rownames(dfv2)
+  df_ta<-merge(dfv1, dfv2, by="ID", all=TRUE); dim(df_ta)
+  rownames(df_ta) <- df_ta$ID
+  df_ta$ID <- NULL
+  
+  return(df_ta)
 }
+
 ```
 
 ```{r, label = remove_pattern_function, echo = FALSE}
@@ -85,12 +105,50 @@ remove_pattern <- function(df) {
 ```
 
 ```{r, label = combine_data, echo = FALSE}
-combine_data <- function(df_list) {
-  df_list <- lapply(df_list, remove_pattern)
-  combined_df <- Reduce(function(x, y) merge(x, y, by = "row.names", all = FALSE), df_list)
-  rownames(combined_df) <- combined_df$Row.names
-  combined_df <- combined_df[, -1]
-  return(combined_df)
+combine_data <- function(df_list, anno_v2, arraytype, cgs_ta, cgs_shared, cgs_epicv1, cgs_epicv2) {
+  # STEP 1: Df with the type A problematic probes
+  df_ta<-treatment_ta_problematic(ls=df_list, anno_v2=anno_v2, cgs=cgs_ta, arraytype=arraytype); dim(df_ta) #8890
+  
+  #STEP 2: Combine same IDs
+  df_shared <- lapply(df_list, remove_pattern) #[1] 723722     11   [1] 808719      4
+  df_shared <- lapply(df_shared, function(df) {
+    df[rownames(df) %in% cgs_shared, ]
+  }) #Dim:610110     11 and  610110      4
+  df_comb_shared <- Reduce(function(x, y) merge(x, y, by = "row.names", all = FALSE), df_shared); dim(df_comb_shared) #610110     16
+  rownames(df_comb_shared) <- df_comb_shared$Row.names
+  df_comb_shared <- df_comb_shared[, -1]
+  
+  #STEP 3: Add specific probes
+  indx1<-which(arraytype =="IlluminaHumanMethylationEPIC")
+  indx2<-which(arraytype =="IlluminaHumanMethylationEPICv2")
+
+  df_specific <- lapply(seq_along(df_list), function(i) {
+    if (i == indx1) {
+      df_list[[i]][rownames(df_list[[i]]) %in% cgs_epicv1, ]
+    } else if (i == indx2) {
+      df_list[[i]][rownames(df_list[[i]]) %in% cgs_epicv2, ]
+    }
+  })
+  
+  df_specific <- lapply(df_specific, as.data.frame)
+  df_comb_specific <- bind_rows(df_specific)
+  
+  #STEP 4: Merge all types of probes
+  all_cols <- union(union(colnames(df_ta), colnames(df_comb_shared)),
+                    colnames(df_comb_specific))
+  
+  reorder_df <- function(df, all_cols) {
+  df <- df[ , all_cols, drop = FALSE] # Mantener el orden de todas las columnas
+  return(df)
+  }
+  
+  df_ta <- reorder_df(df_ta, all_cols)
+  df_comb_shared <- reorder_df(df_comb_shared, all_cols)
+  df_comb_specific <- reorder_df(df_comb_specific, all_cols)
+  
+  df_all <- rbind(df_ta, df_comb_shared, df_comb_specific)
+  
+  return(df_all)
 }
 ```
 
@@ -434,43 +492,84 @@ for(path in scandata){ # all files in the same path have to have identical array
 
 #### MERGE #####
 # Read annotation file. There are different aspects to take into account to merge probes 
-anno=read.csv(annotationfile,as.is=TRUE, skip = 7); dim(anno)#1085441      13
+anno=read.csv(annotationfile,as.is=TRUE, skip = 7); dim(anno)#1085683      10
 
-#--------------------Potential problematic problems: ---------------------------------------------
+#-------------------- Problematic problems: ---------------------------------------------
 # TYPE A) Name" match but not "IlmnID" --> Repeated in EPICv2 
 # TYPE B)"IlmnID" and "Name"  match among EPIC versions but difference in Infinium_Design_Type and Color_Channel
 #--------------------------------------------------------------------------------------------------	
 		
-#For TYPE A: multiply the EPICv1 measurement with all v2 IDs for the merged dataset	
-name_counts <- table(anno[anno$EPIC_version=="v2" & anno$Type=="Probe",]$Name)
-cgs_ta_name <- names(name_counts[name_counts >= 2]); length(cgs_ta_name) #5225
-anno_ta_v2<-anno[anno$Name%in%cgs_ta_name & anno$EPIC_version=="v2",]; dim(anno_ta_v2) #11622  13
-#length(unique(sub("_.*", "", cgs_ta_v2))) # 5225  #Perfect. Only problematics
+#For Type A: multiply the EPICv1 measurement with all v2 IDs for the merged dataset	
+name_counts <- table(anno[anno$EPIC_version=="v2" & anno$Type=="Probe" &  anno$Type=="Probe",]$Name)
+cgs_ta <- names(name_counts[name_counts >= 2]); length(cgs_ta) #5169  Perfect
 
-#Multiply problematic probes(EPICv2) in EPICv1
-TypeII.Red_pathwise<-multiply_rows_V1(TypeII.Red_pathwise, anno_ta_v2, cgs_ta_name)
-TypeII.Green_pathwise<-multiply_rows_V1(TypeII.Green_pathwise, anno_ta_v2, cgs_ta_name)
-TypeI.Red.M_pathwise<-multiply_rows_V1(TypeI.Red.M_pathwise, anno_ta_v2, cgs_ta_name)
-TypeI.Red.U_pathwise<-multiply_rows_V1(TypeI.Red.U_pathwise, anno_ta_v2, cgs_ta_name)
-TypeI.Green.M_pathwise<-multiply_rows_V1(TypeI.Green.M_pathwise, anno_ta_v2, cgs_ta_name)
-TypeI.Green.U_pathwise<-multiply_rows_V1(TypeI.Green.U_pathwise, anno_ta_v2, cgs_ta_name)
+anno_ta_v2<-anno[anno$Name%in%cgs_ta & anno$EPIC_version=="v2" &
+                   !anno$CHR == "0",]; dim(anno_ta_v2) #11423  13
+anno_ta_v1<-anno[anno$EPIC_version=="v1" & anno$Name%in%cgs_ta  ,]; dim(anno_ta_v1) #3578  13
+v2_sp<-unique(anno_ta_v2$Name[!anno_ta_v2$Name %in% anno_ta_v1$Name]); length(v2_sp)  #1590 son epic v2 specific
+cgs_ta <- cgs_ta[!cgs_ta%in%v2_sp]; length(cgs_ta) #3579  
+
+
+#Probes EPIC-version-specific:
+cgs_epicv1<- as.vector(na.omit(anno$IlmnID_EPICv1[anno$Type=="Probe" & anno$EPIC_version=="v1"])); length(cgs_epicv1) #148050
+
+cgs_epicv2<- as.vector(na.omit(anno$IlmnID_EPICv2[anno$Type=="Probe" & anno$EPIC_version=="v2" &
+                                           ! anno$Name %in% cgs_ta])); length(cgs_epicv2) #210812
+
+#Problematics
+  anno_c<-anno[anno$Name %in% cgs_ta & anno$EPIC_version!="v1_v2",]; dim(anno_c)  #11895    10
+  anno_c1<-anno_c[anno_c$EPIC_version=="v1" , ];  dim(anno_c1) #3578     10
+  anno_c2<-anno_c[anno_c$EPIC_version=="v2",  ]; dim(anno_c2) #8317     10
+  
+  anno_merge <- merge(anno_c1, anno_c2, 
+                  by = c("Name", "Infinium_Design_Type", "Color_Channel", "CHR"),
+                  all = TRUE); dim(anno_merge)  #8346     16
+unm_dt <- anno_merge[is.na(anno_merge$IlmnID_EPICv1.x) | is.na(anno_merge$AddressA_ID_EPICv1.x), ]; dim(unm_dt) #104
+unm_dt<-unm_dt [unm_dt$CHR!= "0",]; dim(unm_dt) #21  here the problematics
+cgs_epicv2<-c(cgs_epicv2, unm_dt$IlmnID_EPICv2.y); length(cgs_epicv2) #210833
+
+#Probes shared between EPIC versions no problematics
+cgs_shared<-as.vector(na.omit(anno$Name[anno$Type=="Probe" & anno$EPIC_version=="v1_v2"])); length(cgs_shared) #717868
 
 #Combine data		
-TypeII.Red.All <-combine_data(TypeII.Red_pathwise) #612824
-TypeII.Green.All <- combine_data(TypeII.Green_pathwise) #612824
-TypeI.Green.M.All <- combine_data(TypeI.Green.M_pathwise) #38706    
-TypeI.Green.U.All <- combine_data(TypeI.Green.U_pathwise) #38706
-TypeI.Red.M.All <- combine_data(TypeI.Red.M_pathwise) #70203    
-TypeI.Red.U.All <- combine_data(TypeI.Red.U_pathwise) #70203 
+TypeII.Red.All <-combine_data(df_list=TypeII.Red_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2) 
+TypeII.Green.All <- combine_data(df_list=TypeII.Green_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)
+TypeI.Green.M.All <- combine_data(df_list=TypeI.Green.M_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)   
+TypeI.Green.U.All <- combine_data(df_list=TypeI.Green.U_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)
+TypeI.Red.M.All <- combine_data(df_list=TypeI.Red.M_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)   
+TypeI.Red.U.All <- combine_data(df_list=TypeI.Red.U_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)
 
 ctrl.all <- do.call("rbind",ctrl_pathwise) # need to transpose? 
 
 ## added for lowlevel QC by AT 
-ctrl.complete.Red.all <- combine_data(ctrl.complete.Red_pathwise) #633
-ctrl.complete.Green.all <- combine_data(ctrl.complete.Green_pathwise) # added for lowlevel QC  633
-    
-dp.all <- combine_data(dp_pathwise) #721745
+ctrl.complete.Red.all <- Reduce(function(x, y) merge(x, y, by = "row.names", all = TRUE), ctrl.complete.Red_pathwise)
+rownames(ctrl.complete.Red.all) <- ctrl.complete.Red.all$Row.names
+ctrl.complete.Red.all <- ctrl.complete.Red.all[, -1]
 
+ctrl.complete.Green.all <- Reduce(function(x, y) merge(x, y, by = "row.names", all = TRUE), ctrl.complete.Green_pathwise)
+rownames(ctrl.complete.Green.all) <- ctrl.complete.Green.all$Row.names
+ctrl.complete.Green.all <- ctrl.complete.Green.all[, -1]
+
+
+dim(TypeII.Red.All)[1]+dim(TypeI.Green.M.All)[1]+dim(TypeI.Red.M.All) #1088435  -- PERFECT
+dp.all <- combine_data(df_list=dp_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2); dim(dp.all) #1088435   #
+x<-c(rownames(TypeII.Red.All), rownames(TypeI.Green.M.All), rownames(TypeI.Red.M.All))
+#Somehow the function repeat the problematic. Remove those files
+# rownames(dp.all)[!rownames(dp.all) %in% x]
+#  [1] "cg15934644_BO111" "cg03254865_BO111" "cg04255549_BO111" "cg08786079_BO111"
+#  [5] "cg16781484_TC111" "cg23509869_TC111" "cg23729101_TC111" "cg01341123_TC111"
+#  [9] "cg25946389_TC111" "cg26201213_BC111" "cg19709977_TC111" "cg19968202_TC111"
+# [13] "cg20510225_BC111" "cg10322254_BC111" "cg10387956_BO111" "cg13699845_TC111"
+# [17] "cg00101235_TO111" "cg02022136_BC211" "cg02802904_TC211" "cg14194875_BC211"
+# [21] "cg23998405_BC211"
+dp.all<-dp.all[rownames(dp.all) %in% x,]; dim(dp.all) #1088435      15
 
 # list(ls()) # remove what is not needed anymore - save space 
 # rm( # list=ls(*_pathwise) # )
