@@ -40,6 +40,7 @@ library("factoextra")
 library(ggplot2)
 library(matrixStats)
 library(sesame)
+library(dplyr)
 
 ##################################### 
 ## DescTools package waiting for C++ update on cluster
