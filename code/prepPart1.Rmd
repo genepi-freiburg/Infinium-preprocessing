@@ -709,9 +709,9 @@ In our further calculations beta value data always is processed separately for a
 * Detection p-values are illustrated in the following plots. Low p-values indicate that the signal is unlikely to be background noise. 
 
 ```{r, label='detection_p-values'} 
-# works fine on EPICv2
-dpvec <- dp.all
-dim(dpvec) <- c(nrow(dp.all)*ncol(dp.all),1)
+dpvec <- as.vector(as.matrix(dp.all))
+dim(dpvec) <- c(length(dpvec), 1)
+dpvec<- dpvec[!is.na(dpvec)]
 
 # plot detection P
 dpvecplot <- dpvec
