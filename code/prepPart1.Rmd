@@ -152,6 +152,74 @@ combine_data <- function(df_list, anno_v2, arraytype, cgs_ta, cgs_shared, cgs_ep
 }
 ```
 
+```{r, label = call rate, echo = FALSE}
+calculate_marker_call<- function  (cgs_ta, cgs_shared, cgs_epicv1, cgs_epicv2, 
+                                   anno ,beta_df, sample.name_pathwise, arraytype) {
+  #v1
+  cgs_v1<- unique(c(cgs_ta, cgs_epicv1));  length(cgs_v1) #148051
+  #v2
+  cgs_v2<-cgs_epicv2
+  # v1 and 2
+  cgs_epicv12<-unique(c(cgs_ta,cgs_shared)); length(cgs_epicv12) #721447
+  cgs_epicv12_suf<-unique(anno$IlmnID_EPICv2[anno$Name %in% cgs_epicv12]); length(cgs_epicv12_suf) #726103
+  cgs_epicv12<- cgs_epicv12[!cgs_epicv12 %in% cgs_v1]; length(cgs_epicv12) #717868
+  cgs_epicv12<-unique(c(cgs_epicv12, cgs_epicv12_suf)); length(cgs_epicv12) #1443971
+  cgs_epicv12<-cgs_epicv12[!cgs_epicv12 %in%cgs_v2]; length(cgs_epicv12) #1443950
+  
+  #Create subdata
+  indx1<-which(arraytype =="IlluminaHumanMethylationEPIC")
+  indx2<-which(arraytype =="IlluminaHumanMethylationEPICv2")
+  
+  df_v1<- beta_df [rownames(beta_df) %in% cgs_v1, sample.name_pathwise[[indx1]]]; dim(df_v1) #144616
+  df_v2<- beta_df [rownames(beta_df) %in% cgs_v2, sample.name_pathwise[[indx2]]]; dim(df_v2) #194808
+  df_v12<- beta_df [rownames(beta_df) %in% cgs_epicv12, unlist(sample.name_pathwise)]; dim(df_v12) #709771
+  
+  marker.call <- numeric() 
+  for (df in list(df_v1, df_v2, df_v12)) {
+    marker.call.df<-rowSums(!is.na(df))/ncol(df)
+    marker.call<-c(marker.call.df, marker.call)
+  }
+  
+  return(marker.call)
+                
+}
+
+
+
+calculate_sample_call<- function  (cgs_ta, cgs_shared, cg_shared, cgs_epicv1, cgs_epicv2, 
+                                   anno, beta_df, sample.name_pathwise, arraytype) {
+  #v1
+  cgs_v1<- unique(c(cgs_ta, cgs_epicv1));  length(cgs_v1) #148051
+  #v2
+  cgs_v2<-cgs_epicv2
+  # v1 and 2
+  cgs_epicv12<-unique(c(cgs_ta,cgs_shared)); length(cgs_epicv12) #721447
+  cgs_epicv12_suf<-unique(anno$IlmnID_EPICv2[anno$Name %in% cgs_epicv12]); length(cgs_epicv12_suf) #726103
+  cgs_epicv12<- cgs_epicv12[!cgs_epicv12 %in% cgs_v1]; length(cgs_epicv12) #717868
+  cgs_epicv12<-unique(c(cgs_epicv12, cgs_epicv12_suf)); length(cgs_epicv12) #1443971
+  cgs_epicv12<-cgs_epicv12[!cgs_epicv12 %in%cgs_v2]; length(cgs_epicv12) #1443950
+  
+  #Create subdata
+  indx1<-which(arraytype =="IlluminaHumanMethylationEPIC")
+  indx2<-which(arraytype =="IlluminaHumanMethylationEPICv2")
+  df_v1<- beta_df [rownames(beta_df) %in% c(cgs_v1,cgs_epicv12), 
+                   sample.name_pathwise[[indx1]]]; dim(df_v1) #854387
+  df_v2<- beta_df [rownames(beta_df) %in% c(cgs_v2,cgs_epicv12), 
+                   sample.name_pathwise[[indx2]]]; dim(df_v2) #904579
+  
+  sample.call <- numeric() 
+  for (df in list(df_v1, df_v2)) {
+    sample.call.df<-colSums(!is.na(df))/nrow(df)
+    sample.call<-c(sample.call.df, sample.call)
+  }
+  
+  return(sample.call)
+
+}
+
+
+```
+
 ## PART 1: Data and parameters
 
 ```{r, label='read-in.samples', message = FALSE, echo = FALSE, warning = FALSE}
@@ -814,13 +882,10 @@ rm(TypeII.Red, TypeII.Green, TypeI.Red.M, TypeI.Red.U, TypeI.Green.M, TypeI.Gree
 
 ```{r, label = 'samplecall.markercall'}
 # calculate sample and marker calls without filter -- used for sample filter 
-sample.call=colSums(!is.na(beta.raw))/nrow(beta.raw)
-
-sc<-colSums(!is.na(beta.raw))/nrow(beta.raw)
-
-
-marker.call=rowSums(!is.na(beta.raw))/ncol(beta.raw)
-
+sample.call<-calculate_sample_call(cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2, 
+                                   anno=anno, beta_df=beta.raw, sample.name_pathwise=sample.name_pathwise, arraytype=arraytype)
+marker.call<-calculate_marker_call(cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2, 
+                                   anno=anno, beta.df=beta.raw, sample.name_pathwise=sample.name_pathwise, arraytype=arraytype)
 # remove samples not in samplesfile
 samplesinclude <- intersect(names(sample.call),datsamples$Sentrix_Code)
 sample.call <- sample.call[samplesinclude]
