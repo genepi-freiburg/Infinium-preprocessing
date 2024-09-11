@@ -202,6 +202,9 @@ names(filenames_pathwise) <- scandata
 RGset_pathwise <- vector(mode = "list", length = length(scandata))
 names(RGset_pathwise) <- scandata
 
+sample.name_pathwise <- vector(mode = "list", length = length(scandata))
+names(sample.name_pathwise) <- scandata
+
 sample_names <- NA
 missing_idat <- NA
 samplesheet_combined <- merge(datsamples, datsamplesfinal)
@@ -254,6 +257,7 @@ for(path in scandata){ # all files in the same path have to have identical array
 	# restrict the samplesheet to the samples we found in this path 
   	samplesheet_local <- samplesheet_combined[grep(path, samplesheet_combined$filename),]
  	samplesheet_local$Basename <- samplesheet_local$filename
+ 	sample.name_pathwise[[path]]<-samplesheet_local$Sentrix_Code
 	RGset = read.metharray.exp(targets = samplesheet_local, recursive = TRUE, force = TRUE) # need force in EPIC(v1) idats only, not a v1-v2 problem
 		arraytype.r <- RGset@annotation["array"]
  			if (arraytype.r == "IlluminaHumanMethylationEPICv2") {
@@ -532,18 +536,18 @@ cgs_epicv2<-c(cgs_epicv2, unm_dt$IlmnID_EPICv2.y); length(cgs_epicv2) #210833
 cgs_shared<-as.vector(na.omit(anno$Name[anno$Type=="Probe" & anno$EPIC_version=="v1_v2"])); length(cgs_shared) #717868
 
 #Combine data		
-TypeII.Red.All <-combine_data(df_list=TypeII.Red_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
-                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2) 
-TypeII.Green.All <- combine_data(df_list=TypeII.Green_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
-                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)
-TypeI.Green.M.All <- combine_data(df_list=TypeI.Green.M_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
-                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)   
-TypeI.Green.U.All <- combine_data(df_list=TypeI.Green.U_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
-                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)
-TypeI.Red.M.All <- combine_data(df_list=TypeI.Red.M_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
-                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)   
-TypeI.Red.U.All <- combine_data(df_list=TypeI.Red.U_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
-                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)
+TypeII.Red.All <-as.matrix(combine_data(df_list=TypeII.Red_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2))
+TypeII.Green.All <- as.matrix(combine_data(df_list=TypeII.Green_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2))
+TypeI.Green.M.All <- as.matrix(combine_data(df_list=TypeI.Green.M_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2))   
+TypeI.Green.U.All <- as.matrix(combine_data(df_list=TypeI.Green.U_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2))
+TypeI.Red.M.All <- as.matrix(combine_data(df_list=TypeI.Red.M_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2))  
+TypeI.Red.U.All <- as.matrix(combine_data(df_list=TypeI.Red.U_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2))
 
 ctrl.all <- do.call("rbind",ctrl_pathwise) # need to transpose? 
 
@@ -558,8 +562,8 @@ ctrl.complete.Green.all <- ctrl.complete.Green.all[, -1]
 
 
 dim(TypeII.Red.All)[1]+dim(TypeI.Green.M.All)[1]+dim(TypeI.Red.M.All) #1088435  -- PERFECT
-dp.all <- combine_data(df_list=dp_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
-                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2); dim(dp.all) #1088435   #
+dp.all <- as.matrix(combine_data(df_list=dp_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)); dim(dp.all) #1088435   #
 x<-c(rownames(TypeII.Red.All), rownames(TypeI.Green.M.All), rownames(TypeI.Red.M.All))
 #Somehow the function repeat the problematic. Remove those files
 # rownames(dp.all)[!rownames(dp.all) %in% x]
@@ -679,21 +683,22 @@ For this step we need the annotationfile.
 ```{r, label = 'annotation'}
 
  # get autosomal probes
+ anno<-anno[anno$CHR %in% c(1:22, "X", "Y"),]
  cas=anno[substr(anno$Name, 1,3)=='ch.' & (anno$CHR %in% c(as.character(1:22),"M")),] # M is mitochondrial
  cgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% c(as.character(1:22),"M")),]
- auto = c(cgs$Name, cas$Name)
+ auto = c(unique(c(cgs$IlmnID_EPICv1, cgs$IlmnID_EPICv2, cas$IlmnID_EPICv1, cas$IlmnID_EPICv1)))
  auto=as.matrix(auto)
 
  # get chrX probes 
  xcas=anno[substr(anno$Name, 1,3)=='ch.' & (anno$CHR %in% c("X")),]
  xcgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% c("X")),]
- sexchrX = c(xcgs$Name, xcas$Name)
+ sexchrX = c(unique(c(xcgs$IlmnID_EPICv1, xcgs$IlmnID_EPICv2, xcas$IlmnID_EPICv1, xcas$IlmnID_EPICv2)))
  sexchrX=as.matrix(sexchrX)
 
  # get chrY probes
  ycas=anno[substr(anno$Name, 1,3)=='ch.' & (anno$CHR %in% c("Y")),]
  ycgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% c("Y")),]
- sexchrY = c(ycgs$Name, ycas$Name)
+ sexchrY = c(unique(c(ycgs$IlmnID_EPICv1, ycgs$IlmnID_EPICv2, ycas$IlmnID_EPICv1, ycas$IlmnID_EPICv2)))
  sexchrY=as.matrix(sexchrY)
 
 ```
@@ -709,8 +714,8 @@ In our further calculations beta value data always is processed separately for a
 * Detection p-values are illustrated in the following plots. Low p-values indicate that the signal is unlikely to be background noise. 
 
 ```{r, label='detection_p-values'} 
-dpvec <- as.vector(as.matrix(dp.all))
-dim(dpvec) <- c(length(dpvec), 1)
+dpvec <- dp.all
+dim(dpvec) <- c(nrow(dp.all)*ncol(dp.all),1)
 dpvec<- dpvec[!is.na(dpvec)]
 
 # plot detection P
@@ -810,6 +815,10 @@ rm(TypeII.Red, TypeII.Green, TypeI.Red.M, TypeI.Red.U, TypeI.Green.M, TypeI.Gree
 ```{r, label = 'samplecall.markercall'}
 # calculate sample and marker calls without filter -- used for sample filter 
 sample.call=colSums(!is.na(beta.raw))/nrow(beta.raw)
+
+sc<-colSums(!is.na(beta.raw))/nrow(beta.raw)
+
+
 marker.call=rowSums(!is.na(beta.raw))/ncol(beta.raw)
 
 # remove samples not in samplesfile
