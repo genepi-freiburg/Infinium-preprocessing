@@ -364,7 +364,7 @@ if(WBCok == TRUE){
   } 
   
   #Merge data
-  est_wbc <- do.call("rbind", WBCset)
+  est.wbc.minfi <- do.call("rbind", WBCset)
   rm(WBCset, RGset)
 } 
   
