@@ -889,8 +889,8 @@ marker.call<-calculate_marker_call(cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epi
 # remove samples not in samplesfile
 samplesinclude <- intersect(names(sample.call),datsamples$Sentrix_Code)
 sample.call <- sample.call[samplesinclude]
-ctrl.complete.Green.all <- ctrl.complete.Green.all[,samplesinclude]
-ctrl.complete.Red.all <- ctrl.complete.Red.all[,samplesinclude]
+ctrl.complete.Green.all <- as.matrix(ctrl.complete.Green.all[,samplesinclude])
+ctrl.complete.Red.all <- as.matrix(ctrl.complete.Red.all[,samplesinclude])
 beta.raw.sex <- beta.raw.sex[,samplesinclude]
 beta.raw <- beta.raw[,samplesinclude]
 
