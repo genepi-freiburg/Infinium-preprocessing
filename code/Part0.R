@@ -67,39 +67,29 @@ Winsorize <- function (x, minval = NULL, maxval = NULL, probs = c(0.05, 0.95),
 
 # get arraytype variables in case of multiple arraytypes 
 
-if (arraytype=="IlluminaHumanMethylationEPIC") {
+values <- unique(unlist(arraytype))
 
-	library(FlowSorted.Blood.EPIC)
-	
-	
-
-	annotationfile="/data/programs/pipelines/CPACOR-EPIC_pipeline/annotationfileB4_2017-09-15.csv"
-	# this is identical to the file 
-	# MethylationEPIC_v-1-0_B4.csv
-	# which one can download from 
-	# https://support.illumina.com/array/array_kits/infinium-methylationepic-beadchip-kit/downloads.html 
-	
-} else if (arraytype=="IlluminaHumanMethylationEPICv2") {
-
-	library(FlowSorted.Blood.EPIC)
-	
-	annotationfile="/data/programs/pipelines/CPACOR-EPIC_pipeline/MethylationEPIC_v2.0_Files/EPIC-8v2-0_A1.csv"
-	# download from 
-	# https://support.illumina.com/array/array_kits/infinium-methylationepic-beadchip-kit/downloads.html
-		
-} else if (arraytype=="IlluminaHumanMethylation450k") {
-
-# 	annotationfile="/data/programs/pipelines/CPACOR-EPIC_pipeline/annotationfile450k.csv"
-	annotationfile="/data/programs/pipelines/CPACOR-EPIC_pipeline/HumanMethylation450_15017482_v1-2.csv"
-	# this is identical to the file 
-	# HumanMethylation450_15017482_v1-2.csv
-	# which can be downloaded from 
-	# https://support.illumina.com/array/array_kits/infinium_humanmethylation450_beadchip_kit.html	
-	
-	library(FlowSorted.Blood.450k)
-	
-	
+if (length(values) > 1) {
+  if ("IlluminaHumanMethylationEPIC" %in% values &&
+      "IlluminaHumanMethylationEPICv2" %in% values) {
+    annotationfile <- "/dsk/data1/programs/pipelines/CPACOR-EPIC_pipeline/annotation_files/Methylation_EPICv1_EPICv2/merged_annotationfile_EPICv1v2_for_CPACOR_20240908.csv"
+    library(FlowSorted.Blood.EPIC)
+  }
 } else {
+  if (values == "IlluminaHumanMethylationEPIC") {
+    annotationfile <- "/dsk/data1/programs/pipelines/CPACOR-EPIC_pipeline/annotation_files/Methylation_EPICv1/annotationfileB4_2017-09-15.csv"
+    library(FlowSorted.Blood.EPIC)
+    
+  } else if (values == "IlluminaHumanMethylationEPICv2") {
+    annotationfile <- "/dsk/data1/programs/pipelines/CPACOR-EPIC_pipeline/annotation_files/MethylationEPIC_v2.0_Files/EPIC-8v2-0_A1.csv"
+    library(FlowSorted.Blood.EPIC)
+    
+  } else if (values=="IlluminaHumanMethylation450k") {
+    annotationfile="/dsk/data1/programs/pipelines/CPACOR-EPIC_pipeline/annotation_files/HumanMethylation450_15017482_v1-2.csv"
+    library(FlowSorted.Blood.450k)
+  } else {
     stop("Unsupported array type: ",arraytype,".\n Supported array types are:\n IlluminaHumanMethylationEPIC versions 1.0 and 2.0 \nand IlluminaHumanMethylation450k.\n Exiting...\n")
+  }
 }
+
 
