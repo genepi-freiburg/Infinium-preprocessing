@@ -6,9 +6,7 @@ cp /data/programs/pipelines/CPACOR-EPIC_pipeline/code/*  $tmpfolder/
 
 cd $tmpfolder/
 
-# time R --vanilla << "EOF"
-# time R-3.6.1 --vanilla << "EOF"
- time /opt/bin/R-4.3 --vanilla << "EOF"
+ time /opt/bin/R-4.4 --vanilla << "EOF"
 .libPaths()
 getwd()
 
