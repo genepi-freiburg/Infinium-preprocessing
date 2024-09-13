@@ -31,7 +31,7 @@ detectionP.local <- function (rgSet, type = "m+u")
 }
 ```
 
-```{r, label = remove_pattern_function, echo = FALSE}
+```{r, label = estimateWBCs_EPICv2_function, echo = FALSE}
 estimateWBCs_EPICv2 <- function(RGset) { 
   #Function based on Lucas Salas approach https://github.com/immunomethylomics/FlowSorted.Blood.EPIC/issues/10  
   #Use function projectCellType_CP (WBCs estimation based on Houseman et al. 2012.) as estimateCellCounts2 function. 
@@ -51,7 +51,7 @@ estimateWBCs_EPICv2 <- function(RGset) {
 }
 ```
 
-```{r, label = remove_pattern_function, echo = FALSE}
+```{r, label = treatment_ta_problematic_function, echo = FALSE}
 #Create a function to apply to all datasets
 treatment_ta_problematic<- function (ls, anno_v2, cgs, arraytype) {
   
@@ -104,6 +104,23 @@ remove_pattern <- function(df) {
 }
 ```
 
+```{r, label = combine_snps_function, echo = FALSE}
+combine_snps <- function(ls, arraytype) {
+  indx1<-which(arraytype =="IlluminaHumanMethylationEPIC")
+  indx2<-which(arraytype =="IlluminaHumanMethylationEPICv2")
+  
+  rownames(ls[[indx2]])<-sub("_.*", "", rownames(ls[[indx2]]))
+  snps<-unique (rownames(ls[[indx2]]) [rownames(ls[[indx2]]) %in% rownames(ls[[indx1]])])  
+  
+  ls[[indx2]]<-ls[[indx2]][!duplicated(rownames(ls[[indx2]])),]
+  ls[[indx2]]<-ls[[indx2]][rownames(ls[[indx2]]) %in% snps,]
+  ls[[indx1]]<-ls[[indx1]][rownames(ls[[indx1]]) %in% snps,]
+  
+  return(ls)
+}
+```
+
+
 ```{r, label = combine_data, echo = FALSE}
 combine_data <- function(df_list, anno_v2, arraytype, cgs_ta, cgs_shared, cgs_epicv1, cgs_epicv2) {
   # STEP 1: Df with the type A problematic probes
@@ -152,7 +169,7 @@ combine_data <- function(df_list, anno_v2, arraytype, cgs_ta, cgs_shared, cgs_ep
 }
 ```
 
-```{r, label = call rate, echo = FALSE}
+```{r, label = call_rate, echo = FALSE}
 calculate_marker_call<- function  (cgs_ta, cgs_shared, cgs_epicv1, cgs_epicv2, 
                                    anno ,beta_df, sample.name_pathwise, arraytype) {
   #v1
@@ -226,6 +243,7 @@ calculate_sample_call<- function  (cgs_ta, cgs_shared, cg_shared, cgs_epicv1, cg
 
 #Arraytype name
 arraytype_names <- Reduce(function(x, y) paste0(x, " ,", y), arraytype)
+values <- unique(unlist(arraytype))
 
 ##########################################
 # read samples ###########################
@@ -373,47 +391,29 @@ if(WBCok == TRUE){
 		
 if(exists("extractSNPs")){ 
 	if(extractSNPs == "TRUE"){
-
-	## do this pathwise == arraywise 
 	snps_pathwise <- vector(mode = "list", length = length(scandata))
 	names(snps_pathwise) <- scandata
-
 	 for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
 	 	RGset <- RGset_pathwise[[path]] 
-	 	
-# 	 	RGset_1 <- RGset_pathwise[[path]] 
-# 	 	RGset_2 <- RGset_pathwise[[path]] 
-# 	 	snp.1<- getSnpBeta(RGset_1); dim(snp.1) #59 11
-# 	 	snp.2<- getSnpBeta(RGset_2); dim(snp.2) #65 4
-# 	 	snp.2<- getSnpBeta(RGset_2); dim(snp.2) #65 4
-# 	 	v1<-rownames(snp.1)
-# 	 	v2<-sub("_.*", "", rownames(snp.2))
-# 	 	
-# 	 	v2[which(duplicated(v2))]
-# [1] "rs11249206" "rs133860"   "rs966367" 
-# 	 	
-# 	 	vp<-v2[!v2%in%v1]
-# > vp
-# [1] "rs5931272"  "rs3818562"  "rs1414097"  "rs10774834" "rs5936512"
-	 	
-	  	snps_pathwise[[path]] <- getSnpBeta(RGset) #dim: V1=59
-	  	snps_pathwise[[path]] <- as.data.frame(snps_pathwise[[path]])
-	  	snps_pathwise[[path]]$rsID <- rownames(snps_pathwise[[path]])
-
-       		 if(exists("snp.extraction")){
-       		     snp.extraction <- merge(snp.extraction, snps_pathwise[[path]] , by = "rsID", all = TRUE)
-       		 } else {
-       		     snp.extraction <- snps_pathwise[[path]]
-       		 }
-       	 	
+	 	snps_pathwise[[path]] <- getSnpBeta(RGset)
 	 	rm(RGset)
+	 } 
+	
+	if (length(values) > 1) {
+  if ("IlluminaHumanMethylationEPIC" %in% values &&
+      "IlluminaHumanMethylationEPICv2" %in% values) {
+      snps_pathwise<- combine_snps (ls=snps_pathwise, arraytype= arraytype)
+  }
+}
+  snp.extraction<-do.call("cbind", snps_pathwise)
+	} 
+} 
+
+
 	 
-	 } # end of RGset-wise snp extraction for loop
-       		 
-	} # end of TRUE snp extraction
-} # end of exists snp extraction
 
-
+	 
+	 
 ########### PROBE INFO & DATA SPLIT ###############################################
 # this is what we need and merge in the end 
 	TypeII.Red_pathwise <- vector(mode = "list", length = length(scandata))
@@ -561,7 +561,6 @@ for(path in scandata){ # all files in the same path have to have identical array
 	dp_pathwise[[path]] <- dp
 
 }
-
 #### MERGE #####
 # Read annotation file. There are different aspects to take into account to merge probes 
 anno=read.csv(annotationfile,as.is=TRUE, skip = 7); dim(anno)#1085683      10
