@@ -132,7 +132,6 @@ pt_tp1_match$EPIC_version<-"v1_v2" #both version
 
 pb_2<-rbind(pb_2, pt_tp1_match); dim(pb_2) # 717868      9
 
-x<-
 
 #Type 3: EPIC-version specific
 p1_tp3<- p1[!p1$Name %in% pb_2$Name, ]; dim(p1_tp3) #  148050  6  
