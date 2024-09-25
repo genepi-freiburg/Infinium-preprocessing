@@ -633,8 +633,8 @@ ctrl.complete.Green.all <- ctrl.complete.Green.all[, -1]
 
 
 #dim(TypeII.Red.All)[1]+dim(TypeI.Green.M.All)[1]+dim(TypeI.Red.M.All) #1088435  -- PERFECT
-dp.all <- as.matrix(combine_data(df_list=dp_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
-                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2))
+dp.all <- combine_data(df_list=dp_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)
 x<-c(rownames(TypeII.Red.All), rownames(TypeI.Green.M.All), rownames(TypeI.Red.M.All))
 #Somehow the function repeat the problematic. Remove those files
 # rownames(dp.all)[!rownames(dp.all) %in% x]
