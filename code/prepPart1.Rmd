@@ -762,7 +762,7 @@ For this step we need the annotationfile.
 ```{r, label = 'annotation'}
 
  # get autosomal probes
- anno<-anno[anno$CHR %in% c(1:22, "X", "Y"),]
+ anno<-anno[anno$CHR %in% c(1:22, "X", "Y", "M"),]
  cas=anno[substr(anno$Name, 1,3)=='ch.' & (anno$CHR %in% c(as.character(1:22),"M")),] # M is mitochondrial
  cgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% c(as.character(1:22),"M")),]
  auto = c(unique(c(cgs$IlmnID_EPICv1, cgs$IlmnID_EPICv2, cas$IlmnID_EPICv1, cas$IlmnID_EPICv1)))
