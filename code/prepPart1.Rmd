@@ -372,7 +372,7 @@ if(WBCok == TRUE){
     for(path in scandata) {
       RGset <- RGset_pathwise[[path]] 
       
-      if (RGset@annotation["array"]=="IlluminaHumanMethylationEPIC") {
+      if (RGset@annotation["array"]=="IlluminaHumanMethylationEPIC" | RGset@annotation["array"]=="IlluminaHumanMethylation450k") {
              est_wbc <- estimateCellCounts2(RGset, 
                                     compositeCellType = "Blood", 
                                     cellTypes = c("CD8T","CD4T","NK","Bcell","Mono","Neu"),
@@ -560,8 +560,16 @@ for(path in scandata){ # all files in the same path have to have identical array
 	dp_pathwise[[path]] <- dp
 
 }
+		
 #### MERGE #####
-# Read annotation file. There are different aspects to take into account to merge probes 
+#Consider different arrays used: e.g., only EPICv1, only EPICv2, both
+		
+if (length(values) > 1) {
+  if ("IlluminaHumanMethylationEPIC" %in% values &&
+      "IlluminaHumanMethylationEPICv2" %in% values) {
+    #Used fixed pipeline
+    
+    # Read annotation file. There are different aspects to take into account to merge probes 
 anno=read.csv(annotationfile,as.is=TRUE, skip = 7); dim(anno)#1085683      10
 
 #-------------------- Problematic problems: ---------------------------------------------
@@ -640,6 +648,24 @@ x<-c(rownames(TypeII.Red.All), rownames(TypeI.Green.M.All), rownames(TypeI.Red.M
 # [17] "cg00101235_TO111" "cg02022136_BC211" "cg02802904_TC211" "cg14194875_BC211"
 # [21] "cg23998405_BC211"
 dp.all<-dp.all[rownames(dp.all) %in% x,]; dim(dp.all) #1088435      15
+    
+  }
+} else {
+  TypeII.Red.All <- do.call("cbind",TypeII.Red_pathwise)                                    
+	TypeII.Green.All <- do.call("cbind", TypeII.Green_pathwise) 
+	TypeI.Red.M.All <- do.call("cbind",TypeI.Red.M_pathwise) 
+	TypeI.Red.U.All <- do.call("cbind",TypeI.Red.U_pathwise) 
+	TypeI.Green.M.All <- do.call("cbind",TypeI.Green.M_pathwise)
+	TypeI.Green.U.All <- do.call("cbind",TypeI.Green.U_pathwise)    
+	 
+	ctrl.all <- do.call("rbind",ctrl_pathwise) # need to transpose? 
+	ctrl.complete.Red.all <- do.call("cbind", ctrl.complete.Red) # added for lowlevel QC
+  ctrl.complete.Green.all <- do.call("cbind", ctrl.complete.Green) # added for lowlevel QC
+    
+  dp.all <- do.call("cbind", dp)
+  
+}
+		
 
 # list(ls()) # remove what is not needed anymore - save space 
 # rm( # list=ls(*_pathwise) # )
@@ -892,6 +918,10 @@ rm(TypeII.Red, TypeII.Green, TypeI.Red.M, TypeI.Red.U, TypeI.Green.M, TypeI.Gree
 
 
 ```{r, label = 'samplecall.markercall'}
+
+if (length(values) > 1) {
+  if ("IlluminaHumanMethylationEPIC" %in% values &&
+      "IlluminaHumanMethylationEPICv2" %in% values) {
 # calculate sample and marker calls without filter -- used for sample filter 
 sample.call<-calculate_sample_call(cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2, anno=anno, beta_df=beta.raw, sample.name_pathwise=sample.name_pathwise, arraytype=arraytype)
 
@@ -904,6 +934,20 @@ ctrl.complete.Green.all <- as.matrix(ctrl.complete.Green.all[,samplesinclude])
 ctrl.complete.Red.all <- as.matrix(ctrl.complete.Red.all[,samplesinclude])
 beta.raw.sex <- beta.raw.sex[,samplesinclude]
 beta.raw <- beta.raw[,samplesinclude]
+  }
+} else {
+# calculate sample and marker calls without filter -- used for sample filter 
+sample.call=colSums(!is.na(beta.raw))/nrow(beta.raw)
+marker.call=rowSums(!is.na(beta.raw))/ncol(beta.raw)
+
+# remove samples not in samplesfile
+samplesinclude <- intersect(names(sample.call),datsamples$Sentrix_Code)
+sample.call <- sample.call[samplesinclude]
+ctrl.complete.Green.all <- ctrl.complete.Green.all[,samplesinclude]
+ctrl.complete.Red.all <- ctrl.complete.Red.all[,samplesinclude]
+beta.raw.sex <- beta.raw.sex[,samplesinclude]
+beta.raw <- beta.raw[,samplesinclude]
+}
 
 # save.image("test_runbyhand.Rdata")
 ```
