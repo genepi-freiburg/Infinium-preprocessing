@@ -163,7 +163,7 @@ combine_data <- function(df_list, anno_v2, arraytype, cgs_ta, cgs_shared, cgs_ep
   df_comb_shared <- reorder_df(df_comb_shared, all_cols)
   df_comb_specific <- reorder_df(df_comb_specific, all_cols)
   
-  df_all <- rbind(df_ta, df_comb_shared, df_comb_specific)
+  df_all <- as.matrix(rbind(df_ta, df_comb_shared, df_comb_specific))
   
   return(df_all)
 }
@@ -602,18 +602,18 @@ cgs_epicv2<-c(cgs_epicv2, unm_dt$IlmnID_EPICv2.y); length(cgs_epicv2) #210833
 cgs_shared<-as.vector(na.omit(anno$Name[anno$Type=="Probe" & anno$EPIC_version=="v1_v2"])); length(cgs_shared) #717868
 
 #Combine data		
-TypeII.Red.All <-as.matrix(combine_data(df_list=TypeII.Red_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
-                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2))
-TypeII.Green.All <- as.matrix(combine_data(df_list=TypeII.Green_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
-                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2))
-TypeI.Green.M.All <- as.matrix(combine_data(df_list=TypeI.Green.M_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
-                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2))   
-TypeI.Green.U.All <- as.matrix(combine_data(df_list=TypeI.Green.U_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
-                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2))
-TypeI.Red.M.All <- as.matrix(combine_data(df_list=TypeI.Red.M_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
-                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2))  
-TypeI.Red.U.All <- as.matrix(combine_data(df_list=TypeI.Red.U_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
-                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2))
+TypeII.Red.All <-combine_data(df_list=TypeII.Red_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)
+TypeII.Green.All <- combine_data(df_list=TypeII.Green_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)
+TypeI.Green.M.All <- combine_data(df_list=TypeI.Green.M_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)   
+TypeI.Green.U.All <- combine_data(df_list=TypeI.Green.U_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)
+TypeI.Red.M.All <- combine_data(df_list=TypeI.Red.M_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)  
+TypeI.Red.U.All <- combine_data(df_list=TypeI.Red.U_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)
 
 ctrl.all <- do.call("rbind",ctrl_pathwise) # need to transpose? 
 
