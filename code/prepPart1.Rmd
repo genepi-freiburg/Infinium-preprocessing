@@ -104,8 +104,8 @@ remove_pattern <- function(df) {
 }
 ```
 
-```{r, label = combine_snps_function, echo = FALSE}
-combine_snps <- function(ls, arraytype) {
+```{r, label = harmonize_snps_function, echo = FALSE}
+harmonize_snps <- function(ls, arraytype) {
   indx1<-which(arraytype =="IlluminaHumanMethylationEPIC")
   indx2<-which(arraytype =="IlluminaHumanMethylationEPICv2")
   
@@ -243,7 +243,6 @@ calculate_sample_call<- function  (cgs_ta, cgs_shared, cg_shared, cgs_epicv1, cg
 
 #Arraytype name
 arraytype_names <- Reduce(function(x, y) paste0(x, " ,", y), arraytype)
-values <- unique(unlist(arraytype))
 
 ##########################################
 # read samples ###########################
@@ -295,6 +294,8 @@ sample_names <- NA
 missing_idat <- NA
 samplesheet_combined <- merge(datsamples, datsamplesfinal)
 
+
+
 ######## FILENAMES ###################
 
 for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
@@ -323,6 +324,8 @@ for(path in scandata){ # all files in the same path have to have identical array
 
 }
 
+
+
 # make one filenames object to merge 
 	filenames_all <- unlist(filenames_pathwise)
 	samplesheet_combined$filename <- as.character(sapply(samplesheet_combined$Sentrix_Code, function(x){grep(x,filenames_all, value = TRUE)})) 
@@ -335,6 +338,8 @@ for(path in scandata){ # all files in the same path have to have identical array
 	if(length(missing_idat) > 0){
 		write.table(missing_idat, file = paste0(outputdir,"/missing_idat_files","_",projectname,"-",formatted.time,".tsv"), row.names = FALSE, append = TRUE) 
 	}
+
+
 
 
 ####### METHYLATION READ-IN #####################
@@ -387,13 +392,12 @@ if(WBCok == TRUE){
 } 
   
 
-#### SNP extraction ## EPICv2 comment: works theoretically, but too low output
-		
+#### SNP extraction ## 
 if(exists("extractSNPs")){ 
 	if(extractSNPs == "TRUE"){
 	snps_pathwise <- vector(mode = "list", length = length(scandata))
 	names(snps_pathwise) <- scandata
-	 for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
+	 for(path in scandata){ 
 	 	RGset <- RGset_pathwise[[path]] 
 	 	snps_pathwise[[path]] <- getSnpBeta(RGset)
 	 	rm(RGset)
@@ -402,18 +406,13 @@ if(exists("extractSNPs")){
 	if (length(values) > 1) {
   if ("IlluminaHumanMethylationEPIC" %in% values &&
       "IlluminaHumanMethylationEPICv2" %in% values) {
-      snps_pathwise<- combine_snps (ls=snps_pathwise, arraytype= arraytype)
+      snps_pathwise<- harmonize_snps (ls=snps_pathwise, arraytype= arraytype)
   }
 }
   snp.extraction<-do.call("cbind", snps_pathwise)
 	} 
 } 
 
-
-	 
-
-	 
-	 
 ########### PROBE INFO & DATA SPLIT ###############################################
 # this is what we need and merge in the end 
 	TypeII.Red_pathwise <- vector(mode = "list", length = length(scandata))
@@ -655,12 +654,25 @@ setwd(cwd)
 
 # save.image("test_runbyhand.Rdata")
 ```
+```{r, label = data_to_report, echo = FALSE}
+d2r_directory <- data.frame(
+  arraytype = values,
+  directory = unlist(idatdir)
+)
+
+d2r_nfiles <- data.frame(
+  arraytype = arraytype,
+  num_files = unlist(lapply(filenames_pathwise, length))
+)
+```
 
 ### Read data and parameters
 
-We are working with data from directory 
-`r paste(strsplit(idatdir, split = "/")[[1]][-1], collapse = "/ ")` 
-which contains $`r length(filenames) `$ idat files.
+We are working with data from directory:
+`r knitr::kable(d2r_directory, row.names = FALSE)` 
+which contains the following idat files:
+`r knitr::kable(d2r_nfiles, row.names = FALSE)` 
+
 The annotationfile used is 
 `r paste(strsplit(annotationfile, split = "/")[[1]][-1], collapse = "/ ")`
  - if problems occur with annotation, please have a look at [Illumina downloads](https://support.illumina.com/array/downloads.html)    *Infimum Methylation EPIC Product files*. 
@@ -881,10 +893,10 @@ rm(TypeII.Red, TypeII.Green, TypeI.Red.M, TypeI.Red.U, TypeI.Green.M, TypeI.Gree
 
 ```{r, label = 'samplecall.markercall'}
 # calculate sample and marker calls without filter -- used for sample filter 
-sample.call<-calculate_sample_call(cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2, 
-                                   anno=anno, beta_df=beta.raw, sample.name_pathwise=sample.name_pathwise, arraytype=arraytype)
-marker.call<-calculate_marker_call(cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2, 
-                                   anno=anno, beta.df=beta.raw, sample.name_pathwise=sample.name_pathwise, arraytype=arraytype)
+sample.call<-calculate_sample_call(cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2, anno=anno, beta_df=beta.raw, sample.name_pathwise=sample.name_pathwise, arraytype=arraytype)
+
+marker.call<-calculate_marker_call(cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2,  anno=anno, beta_df=beta.raw, sample.name_pathwise=sample.name_pathwise, arraytype=arraytype)
+
 # remove samples not in samplesfile
 samplesinclude <- intersect(names(sample.call),datsamples$Sentrix_Code)
 sample.call <- sample.call[samplesinclude]
