@@ -651,10 +651,10 @@ dp.all<-dp.all[rownames(dp.all) %in% x,]
 	TypeI.Green.U.All <- do.call("cbind",TypeI.Green.U_pathwise)    
 	 
 	ctrl.all <- do.call("rbind",ctrl_pathwise) # need to transpose? 
-	ctrl.complete.Red.all <- do.call("cbind", ctrl.complete.Red) # added for lowlevel QC
-  ctrl.complete.Green.all <- do.call("cbind", ctrl.complete.Green) # added for lowlevel QC
+	ctrl.complete.Red.all <- ctrl.complete.Red # added for lowlevel QC
+  ctrl.complete.Green.all <- ctrl.complete.Green # added for lowlevel QC
     
-  dp.all <- do.call("cbind", dp)
+  dp.all <- dp
   
 }
 		
