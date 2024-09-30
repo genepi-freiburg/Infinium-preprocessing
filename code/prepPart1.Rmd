@@ -803,9 +803,9 @@ if (length(values) > 1) {
  sexchrY = c(unique(c(ycgs$IlmnID_EPICv1, ycgs$IlmnID_EPICv2, ycas$IlmnID_EPICv1, ycas$IlmnID_EPICv2)))
  sexchrY=as.matrix(sexchrY)
   }
-} 
- 
- if ("IlluminaHumanMethylationEPICv2" %in% values) {
+} else {
+  
+  if ("IlluminaHumanMethylationEPICv2" %in% values) {
   anno=anno[,c('IlmnID','Color_Channel', 'CHR', 'MAPINFO', 'Name')]
   anno$CHR <- gsub("chr", "", anno$CHR)
   anno<-anno[anno$CHR %in% c(1:22, "X", "Y", "M"),]
@@ -849,6 +849,8 @@ if (length(values) > 1) {
  sexchrY = c(ycgs$Name, ycas$Name)
  sexchrY=as.matrix(sexchrY)  
  
+}
+  
 }
  
 ```
