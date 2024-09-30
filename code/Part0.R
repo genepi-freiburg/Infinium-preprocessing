@@ -49,18 +49,18 @@ library(dplyr)
 # library(DescTools)
 
 Winsorize <- function (x, minval = NULL, maxval = NULL, probs = c(0.05, 0.95), 
-    na.rm = FALSE, type = 7) 
+                       na.rm = FALSE, type = 7) 
 {
-    if (is.null(minval) || is.null(maxval)) {
-        xq <- quantile(x = x, probs = probs, na.rm = na.rm, type = type)
-        if (is.null(minval)) 
-            minval <- xq[1L]
-        if (is.null(maxval)) 
-            maxval <- xq[2L]
-    }
-    x[x < minval] <- minval
-    x[x > maxval] <- maxval
-    return(x)
+  if (is.null(minval) || is.null(maxval)) {
+    xq <- quantile(x = x, probs = probs, na.rm = na.rm, type = type)
+    if (is.null(minval)) 
+      minval <- xq[1L]
+    if (is.null(maxval)) 
+      maxval <- xq[2L]
+  }
+  x[x < minval] <- minval
+  x[x > maxval] <- maxval
+  return(x)
 }
 #####################################
 
