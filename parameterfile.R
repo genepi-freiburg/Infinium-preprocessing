@@ -26,7 +26,7 @@ outputdir="/data/studies/00_GCKD/00_data/02_methylation/01_QC/03_DNAm_preprocess
 #########################################
 # samplesfile needed for QC (steps 2) ###
 
-samplesfile="/data/studies/00_GCKD/00_data/02_methylation/01_QC/03_DNAm_preprocessing_batches123/tests_ZRH/samplesheet_GCKD_batch1and2_testfailplus5.txt"
+samplesfile="Z:/dsk/data1/studies/00_GCKD/00_data/02_methylation/01_QC/03_DNAm_preprocessing_batches123/tests_ZRH/samplesheet_GCKD_batch1and2_testfailplus5.txt"
 # CHANGE: sample table; must be absolute path and not relative path
 
 
@@ -60,5 +60,5 @@ filterOutlierCtrlQC=TRUE
 QuantileNormalize=TRUE
 InterQuartileRangeCalculation=TRUE
 estimateWBCs=FALSE
-extractSNPs=TRUE
+extractSNPs=FALSE
 additionalBatchVariables=FALSE
