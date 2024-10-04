@@ -408,8 +408,19 @@ if(exists("extractSNPs")){
   }
 }
   snp.extraction<-do.call("cbind", snps_pathwise)
+  
+  #TTriche script to annotate the genotype:  https://github.com/ttriche/infiniumSnps/tree/master
+  GM12878 <- read.csv(file="https://raw.githubusercontent.com/ttriche/infiniumSnps/master/GM12878.csv", row.names=1)
+  GM12878 <- GM12878[!is.na(GM12878$U) & !is.na(GM12878$M), ]
+  GM12878$SNP_name <- paste0(rownames(GM12878), "_", GM12878$M, "_", GM12878$U)
+  
+snp.extraction <- merge(snp.extraction, GM12878[, "SNP_name", drop = FALSE], by = "row.names")
+rownames(snp.extraction)<-snp.extraction$SNP_name
+snp.extraction <- snp.extraction[ , !(names(snp.extraction) %in% "SNP_name")]
+  
 	} 
 } 
+	 
 
 ########### PROBE INFO & DATA SPLIT ###############################################
 # this is what we need and merge in the end 
