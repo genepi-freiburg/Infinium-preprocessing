@@ -690,7 +690,7 @@ d2r_directory <- data.frame(
 )
 
 d2r_nfiles <- data.frame(
-  arraytype = arraytype,
+  arraytype = unlist(arraytype),
   num_files = unlist(lapply(filenames_pathwise, length))
 )
 ```
@@ -698,7 +698,14 @@ d2r_nfiles <- data.frame(
 ### Read data and parameters
 
 We are working with data from directory:
-`r knitr::kable(d2r_directory, row.names = FALSE)` 
+```{r}
+for (i in 1:nrow(d2r_directory)) {
+  cat("Arraytype:\n")
+  cat(d2r_directory$arraytype[i], "\n")
+  cat(d2r_directory$directory[i], "\n\n")
+}
+```
+
 which contains the following idat files:
 `r knitr::kable(d2r_nfiles, row.names = FALSE)` 
 
