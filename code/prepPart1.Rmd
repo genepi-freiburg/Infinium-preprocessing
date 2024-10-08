@@ -416,7 +416,7 @@ if(exists("extractSNPs")){
   
 snp.extraction <- merge(snp.extraction, GM12878[, "SNP_name", drop = FALSE], by = "row.names")
 rownames(snp.extraction)<-snp.extraction$SNP_name
-snp.extraction <- snp.extraction[ , !(names(snp.extraction) %in% "SNP_name")]
+snp.extraction <- snp.extraction[ , !(names(snp.extraction) %in% c("SNP_name", "Row.names"))]
   
 	} 
 } 
