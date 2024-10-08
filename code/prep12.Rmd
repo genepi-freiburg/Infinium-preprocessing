@@ -8,6 +8,7 @@ output:
     toc: true
     toc_depth: 2
     keep_tex: true
+    latex_engine: xelatex
 ---
 
 ```{r setup, include=FALSE, echo = FALSE, warning = FALSE}
