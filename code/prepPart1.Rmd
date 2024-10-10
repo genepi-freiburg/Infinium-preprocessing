@@ -59,6 +59,7 @@ treatment_ta_problematic<- function (ls, anno_v2, cgs, arraytype) {
   indx1<-which(arraytype =="IlluminaHumanMethylationEPIC")
   dfv1<-ls[[indx1]] 
   dfv1_match <- dfv1[rownames(dfv1) %in% cgs, , drop = FALSE]
+  rm(dfv1)
 
   # Create matrix: repeat row according number of coincidences in cg_v2_matches
   times <- sapply(rownames(dfv1_match), function(x) sum(anno_v2$Name == x))
@@ -71,15 +72,20 @@ treatment_ta_problematic<- function (ls, anno_v2, cgs, arraytype) {
   #Combine with real EPIC_v1 probes
   dfv1 <- rbind(dfv1_match, dfv1_exp)
   
+  #Save rownames vector for next steps
+  dfv1_exp<-rownames(dfv1_exp)
+  dfv1_match<-rownames(dfv1_match)
+  rm(times, cgs_ordered)
+  
   #Work with EPIC V2 --> Extract specific probes
   indx2<-which(arraytype =="IlluminaHumanMethylationEPICv2")
   dfv2<-ls[[indx2]]
   #Subset data
-  dfv2<-as.data.frame(dfv2[rownames(dfv2) %in% rownames(dfv1_exp),])
+  dfv2<-as.data.frame(dfv2[rownames(dfv2) %in% dfv1_exp,])
   
   #Subset dfv1 according to the probes present in dfv2
   cgs_subset<-c(rownames(dfv2), 
-                rownames(dfv1_match)[rownames(dfv1_match)%in% unique(sub("_.*", "", rownames(dfv2)))])
+                dfv1_match[dfv1_match%in% unique(sub("_.*", "", rownames(dfv2)))])
   
   dfv1<-as.data.frame(dfv1[rownames(dfv1) %in% cgs_subset,])
   
@@ -89,7 +95,6 @@ treatment_ta_problematic<- function (ls, anno_v2, cgs, arraytype) {
   df_ta<-merge(dfv1, dfv2, by="ID", all=TRUE)
   rownames(df_ta) <- df_ta$ID
   df_ta$ID <- NULL
-  
   return(df_ta)
 }
 
@@ -132,6 +137,7 @@ combine_data <- function(df_list, anno_v2, arraytype, cgs_ta, cgs_shared, cgs_ep
     df[rownames(df) %in% cgs_shared, ]
   }) 
   df_comb_shared <- Reduce(function(x, y) merge(x, y, by = "row.names", all = FALSE), df_shared)
+  rm(df_shared)
   rownames(df_comb_shared) <- df_comb_shared$Row.names
   df_comb_shared <- df_comb_shared[, -1]
   
@@ -146,9 +152,11 @@ combine_data <- function(df_list, anno_v2, arraytype, cgs_ta, cgs_shared, cgs_ep
       df_list[[i]][rownames(df_list[[i]]) %in% cgs_epicv2, ]
     }
   })
+  rm(df_list)
   
   df_specific <- lapply(df_specific, as.data.frame)
   df_comb_specific <- bind_rows(df_specific)
+  rm(df_specific)
   
   #STEP 4: Merge all types of probes
   all_cols <- union(union(colnames(df_ta), colnames(df_comb_shared)),
@@ -347,7 +355,7 @@ for(path in scandata){ # all files in the same path have to have identical array
   	samplesheet_local <- samplesheet_combined[grep(path, samplesheet_combined$filename),]
  	samplesheet_local$Basename <- samplesheet_local$filename
  	sample.name_pathwise[[path]]<-samplesheet_local$Sentrix_Code
-	RGset = read.metharray.exp(targets = samplesheet_local, recursive = TRUE, force = TRUE) # need force in EPIC(v1) idats only, not a v1-v2 problem
+	RGset = read.metharray.exp(targets = samplesheet_local, recursive = TRUE, verbose= TRUE, force = TRUE) # need force in EPIC(v1) idats only, not a v1-v2 problem
 		arraytype.r <- RGset@annotation["array"]
  			if (arraytype.r == "IlluminaHumanMethylationEPICv2") {
  		 annotation(RGset)["array"] = "IlluminaHumanMethylationEPIC"
@@ -453,7 +461,7 @@ snp.extraction <- snp.extraction[ , !(names(snp.extraction) %in% c("SNP_name", "
 	dp_pathwise <- vector(mode = "list", length = length(scandata))
 		names(dp_pathwise) <- scandata
 
-
+print("Get probe information")
 for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
 	RGset <- RGset_pathwise[[path]] 
 	# Type II probes
@@ -488,9 +496,10 @@ for(path in scandata){ # all files in the same path have to have identical array
 	TypeI.Red.U_pathwise[[path]] <- TypeI.Red.U 
 	TypeI.Green.M_pathwise[[path]] <- TypeI.Green.M 
 	TypeI.Green.U_pathwise[[path]] <- TypeI.Green.U 
+	print(paste0("Complete for: ", path))
 }
 
-		
+print("Get control probe information and P detection")
 for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
  
 	RGset <- RGset_pathwise[[path]] 
@@ -571,7 +580,8 @@ for(path in scandata){ # all files in the same path have to have identical array
 	ctrl.complete.Green_pathwise[[path]] <- ctrl.complete.Green
 	
 	dp_pathwise[[path]] <- dp
-
+	
+		print(paste0("Complete for: ", path))
 }
 		
 #### MERGE #####
@@ -581,7 +591,8 @@ if (length(values) > 1) {
   if ("IlluminaHumanMethylationEPIC" %in% values &&
       "IlluminaHumanMethylationEPICv2" %in% values) {
     #Used fixed pipeline
-    
+print("Merging IlluminaHumanMethylationEPIC and IlluminaHumanMethylationEPICv2 arrays")
+
     # Read annotation file. There are different aspects to take into account to merge probes 
 anno=read.csv(annotationfile,as.is=TRUE, skip = 7)
 
@@ -599,7 +610,6 @@ anno_ta_v2<-anno[anno$Name%in%cgs_ta & anno$EPIC_version=="v2" &
 anno_ta_v1<-anno[anno$EPIC_version=="v1" & anno$Name%in%cgs_ta  ,]
 v2_sp<-unique(anno_ta_v2$Name[!anno_ta_v2$Name %in% anno_ta_v1$Name])
 cgs_ta <- cgs_ta[!cgs_ta%in%v2_sp]
-
 
 #Probes EPIC-version-specific:
 cgs_epicv1<- as.vector(na.omit(anno$IlmnID_EPICv1[anno$Type=="Probe" & anno$EPIC_version=="v1"]))
@@ -621,6 +631,8 @@ cgs_epicv2<-c(cgs_epicv2, unm_dt$IlmnID_EPICv2.y)
 
 #Probes shared between EPIC versions no problematics
 cgs_shared<-as.vector(na.omit(anno$Name[anno$Type=="Probe" & anno$EPIC_version=="v1_v2"]))
+
+rm(name_counts,anno_ta_v1, v2_sp, anno_c, anno_c1, anno_c2, anno_merge, unm_dt)
 
 #Combine data		
 TypeII.Red.All <-combine_data(df_list=TypeII.Red_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
