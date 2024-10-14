@@ -462,7 +462,6 @@ snp.extraction <- snp.extraction[ , !(names(snp.extraction) %in% c("SNP_name", "
 		names(dp_pathwise) <- scandata
 
 print("Get probe information")
-flush.console()
 for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
 	RGset <- RGset_pathwise[[path]] 
 	# Type II probes
