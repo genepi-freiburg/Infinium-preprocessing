@@ -16,7 +16,7 @@ and exclusion of outliers based on the Inter-Quartile-Range.
 The threshold for the sample call rate was set to CHANGE. 
 White blood cell type (WBC) sub-populations were estimated based on 100 CpG sites 
 by the Houseman method <PMID: 22568884> as implemented in the function estimateCellCounts2
-withing the minfi R package. For WBC extraction from EPICv2 array, We created a function based on Lucas Salas approach https://github.com/immunomethylomics/FlowSorted.Blood.EPIC/issues/10 .
+within the minfi R package. For WBC extraction from EPICv2 array, We created a function based on Lucas Salas approach https://github.com/immunomethylomics/FlowSorted.Blood.EPIC/issues/10 .
 For the SNP extraction, we used the annotation file provided by TTriche https://github.com/ttriche/infiniumSnps/tree/master .
 
 XXXXX samples discordant for reported and genetic sex, based on CpGs on the X- and Y-chromosome,
