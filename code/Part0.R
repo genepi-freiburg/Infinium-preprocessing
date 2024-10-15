@@ -41,6 +41,7 @@ library(ggplot2)
 library(matrixStats)
 library(sesame)
 library(dplyr)
+library(parallel)
 
 ##################################### 
 ## DescTools package waiting for C++ update on cluster
