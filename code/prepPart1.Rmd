@@ -118,9 +118,11 @@ harmonize_snps <- function(ls, arraytype) {
   snps<-unique (rownames(ls[[indx2]]) [rownames(ls[[indx2]]) %in% rownames(ls[[indx1]])])  
   
   ls[[indx2]]<-ls[[indx2]][!duplicated(rownames(ls[[indx2]])),]
-  ls[[indx2]]<-ls[[indx2]][rownames(ls[[indx2]]) %in% snps,]
-  ls[[indx1]]<-ls[[indx1]][rownames(ls[[indx1]]) %in% snps,]
   
+  for (i in c(indx1,indx2)) {
+  ls[[i]]<-ls[[i]][rownames(ls[[i]]) %in% snps,]
+  ls[[i]] <- ls[[i]][match(snps, rownames(ls[[i]])), , drop = FALSE]
+  }
   return(ls)
 }
 ```
