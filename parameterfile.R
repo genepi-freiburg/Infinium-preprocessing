@@ -62,3 +62,9 @@ InterQuartileRangeCalculation=TRUE
 estimateWBCs=FALSE
 extractSNPs=FALSE
 additionalBatchVariables=FALSE
+
+
+##############
+# N cores  ###
+ncores=10
+
