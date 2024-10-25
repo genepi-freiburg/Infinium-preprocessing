@@ -909,7 +909,7 @@ if(sum(dpvec>0)>0){
 
 
 ```{r, label='detection_p-values_zero'}
-hist(-log10(dpvecplot),breaks=30, main = "detection p-values: zero values set to 1E-20")
+#hist(-log10(dpvecplot),breaks=30, main = "detection p-values: zero values set to 1E-20")
 rm(dpvecplot)
 ```
 \pagebreak
@@ -1079,14 +1079,14 @@ if (length(bufout)>0) samples.filtered <- data.frame(sample=bufout,x=NA,y=NA,fil
 hist(sample.call,breaks=100, main = "sample call rates")
 ```
 
-```{r, label = sample_call_zoomx}
+```{r, label = sample_call_zoom}
 # plot sample call rates
-hist(sample.call,breaks=100, main = "sample call rates zoomed x-axis", xlim = c(0.85,1), sub = "zoomed x-axis is fixed to 0.85 to 1")
+hist(sample.call,breaks=100, main = "sample call rates zoomed axis", xlim = c(0.85,1), ylim = c(0,30), sub = "zoomed x- and y-axis is fixed to 0.85 to 1 and 0 to 30, respectively")
 ```
 
 ```{r, label = sample_call_zoomy}
 # plot sample call rates
-hist(sample.call,breaks=100, main = "sample call rates zoomed y-axis", ylim = c(0,30), sub = "zoomed y axis is fixed to 0 to 30")
+# hist(sample.call,breaks=100, main = "sample call rates zoomed y-axis", ylim = c(0,30), sub = "zoomed y axis is fixed to 0 to 30")
 ```
 
 $`r max(0,length(sample.call[which(sample.call<=0.98)]))`$ of all sample call rates are lower than 0.98,  
@@ -1097,7 +1097,7 @@ We have a look at the marker call rates as well:
 
 
 ```{r, label = marker_call}
-hist(marker.call,breaks=100, main = "marker call rates")
+#hist(marker.call,breaks=100, main = "marker call rates")
 ```
 
 
