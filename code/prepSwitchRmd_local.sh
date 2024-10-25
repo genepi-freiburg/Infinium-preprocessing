@@ -15,13 +15,23 @@ getwd()
  parameterpath = paste0("../parameterfile.R")
  callpath=getwd()
 
+start.Time = Sys.time()
+formatted.time = format(Sys.time(), "%Y-%m-%d-%Hh%Mm")
+source("Part0.R")
+
+
+rmarkdown::render(paste0("prepPart1.Rmd"), output_file = paste0(format(Sys.time(),format = "%Y-%m-%d-%Hh%Mm"),"-",projectname,"-prepPart1.pdf"), clean = FALSE, output_dir = callpath, params = list(parameterfile = parameterpath))
+
   if(QuantileNormalize == FALSE){
   	 rmarkdown::render(paste0("prep12.Rmd"),  output_file = paste0(format(Sys.time(),format = "%Y-%m-%d-%Hh%Mm"),"-",projectname,"-QC",".pdf"), clean = FALSE, output_dir = callpath , params = list(parameterfile = parameterpath) )
    } else {
 	if(InterQuartileRangeCalculation){
-  	 rmarkdown::render(paste0("prep1234.Rmd"), output_file = paste0(format(Sys.time(),format = "%Y-%m-%d-%Hh%Mm"),"-",projectname,".pdf"),clean = FALSE, output_dir = callpath , params = list(parameterfile = parameterpath) )
+	rmarkdown::render(paste0("prepPart2.Rmd"), output_file = paste0(format(Sys.time(),format = "%Y-%m-%d-%Hh%Mm"),"-",projectname,"-prepPart2.pdf"), clean = FALSE, output_dir = callpath, params = list(parameterfile = parameterpath))
+	rmarkdown::render(paste0("prepPart3.Rmd"), output_file = paste0(format(Sys.time(),format = "%Y-%m-%d-%Hh%Mm"),"-",projectname,"-prepPart3.pdf"), clean = FALSE, output_dir = callpath, params = list(parameterfile = parameterpath))
+  	rmarkdown::render(paste0("prep1234.Rmd"), output_file = paste0(format(Sys.time(),format = "%Y-%m-%d-%Hh%Mm"),"-",projectname,".pdf"),clean = FALSE, output_dir = callpath , params = list(parameterfile = parameterpath) )
 	} else {
-  	 rmarkdown::render(paste0("prep123.Rmd"), output_file = paste0(format(Sys.time(),format = "%Y-%m-%d-%Hh%Mm"),"-",projectname,".pdf"), clean = FALSE, output_dir = callpath, params = list(parameterfile = parameterpath) )
+	rmarkdown::render(paste0("prepPart2.Rmd"), output_file = paste0(format(Sys.time(),format = "%Y-%m-%d-%Hh%Mm"),"-",projectname,"-prepPart2.pdf"), clean = FALSE, output_dir = callpath, params = list(parameterfile = parameterpath))
+  	rmarkdown::render(paste0("prep123.Rmd"), output_file = paste0(format(Sys.time(),format = "%Y-%m-%d-%Hh%Mm"),"-",projectname,".pdf"), clean = FALSE, output_dir = callpath, params = list(parameterfile = parameterpath) )
 	}
    } 
 

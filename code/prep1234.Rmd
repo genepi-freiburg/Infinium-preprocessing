@@ -17,14 +17,7 @@ formatted.time = format(Sys.time(), "%Y-%m-%d-%Hh%Mm")
 source(params$parameterfile)
 source("Part0.R")
 ```
-This is a pipeline for preprocessing EPIC-Methylation data using R. 
 
-```{r child = 'prepPart1.Rmd'}
-```
-```{r child = 'prepPart2.Rmd'}
-```
-```{r child = 'prepPart3.Rmd'}
-```
 ```{r child = 'prepPart4.Rmd'}
 ```
 

@@ -1,9 +1,21 @@
+---
+title: "EPIC Pipeline- PrepPart3"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+params:
+  parameterfile: ""
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    latex_engine: xelatex
+---
+
 
 ## PART 3: Quantile Normalisation
 
 The previous calculations provide all information needed to filter the samples and make a tab-separated file *samplesfilefinal* for further use. 
 For this analysis, `r paste(strsplit(samplesfilefinal, split = "/")[[1]][-1], collapse = "/ ")` was used as list of samples for the final preprocessing steps. 
-```{r, label = QN_intro}
+```{r, label = QN_intro, echo=FALSE}
 ###############################################################################
 
 # PART 3 (QN)
@@ -25,7 +37,7 @@ samples <- unique(samples[samples %in% datsamplesfinal$Sentrix_Code])
 
 `r length(men)` men and `r length(women)` women samples are included in Quantile Normalisation.
 
-```{r, label = QN_calculation}
+```{r, label = QN_calculation, echo=FALSE}
 
 # ---- QN AUTOSOMES ---------------------------------
 
@@ -199,7 +211,7 @@ marker.callYwomen=rowSums(!is.na(betaQN.sex[sexchrY,colnames(betaQN.sex) %in% wo
 
 
 
-```{r, label = histogram_womensexcall2}
+```{r, label = histogram_womensexcall2, echo=FALSE}
 if(length(women) > 1){
 par(mfrow=c(1,1))
 hist(marker.callYwomen,breaks=50)
@@ -209,7 +221,7 @@ hist(marker.callYwomen,breaks=50)
 Now a PCA will be conducted on autosomal beta values after quantile normalisation. Here we investigate how well the markers can be separated by choosing different base vectors. 
 Rows are observations, here markers.
 
-```{r, label = pca_autosome_postQN}
+```{r, label = pca_autosome_postQN, echo=FALSE}
 # PCA variables (autosomes)
 betaPCA <- betaQN
 pcaAuto <- prcomp(na.omit(betaPCA))
@@ -223,7 +235,7 @@ pcaAuto <- prcomp(na.omit(betaPCA))
 ```
 
 
-```{r, label = plot_pca_autosome_postQN}
+```{r, label = plot_pca_autosome_postQN, echo=FALSE}
 # EVals
 par(mfrow=c(1,1))
 plot((pcaAuto$sdev^2/sum(pcaAuto$sdev^2))[1:10],main="Explained Variance of markers on autosomes",ylab="% variance",xlab="PC#",ylim=c(0,1.05))
@@ -237,7 +249,7 @@ This is the same data as used in the plot before, but with transposed data (rows
 So the variation which is explained by the first pricipal component indicates how well the samples can be separated by choosing a new base vector.
 
 
-```{r, warnings = FALSE, plot_transposed_pca_autosome_postQN} 
+```{r, warnings = FALSE, plot_transposed_pca_autosome_postQN, echo=FALSE} 
 pca.col.plot2 <- function(pc, group,legend,col_pal, header = ""){
 p1 <- fviz_pca_ind(pc,axes=c(1,2),
 		     col.ind = group, # color by groups # if there are more than 25 groups, this will cause a warning or an error !!
@@ -269,7 +281,7 @@ EV <- merge(EV,datsamples,by.x=0,by.y="Sentrix_Code")
 plot(cumsum((pcaSamples$sdev^2/sum(pcaSamples$sdev^2)))[1:10],main="Cumulative explained variance between samples",ylab="% variance",xlab="number of PCs",ylim=c(0,1.05))
 ```
 
-```{r, label = plot_samplevariance_postQN} 
+```{r, label = plot_samplevariance_postQN, echo=FALSE} 
 plot((pcaSamples$sdev^2/sum(pcaSamples$sdev^2))[1:10],main="Explained variance between samples",ylab="% variance",xlab="number of PCs",ylim=c(0,1.05))
 text((y=pcaSamples$sdev^2/sum(pcaSamples$sdev^2))[1:10],x=1:10+0.1,labels=sprintf("%1.3f",(pcaSamples$sdev^2/sum(pcaSamples$sdev^2)))[1:10],adj=c(0.5,-1))
 
@@ -280,7 +292,7 @@ Because color coding for more than 18 groups is problematic, we split the batch 
 
 First, we plot regarding *Sentrix_ID*:
 
-```{r, warnings = FALSE, label = plots_batcheffects_postQN_sentrix} 
+```{r, warnings = FALSE, label = plots_batcheffects_postQN_sentrix, echo=FALSE} 
 
 # pdf(file=paste0(outputdir,"/results-PCAauto-QN-platewise","_",projectname,"-",formatted.time,".pdf"),height=21,width = 21)
 # par(mar=c(8.1,7.1,4.1,2.1))
@@ -336,7 +348,7 @@ Additionally we supply the Sentrix_IDs of outliers (defined by three times the s
 `r cat(paste0("samples-with-batch-effect_",projectname,"-",formatted.time,".csv"),"\n")`.
 
 
-```{r, label = plots_batcheffects_postQN_sentrix2}
+```{r, label = plots_batcheffects_postQN_sentrix2, echo=FALSE}
 EV = as.data.frame(pcaSamples$x)
 plot(EV$PC1, EV$PC2, main = "Label outliers (3*SD)", xlab = "PC1", ylab = "PC2")
 batch.effect.samples12 = mark.outliers(EV$PC1, EV$PC2,"blue",rownames(EV), sd.range = 3, color.points = TRUE)
@@ -355,18 +367,18 @@ write.csv(batch.effect.samples,file = paste0(outputdir,"/samples-with-batch-effe
 
 Next, we plot with respect to *Sample_Plate*:
 
-```{r, label = plots_batcheffects_postQN_plate}
+```{r, label = plots_batcheffects_postQN_plate, echo=FALSE}
 make.fancy.PCA.plots("Sample_Plate")
 
 ```
 
 To better understand these results, compare the **number of samples per Plate**.
-```{r, label = plots_batcheffects_postQN_plate2}
+```{r, label = plots_batcheffects_postQN_plate2, echo=FALSE}
 number.of.samples.per.plate = sapply(unique(datsamples$Sample_Plate), function(n){sum(datsamples$Sample_Plate%in%n)})
 print(number.of.samples.per.plate)
 ```
 
-```{r, label = plots_batcheffects_postQN_additional}
+```{r, label = plots_batcheffects_postQN_additional, echo=FALSE}
 if(exists("additionalBatchVariables")){
 	if(additionalBatchVariables){
 		BatchVariables = read.table(BatchVariablesFile, header = FALSE, stringsAsFactors = F)$V1

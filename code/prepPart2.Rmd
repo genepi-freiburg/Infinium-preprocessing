@@ -1,3 +1,16 @@
+---
+title: "EPIC Pipeline- PrepPart2"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+params:
+  parameterfile: ""
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    latex_engine: xelatex
+---
+
+
 ```{r, label = declare_remOutlier_function, echo = FALSE}
 
 removeOutlier <- function(val1,val2,labels=NULL,xname="val1",yname="val2",title="",filterYout=1, SDrange=4 ,nullOffs=0.0001 ) {
@@ -48,7 +61,7 @@ The quality control consists of two parts:
 
 * By conducting a PCA on the control-probe information we obtain controlprobe scores. 
 
-```{r, label = pca_controlprobe}
+```{r, label = pca_controlprobe, echo=FALSE}
 #PCA of control-probe intensities
 pca <- prcomp(na.omit(ctrl.all))
 ctrlprobes.scores = pca$x
@@ -59,7 +72,7 @@ colnames(ctrlprobes.scores) = paste(colnames(ctrlprobes.scores), '_cp', sep='')
 ```
 
 * Then we look at the controls (if FilterOutlierQC == TRUE).
-```{r, label = controlprobe_QC}
+```{r, label = controlprobe_QC, echo=FALSE}
 if(filterOutlierCtrlQC){
 
 #control probe based QC
@@ -125,7 +138,7 @@ controlQC <- cbind(controlQC,data.frame(StainingGreenB=ctrl.complete.Green.all[c
 
 The first 3 rows of control probes information from QC contain the following information:
 
-```{r}
+```{r, echo=FALSE}
 if(exists("controlQC")){
 	controlQC[1:3,]
 }
@@ -133,7 +146,7 @@ if(exists("controlQC")){
 
 In the following control probes are checked. For a more detailed description see e.g. the [ILMN HD methylation assay protocol guide (15019519)](https://support.illumina.com/downloads/infinium_hd_methylation_assay_protocol_guide_(15019519_b).html) or the [Illumina BeadArray Controls Reporter Software Guide ](https://support.illumina.com/downloads/beadarray-controls-reporter-software-guide-1000000004009.html),pages 6-8. Probes are evaluated by MA plots. BS-I and BS-II control probes check the DNA bisulfite conversion step.
 
-```{r, label = controlprobeQC_bisulfite}
+```{r, label = controlprobeQC_bisulfite, echo=FALSE}
 
 if(exists("controlQC")){
 	labels <- rownames(controlQC)
@@ -156,7 +169,7 @@ if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout
 
 We also check the Hybridisation of the amplified DNA to the array:
 
-```{r, label = controlprobeQC_other}
+```{r, label = controlprobeQC_other, echo=FALSE}
 
 if(filterOutlierCtrlQC){
 # Hyb + TR
@@ -214,7 +227,7 @@ The following table lists the detected outliers identified by the quality contro
 in the file **samples-filtered.csv**
  in a slightly expanded version. 
 
-```{r, label = controlprobeQC_report}
+```{r, label = controlprobeQC_report, echo=FALSE}
 if(nrow(samples.filtered) > 0){
 # 	# remove redundant information
 # 	posID = match("Sentrix_ID", colnames(samples.filtered))
@@ -237,7 +250,7 @@ if(nrow(samples.filtered) > 0){
 ### Sex mismatch
 
 Gamete methylation can be used to check sex mismatches. 
-```{r, label = sexmismatch}
+```{r, label = sexmismatch, echo=FALSE}
 ############## sex mismatch ##############
 
 # parameters
@@ -359,14 +372,14 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 
 The samples whose loadings are more than three standard deviations from the mean of the loadings with same assigned sex according to the first two principal components:
 
-```{r, label = printsexmismatch}
+```{r, label = printsexmismatch, echo=FALSE}
 print(sex.mismatches)
 rm(sex.mismatches)
 ```
 
 The plot shows the principle components of the PCA on the samples in the space of samples (a standard PCA plot).
 
-```{r, label = pca_sexmismatch}
+```{r, label = pca_sexmismatch, echo=FALSE}
 if(exists("EV")){
 	resSexCheck <- data.frame(Sentrix_Code=EV$Sentrix_Code, Sex=EV$Sex_female, EV1=EV[,"PC1"], EV2=EV[,"PC2"])
 } else {
@@ -443,7 +456,7 @@ if(min(dim(na.omit(betaPCA))) > 0){
 
 The samples whose values are more than three standard deviations from the mean of the samples with same assigned sex according to the first two principal components:
 
-```{r, label = report_sexmismatch}
+```{r, label = report_sexmismatch, echo=FALSE}
 if(length(sex.mismatches) > 0 && !is.na(sex.mismatches)){
 	print(sex.mismatches)
 	if(exists("countsexna.relative")){
@@ -479,7 +492,7 @@ To ensure correct performance of quantile normalisation samples with a callrate 
 
 
 
-```{r, label = typewise_callrate.QNfilter_auto}
+```{r, label = typewise_callrate.QNfilter_auto, echo=FALSE}
 
 minimum_callrate_QN <- 0
 
@@ -515,7 +528,7 @@ rm(samples.auto.QN, sample.call.auto, samples.callrate.typewise.auto, markers.au
 
 `r nrow(datsamples)` samples are included in the analysis, identified by the *samplesfilefinal*, existing sample calls and samplewise minimum callrate `r minimum_callrate_QN`. Callrate filtering is performed on autosomes and for sex chromosome QN additionally on sex chromosomes.
 
-```{r, label = men.women}
+```{r, label = men.women, echo=FALSE}
 
 # sex chromosomes ------------------------------------------------------------------
 women <- datsamples[datsamples$Sex_female==1,"Sentrix_Code"]
@@ -526,7 +539,7 @@ Of the persons from whom samples are processed, `r length(women)` are women and 
 
 
 
-```{r, label = QNfilters_sex}
+```{r, label = QNfilters_sex, echo=FALSE}
 
 category=c(sexchrX,sexchrY)
 

@@ -1,3 +1,14 @@
+---
+title: "EPIC Pipeline- PrepPart1"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+params:
+  parameterfile: ""
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    latex_engine: xelatex
+---
 ```{r, label = declare_detP_function, echo = FALSE}
 detectionP.local <- function (rgSet, type = "m+u")
 {
@@ -705,9 +716,10 @@ d2r_nfiles <- data.frame(
 ```
 
 ### Read data and parameters
+This is a pipeline for preprocessing EPIC-Methylation data using R. 
 
 We are working with data from directory:
-```{r}
+```{r, echo=FALSE}
 for (i in 1:nrow(d2r_directory)) {
   cat("Arraytype:\n")
   cat(d2r_directory$arraytype[i], "\n")
@@ -744,7 +756,7 @@ Further we interpret the values for the Sex_female in the samplesfile as **1=fem
 
 InterQuartileRange calculation depends on QuantileNormalisation, therefore Quantile Normalize is set to TRUE, if InterQuartileRangeCalculation is requested. 
 
-```{r}
+```{r, echo=FALSE}
 if(InterQuartileRangeCalculation == TRUE){
 	QuantileNormalize <- TRUE
 }
@@ -773,7 +785,7 @@ If the switch estimateWBCs is set to TRUE in the parameterfile, white blood cell
 The estimation of White Blood Cells results in a data.frame est.wbc.minfi for further use as part of the phenodata.\newline
 *Notice*: Dependencies of the results on the sample selection is possible. To avoid that the WBC estimation of fine runs is disturbed by problematic measurements, the estimation is based on samples from the final sample file only.
 
-```{r} 
+```{r, echo=FALSE} 
 if(exists("est.wbc.minfi")){
      head(est.wbc.minfi)
 }
@@ -787,7 +799,7 @@ This information can be used to detect mismatches in labeling of samples and oft
 Homozygotes should have values around $0$ and $1$, whereas heterozygotes have values close to $0.5$. 
 Please consider this when comparing to the genotyping from other sources which may be coded $0$ - $1$ - $2$. 
 
-```{r} 
+```{r, echo=FALSE} 
 if(exists("extractSNPs") && extractSNPs%in%"TRUE"){
     if(exists("snp.extraction")){
         write.csv(snp.extraction, file = paste0(outputdir,"/extracted-snps","_",projectname,"-",formatted.time,".csv"),row.names=T)
@@ -804,7 +816,7 @@ if(exists("extractSNPs") && extractSNPs%in%"TRUE"){
 The probes are divided by chromosome type: autosomal probes, chromosome X probes and chromosome Y probes.
 For this step we need the annotationfile.
 
-```{r, label = 'annotation'}
+```{r, label = 'annotation', echo=FALSE}
 anno=read.csv(annotationfile,as.is=TRUE, skip = 7)
 
 if (length(values) > 1) {
@@ -892,7 +904,7 @@ In our further calculations beta value data always is processed separately for a
 
 * Detection p-values are illustrated in the following plots. Low p-values indicate that the signal is unlikely to be background noise. 
 
-```{r, label='detection_p-values'} 
+```{r, label='detection_p-values', echo=FALSE} 
 dpvec <- as.vector(t(dp.all))
 # dpvec <- dp.all
 # dim(dpvec) <- c(nrow(dp.all)*ncol(dp.all),1)
@@ -908,7 +920,7 @@ if(sum(dpvec>0)>0){
 
 
 
-```{r, label='detection_p-values_zero'}
+```{r, label='detection_p-values_zero', echo=FALSE}
 #hist(-log10(dpvecplot),breaks=30, main = "detection p-values: zero values set to 1E-20")
 rm(dpvecplot)
 ```
@@ -924,7 +936,7 @@ $`r detPthreshold `$ | $`r length(which(dpvec<detPthreshold))`$    | $`r length(
 
 $`r sum(is.na(dpvec))`$ detection p-values are missing.
 
-```{r}
+```{r, echo=FALSE}
 #set detection p-value threshold
 thres=detPthreshold
 d=dp.all[rownames(TypeII.Green.All),colnames(TypeII.Green.All)]
@@ -947,7 +959,7 @@ $`r length(which(dpvec>detPthreshold))`$   ($`r round(length(which(dpvec>detPthr
 To skip this filtering, set the parameter *detPthreshold* to a value **strictly** bigger than 1 in the *parameterfile.R*.
 
 
-```{r}
+```{r, echo=FALSE}
 
 #autosomes ------------------------------------------------------------------
  category=auto
@@ -992,7 +1004,7 @@ rm(TypeII.Red, TypeII.Green, TypeI.Red.M, TypeI.Red.U, TypeI.Green.M, TypeI.Gree
 ```
 
 
-```{r, label = 'samplecall.markercall'}
+```{r, label = 'samplecall.markercall', echo=FALSE}
 
 if (length(values) > 1) {
   if ("IlluminaHumanMethylationEPIC" %in% values &&
@@ -1034,7 +1046,7 @@ beta values:   | autosomes           |  sex chromosomes
 ---------------|---------------------|----------------------------
 dimension:     | $`r dim(beta.raw)`$ | $`r dim(beta.raw.sex)`$
 
-```{r, label='beta-densities'}
+```{r, label='beta-densities', echo=FALSE}
 if(length(samplesinclude)<101){
 	cat("\nThe sample names of the included samples:\n")
 	datsamples$Sample_Name[datsamples$Sentrix_Code %in%samplesinclude]
@@ -1061,7 +1073,7 @@ plot.beta.densities(beta.raw,"Densities of raw autosomal beta values per sample"
 
 
 
-```{r}
+```{r, echo=FALSE}
 # call-rate filtering
 
 samples.filtered <- data.frame()
@@ -1074,17 +1086,17 @@ if (length(bufout)>0) samples.filtered <- data.frame(sample=bufout,x=NA,y=NA,fil
 * $`r length(bufout)`$ samples were tagged for exclusion because the call-rate was below the threshold $`r callrate.thres`$.
 
 
-```{r, label = 'sample_call'}
+```{r, label = 'sample_call', echo=FALSE}
 # plot sample call rates
 hist(sample.call,breaks=100, main = "sample call rates")
 ```
 
-```{r, label = sample_call_zoom}
+```{r, label = sample_call_zoom, echo=FALSE}
 # plot sample call rates
 hist(sample.call,breaks=100, main = "sample call rates zoomed axis", xlim = c(0.85,1), ylim = c(0,30), sub = "zoomed x- and y-axis is fixed to 0.85 to 1 and 0 to 30, respectively")
 ```
 
-```{r, label = sample_call_zoomy}
+```{r, label = sample_call_zoomy, echo=FALSE}
 # plot sample call rates
 # hist(sample.call,breaks=100, main = "sample call rates zoomed y-axis", ylim = c(0,30), sub = "zoomed y axis is fixed to 0 to 30")
 ```
@@ -1096,12 +1108,12 @@ $`r max(0,length(sample.call[which(sample.call<=0.98)]))`$ of all sample call ra
 We have a look at the marker call rates as well:
 
 
-```{r, label = marker_call}
+```{r, label = marker_call, echo=FALSE}
 #hist(marker.call,breaks=100, main = "marker call rates")
 ```
 
 
-```{r, label = marker_call_zoom}
+```{r, label = marker_call_zoom, echo=FALSE}
 hist(marker.call,breaks=100, main = "marker call rates zoomed y-axis", ylim = c(0,500), sub = "zoomed y axis is fixed to 0 to 500")
 ```  
 
