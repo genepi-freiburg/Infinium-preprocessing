@@ -17,6 +17,7 @@ The previous calculations provide all information needed to filter the samples a
 For this analysis, `r paste(strsplit(samplesfilefinal, split = "/")[[1]][-1], collapse = "/ ")` was used as list of samples for the final preprocessing steps. 
 ```{r, label = QN_intro, echo=FALSE}
 ###############################################################################
+gc()
 
 # PART 3 (QN)
 

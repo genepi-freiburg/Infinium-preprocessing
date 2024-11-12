@@ -914,16 +914,23 @@ dpvec<- dpvec[!is.na(dpvec)]
 dpvecplot <- dpvec
 dpvecplot[which(dpvecplot==0)] <- 1E-20
 if(sum(dpvec>0)>0){
+  pdf("dpvec_histogram.pdf")
 	hist(-log10(dpvec[!dpvec%in%0]),breaks=30, main = "detection p-values: only positive values")
+	dev.off()
 }
+graphics.off()  
 ```
-
-
 
 ```{r, label='detection_p-values_zero', echo=FALSE}
 #hist(-log10(dpvecplot),breaks=30, main = "detection p-values: zero values set to 1E-20")
 rm(dpvecplot)
+gc()
 ```
+
+```{r, echo=FALSE}
+knitr::include_graphics("dpvec_histogram.pdf")
+```
+
 \pagebreak
 
 
@@ -1068,10 +1075,16 @@ plot.beta.densities = function(beta, title){
     plot(density(beta, na.rm = TRUE), main = title)
   }
 }
+pdf("beta_densities_plot.pdf")
 plot.beta.densities(beta.raw,"Densities of raw autosomal beta values per sample")
+dev.off()
+graphics.off()
+gc()
 ```
 
-
+```{r, echo=FALSE}
+knitr::include_graphics("beta_densities_plot.pdf")
+```
 
 ```{r, echo=FALSE}
 # call-rate filtering
@@ -1088,12 +1101,28 @@ if (length(bufout)>0) samples.filtered <- data.frame(sample=bufout,x=NA,y=NA,fil
 
 ```{r, label = 'sample_call', echo=FALSE}
 # plot sample call rates
+pdf("sample_call.pdf")
 hist(sample.call,breaks=100, main = "sample call rates")
+dev.off()
+graphics.off()
+gc()
+```
+
+```{r, echo=FALSE}
+knitr::include_graphics("sample_call.pdf")
 ```
 
 ```{r, label = sample_call_zoom, echo=FALSE}
 # plot sample call rates
+pdf("sample_call_zoom.pdf")
 hist(sample.call,breaks=100, main = "sample call rates zoomed axis", xlim = c(0.85,1), ylim = c(0,30), sub = "zoomed x- and y-axis is fixed to 0.85 to 1 and 0 to 30, respectively")
+dev.off()
+graphics.off()
+gc()
+```
+
+```{r, echo=FALSE}
+knitr::include_graphics("sample_call_zoom.pdf")
 ```
 
 ```{r, label = sample_call_zoomy, echo=FALSE}
@@ -1114,13 +1143,21 @@ We have a look at the marker call rates as well:
 
 
 ```{r, label = marker_call_zoom, echo=FALSE}
+pdf("marker_call_zoom.pdf")
 hist(marker.call,breaks=100, main = "marker call rates zoomed y-axis", ylim = c(0,500), sub = "zoomed y axis is fixed to 0 to 500")
+dev.off()
+graphics.off()
+gc()
+rm(dpvec, detectionP.local, estimateWBCs_EPICv2, treatment_ta_problematic, remove_pattern, harmonize_snps, combine_data, calculate_marker_call, calculate_sample_call, RGset_pathwise, dp_pathwise, TypeII.Green_pathwise, TypeII.Red_pathwise, TypeI.Red.M_pathwise, TypeI.Red.U_pathwise, TypeI.Green.M_pathwise, TypeI.Green.U_pathwise, ctrl_pathwise, anno, cgs,TypeII.Name, cgs_shared, cgs_epicv2, cgs_epicv1, xcgs, TypeI.Red.Name, TypeI.Green.Name, ctrl, samplesheet_combined, category, anno_ta_v2,filenames_pathwise)
 ```  
+
+```{r, echo=FALSE}
+knitr::include_graphics("marker_call_zoom.pdf")
+```
 
 $`r max(0,length(marker.call[which(marker.call<=0.98)]))`$ of all marker call rates are lower than 0.98,  
  and $`r length(marker.call[which(marker.call<=0.95)])`$ are lower than the threshold 0.95.
 
 
 The results of the sample call rate filter are included in the export file **samples_filtered.csv** which also documents the following control-probe based quality control.
-
 
