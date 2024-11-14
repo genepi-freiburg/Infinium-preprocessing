@@ -831,14 +831,18 @@ if (length(values) > 1) {
  auto=as.matrix(auto)
 
  # get chrX probes 
- xcas=anno[substr(anno$Name, 1,3)=='ch.' & (anno$CHR %in% c("X")),]
- xcgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% c("X")),]
+ xcas=anno[substr(anno$Name, 1,3)=='ch.' & (anno$CHR %in% c("X")) & 
+             anno$EPIC_version == 'v1_v2',]
+ xcgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% c("X")) & 
+             anno$EPIC_version == 'v1_v2',]
  sexchrX = c(unique(c(xcgs$IlmnID_EPICv1, xcgs$IlmnID_EPICv2, xcas$IlmnID_EPICv1, xcas$IlmnID_EPICv2)))
  sexchrX=as.matrix(sexchrX)
 
  # get chrY probes
- ycas=anno[substr(anno$Name, 1,3)=='ch.' & (anno$CHR %in% c("Y")),]
- ycgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% c("Y")),]
+ ycas=anno[substr(anno$Name, 1,3)=='ch.' & (anno$CHR %in% c("Y")) & 
+             anno$EPIC_version == 'v1_v2',]
+ ycgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% c("Y")) & 
+             anno$EPIC_version == 'v1_v2',]
  sexchrY = c(unique(c(ycgs$IlmnID_EPICv1, ycgs$IlmnID_EPICv2, ycas$IlmnID_EPICv1, ycas$IlmnID_EPICv2)))
  sexchrY=as.matrix(sexchrY)
   }
