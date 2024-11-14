@@ -435,10 +435,18 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 ```
 
 ```{r, echo=FALSE}
-knitr::include_graphics("find female outlier.pdf")
-knitr::include_graphics("find male-outlier.pdf")
-knitr::include_graphics("find female-outlier_2.pdf")
-knitr::include_graphics("find male-outlier_2.pdf")
+if (file.exists("find female outlier.pdf")) {
+  knitr::include_graphics("find female outlier.pdf")
+}
+if (file.exists("find male-outlier.pdf")) {
+  knitr::include_graphics("find male-outlier.pdf")
+}
+if (file.exists("find female-outlier_2.pdf")) {
+  knitr::include_graphics("find female-outlier_2.pdf")
+}
+if (file.exists("find male-outlier_2.pdf")) {
+  knitr::include_graphics("find male-outlier_2.pdf")
+}
 ```
 
 The samples whose loadings are more than three standard deviations from the mean of the loadings with same assigned sex according to the first two principal components:
@@ -535,10 +543,18 @@ if(min(dim(na.omit(betaPCA))) > 0){
 
 ```{r, echo=FALSE}
 #mod
-knitr::include_graphics("PCA_find female-outlier.pdf")
-knitr::include_graphics("PCA_find male-outlier.pdf")
-knitr::include_graphics("PCA_find female-outlier_2.pdf")
-knitr::include_graphics("PCA_find male-outlier_2.pdf")
+if (file.exists("PCA_find female-outlier.pdf")) {
+  knitr::include_graphics("PCA_find female-outlier.pdf")
+}
+if (file.exists("PCA_find male-outlier.pdf")) {
+  knitr::include_graphics("PCA_find male-outlier.pdf")
+}
+if (file.exists("PCA_find female-outlier_2.pdf")) {
+  knitr::include_graphics("PCA_find female-outlier_2.pdf")
+}
+if (file.exists("PCA_find male-outlier_2.pdf")) {
+    knitr::include_graphics("PCA_find male-outlier_2.pdf")
+}
 ```
 
 The samples whose values are more than three standard deviations from the mean of the samples with same assigned sex according to the first two principal components:
