@@ -7,7 +7,7 @@ output:
   pdf_document:
     toc: true
     toc_depth: 2
-    latex_engine: xelatex
+    latex_engine: pdflatex
 ---
 
 
@@ -155,19 +155,19 @@ if(exists("controlQC")){
 
 if(filterOutlierCtrlQC){
 # BS I-C
-pdf("BS-I C_U (red).pdf")
+pdf("BS_I_C_U_red.pdf")
 bufout <- removeOutlier(controlQC$Cred,controlQC$Ured,labels,"Cred","Ured","BS-I C/U (red)")
 dev.off()
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="BS I-C (red)"))
 
 # BS I-U
-pdf("BS-I C_U (green).pdf")
+pdf("BS_I_C_U_green.pdf")
 bufout <- removeOutlier(controlQC$Cgreen,controlQC$Ugreen,labels,"Cgreen","Ugreen","BS-I C/U (green)")
 dev.off()
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="BS I-C (green)"))
 
 # BS II
-pdf("BS-II (red vs. green).pdf")
+pdf("BS_II_red_vs_green.pdf")
 bufout <- removeOutlier(controlQC$BSIIred,controlQC$BSIIgreen,labels,"BSIIred","BSIIgreen","BS-II (red vs. green)")
 dev.off()
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="BS II"))
@@ -175,9 +175,9 @@ if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout
 ```
 
 ```{r, echo=FALSE}
-knitr::include_graphics("BS-I C_U (red).pdf")
-knitr::include_graphics("BS-I C_U (green).pdf")
-knitr::include_graphics("BS-II (red vs. green).pdf")
+knitr::include_graphics("BS_I_C_U_red.pdf")
+knitr::include_graphics("BS_I_C_U_green.pdf")
+knitr::include_graphics("BS_II_red_vs_green.pdf")
 ```
 
 
@@ -187,25 +187,25 @@ We also check the Hybridisation of the amplified DNA to the array:
 
 if(filterOutlierCtrlQC){
 # Hyb + TR
-pdf("Hybridization (green).pdf")
+pdf("Hybridization_green.pdf")
 bufout <- removeOutlier(controlQC$HybH,controlQC$TR,labels,"HybH","TargetRemoval","Hybridization (green)")
 dev.off()
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="Hyb_TR"))
 
 # SpecI red
-pdf("Specificity I (red).pdf")
+pdf("Specificity_I_red.pdf")
 bufout <- removeOutlier(controlQC$SpecIPMred,controlQC$SpecIMMred,labels,"specific","unspecific","Specificity I (red)")
 dev.off()
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="Specificity I (red)"))
 
 # SpecI green
-pdf("Specificity I (green).pdf")
+pdf("Specificity_I_green.pdf")
 bufout <- removeOutlier(controlQC$SpecIPMgreen,controlQC$SpecIMMgreen,labels,"specific","unspecific","Specificity I (green)")
 dev.off()
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="Specificity I (green)"))
 
 # SpecII
-pdf("Specificity II.pdf")
+pdf("Specificity_II.pdf")
 bufout <- removeOutlier(controlQC$SpecIIspec,controlQC$SpecIIunspec,labels,"specific","unspecific","Specificity II")
 dev.off()
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="Specificity II"))
@@ -218,16 +218,18 @@ if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout
 
 nullOffs=0.0001 # use the same value as defined in removeOutlier() function!
 # Staining Red (do not filter upper left cluster when checking csv file)
-pdf("Staining (red) Upper left cluster.pdf")
+pdf("Staining_red_Upper_left_cluster.pdf")
 bufout <- removeOutlier(controlQC$StainingRedH,controlQC$StainingRedB,labels,"RedH","RedB","Staining (red) - Upper left cluster is OK!")
 dev.off()
-pdf("Staining Red (cross-check with Extension outliers).pdf")
+pdf("Staining_Red_cross_check_with_Extension_outliers.pdf")
 bufout <- bufout[which(bufout$x>log2(nullOffs) | bufout$y<=0),] # do not remove upper left cluster
 dev.off()
+graphics.off()
+
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="Staining Red (cross-check with Extension outliers!)"))
 
 # Staining Green (do not filter upper left cluster when checking csv file)
-pdf("Staining (green) - Upper left cluster.pdf")
+pdf("Staining_green_Upper_left_cluster.pdf")
 bufout <- removeOutlier(controlQC$StainingGreenH,controlQC$StainingGreenB,labels,"GreenH","GreenB","Staining (green) - Upper left cluster is OK!")
 dev.off()
 
@@ -235,12 +237,12 @@ bufout <- bufout[which(bufout$x>log2(nullOffs) | bufout$y<=0),] # do not remove 
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="Staining Green (cross-check with Extension outliers!)"))
 
 # Staining Red vs. Green
-pdf("Staining (red vs. green).pdf")
+pdf("Staining_red_vs_green.pdf")
 bufout <- removeOutlier(controlQC$StainingRedH,controlQC$StainingGreenH,labels,"RedH","GreenH","Staining (red vs. green)",2) # both on upper and lower Y outlier
 dev.off()
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="Staining Green_Red (cross-check with Extension outliers!)"))
 
-pdf("cross-check with Extension outliers.pdf")
+pdf("cross_check_with_Extension_outliers.pdf")
 plot(1,1,type="n",xaxt="n",yaxt="n",xlab="",ylab="",bty="n")
 text(1,1,label="cross-check with Extension outliers!")
 dev.off()
@@ -259,16 +261,16 @@ write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",proje
 
 
 ```{r, echo=FALSE}
-knitr::include_graphics("Hybridization (green).pdf")
-knitr::include_graphics("Specificity I (red).pdf")
-knitr::include_graphics("Specificity I (green).pdf")
-knitr::include_graphics("Specificity II.pdf")
+knitr::include_graphics("Hybridization_green.pdf")
+knitr::include_graphics("Specificity_I_red.pdf")
+knitr::include_graphics("Specificity_I_green.pdf")
+knitr::include_graphics("Specificity_II.pdf")
 knitr::include_graphics("Extensions.pdf")
-knitr::include_graphics("Staining (red) Upper left cluster.pdf")
-knitr::include_graphics("Staining Red (cross-check with Extension outliers).pdf")
-knitr::include_graphics("Staining (green) - Upper left cluster.pdf")
-knitr::include_graphics("Staining (red vs. green).pdf")
-knitr::include_graphics("cross-check with Extension outliers.pdf")
+knitr::include_graphics("Staining_red_Upper_left_cluster.pdf")
+#knitr::include_graphics("Staining_Red_cross_check_with_Extension_outliers.pdf")
+knitr::include_graphics("Staining_green_Upper_left_cluster.pdf")
+knitr::include_graphics("Staining_red_vs_green.pdf")
+knitr::include_graphics("cross_check_with_Extension_outliers.pdf")
 ```
 
 
@@ -347,7 +349,7 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 
 	# plot first males, then females: find female outlier
 	idx = which(EV$Sex_female%in%c(1)) # 1 is female
-	 pdf("find female outlier.pdf")
+	 pdf("find_female_outlier.pdf")
 	plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"]) + 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 	points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
 	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
@@ -357,7 +359,7 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 
 
 	# then plot first females, then males: find male-outlier
-	pdf("find male-outlier.pdf")
+	pdf("find_male_outlier.pdf")
 	plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 	points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
 	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
@@ -409,14 +411,14 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 
 	# plot first males, then females: find female outlier
 	idx = which(EV$Sex_female%in%c(1)) # 1 is female
-	pdf("find female-outlier_2.pdf")
+	pdf("find_female_outlier_2.pdf")
 	plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"]) + 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 	points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
 	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 	dev.off()
 
 	# then plot first females, then males: find male-outlier
-		pdf("find male-outlier_2.pdf")
+		pdf("find_male_outlier_2.pdf")
 	plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 	points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
 	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
@@ -435,17 +437,17 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 ```
 
 ```{r, echo=FALSE}
-if (file.exists("find female outlier.pdf")) {
-  knitr::include_graphics("find female outlier.pdf")
+if (file.exists("find_female_outlier.pdf")) {
+  knitr::include_graphics("find_female_outlier.pdf")
 }
-if (file.exists("find male-outlier.pdf")) {
-  knitr::include_graphics("find male-outlier.pdf")
+if (file.exists("find_male_outlier.pdf")) {
+  knitr::include_graphics("find_male_outlier.pdf")
 }
-if (file.exists("find female-outlier_2.pdf")) {
-  knitr::include_graphics("find female-outlier_2.pdf")
+if (file.exists("find_female_outlier_2.pdf")) {
+  knitr::include_graphics("find_female_outlier_2.pdf")
 }
-if (file.exists("find male-outlier_2.pdf")) {
-  knitr::include_graphics("find male-outlier_2.pdf")
+if (file.exists("find_male_outlier_2.pdf")) {
+  knitr::include_graphics("find_male_outlier_2.pdf")
 }
 ```
 
@@ -477,21 +479,22 @@ if(min(dim(na.omit(betaPCA))) > 0){
 
 	# plot first males, then females: find female outlier
 	idx = which(EV$Sex_female%in%c(1)) # 1 is female
-	pdf("PCA_find female-outlier.pdf")
+	pdf("PCA_find_female_outlier.pdf")
 	plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*( max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 	points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
 	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 	dev.off()
 
 	# then plot first females, then males: find male-outlier
-	pdf("PCA_find male-outlier.pdf")
+	pdf("PCA_find_male_outlier.pdf")
 	plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 	points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
 	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
-	dev.off()
+	
 
 	sex.mismatches = mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "blue", EV$Sentrix_Code[idx])
 	 sex.mismatches = c(sex.mismatches, mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "red",EV$Sentrix_Code[-idx]) )
+	 dev.off()
 
 	resSexCheck <- cbind(resSexCheck,data.frame(PC1=EV[,"PC1"],PC2=EV[,"PC2"]))
 	write.csv(resSexCheck,file = paste0(outputdir,"/results-PCAsex_raw","_",projectname,"-",formatted.time,".csv"),row.names=F,quote=F)
@@ -512,14 +515,14 @@ if(min(dim(na.omit(betaPCA))) > 0){
 
 		# plot first males, then females: find female outlier
 		idx = which(EV$Sex_female%in%c(1)) # 1 is female
-		pdf("PCA_find female-outlier_2.pdf")
+		pdf("PCA_find_female_outlier_2.pdf")
 		plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*( max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 		points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
 		legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 		dev.off()
 
 		# then plot first females, then males: find male-outlier
-		pdf("PCA_find male-outlier_2.pdf")
+		pdf("PCA_find_male_outlier_2.pdf")
 		plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 		points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
 		legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
@@ -543,24 +546,24 @@ if(min(dim(na.omit(betaPCA))) > 0){
 
 ```{r, echo=FALSE}
 #mod
-if (file.exists("PCA_find female-outlier.pdf")) {
-  knitr::include_graphics("PCA_find female-outlier.pdf")
+if (file.exists("PCA_find_female_outlier.pdf")) {
+  knitr::include_graphics("PCA_find_female_outlier.pdf")
 }
-if (file.exists("PCA_find male-outlier.pdf")) {
-  knitr::include_graphics("PCA_find male-outlier.pdf")
+if (file.exists("PCA_find_male_outlier.pdf")) {
+  knitr::include_graphics("PCA_find_male_outlier.pdf")
 }
-if (file.exists("PCA_find female-outlier_2.pdf")) {
-  knitr::include_graphics("PCA_find female-outlier_2.pdf")
+if (file.exists("PCA_find_female_outlier_2.pdf")) {
+  knitr::include_graphics("PCA_find_female_outlier_2.pdf")
 }
-if (file.exists("PCA_find male-outlier_2.pdf")) {
-    knitr::include_graphics("PCA_find male-outlier_2.pdf")
+if (file.exists("PCA_find_male_outlier_2.pdf")) {
+    knitr::include_graphics("PCA_find_male_outlier_2.pdf")
 }
 ```
 
 The samples whose values are more than three standard deviations from the mean of the samples with same assigned sex according to the first two principal components:
 
 ```{r, label = report_sexmismatch, echo=FALSE}
-if(length(sex.mismatches) > 0 && !is.na(sex.mismatches)){
+if(length(sex.mismatches) > 0 & all(!is.na(sex.mismatches))){
 	print(sex.mismatches)
 	if(exists("countsexna.relative")){
 		sex.mismatch.df = data.frame(sample = sex.mismatches, filter = "sex mismatch", sex.chr.callrate = countsexna.relative[sex.mismatches], stringsAsFactors= F)	
