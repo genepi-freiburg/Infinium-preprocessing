@@ -166,8 +166,15 @@ pcaControls <- prcomp(na.omit(datpca))
 ctrlprobes.scores = pcaControls$x
 EV <- merge(ctrlprobes.scores,datsamples,by.x=0,by.y="Sentrix_Code")
 colnames(ctrlprobes.scores) = paste(colnames(ctrlprobes.scores), '_cp', sep='')
+#Paint by colours
+color_map <- as.factor(EV$Pool_ID)
+colors <- rainbow(length(unique(color_map)))[as.numeric(color_map)]
 
-plot(EV[,"PC1"],EV[,"PC2"], main=paste0("PCA - number of controls probes: ",ncol(datpca)),xlab=paste0("PC1 (",sprintf("%1.1f",(pcaControls$sdev^2/sum(pcaControls$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaControls$sdev^2/sum(pcaControls$sdev^2))[2]*100),"%)"))
+#pdf("PCA_control_probes_batches.pdf")
+plot(EV[,"PC1"],EV[,"PC2"], col = colors,
+     main=paste0("PCA - number of controls probes: ",ncol(datpca)),xlab=paste0("PC1 (",sprintf("%1.1f",(pcaControls$sdev^2/sum(pcaControls$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaControls$sdev^2/sum(pcaControls$sdev^2))[2]*100),"%)"))
+legend("topright", legend = levels(color_map), col = rainbow(length(levels(color_map))), pch = 19, title = "Pol ID")
+
 
 par(mfrow=c(1,1))
 plot((pcaControls$sdev^2/sum(pcaControls$sdev^2))[1:10],main="Explained Variance by control probe PCs",ylab="% variance",xlab="PC#",ylim=c(0,1.05))
