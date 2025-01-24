@@ -1,7 +1,7 @@
 #!/bin/sh
 
-#SBATCH -n1
-#SBATCH --cpus-per-task=1
+##SBATCH -n1
+#SBATCH --cpus-per-task=10
 #SBATCH --mem=100G
 
 # SBATCH --mail-user=CHANGE@imbi.uni-freiburg.de
