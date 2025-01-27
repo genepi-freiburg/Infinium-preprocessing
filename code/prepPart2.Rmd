@@ -38,6 +38,9 @@ removeOutlier <- function(val1,val2,labels=NULL,xname="val1",yname="val2",title=
 	rybottom <- mean(y.w) - sd(y.w)* (SDrange + 1)
 	rect(rxleft, rybottom, rxright, ryup, border = "grey")
 	text(rxleft, rybottom,label=paste("SD", as.character(SDrange + 1)),col="grey",adj=c(0,0),cex=0.7)
+	
+	# Add dashed line at ryup
+	if (filterYout!=2) {segments(rxleft, ryup, rxright + 2, ryup, lty = "dashed", col = "grey")}
 
 	# mark exclusion samples
     points(x[out],y[out],col="red")
