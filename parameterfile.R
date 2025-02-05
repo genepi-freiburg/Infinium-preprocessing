@@ -64,7 +64,4 @@ extractSNPs=FALSE
 additionalBatchVariables=FALSE
 
 
-##############
-# N cores  ###
-ncores=10 # has to be aligned with the --cpus-per-task option in the submissionScript-preprocessing.sh
 
