@@ -81,7 +81,7 @@ marker.outlier.all <- data.frame(
 ```
 
 ```{r, label = IQR_Nprobes, echo=FALSE}
-Nprobes = (nrow(betaQN.all)*ncol(betaQN.all))
+Nprobes = as.numeric(nrow(betaQN.all)) * as.numeric(ncol(betaQN.all))
 Nprobes.nocall = length(betaQN.all[which(is.na(betaQN.all))])
 Nprobes.call = length(betaQN.all.3IQR[which(is.na(betaQN.all.3IQR))])
 ```
