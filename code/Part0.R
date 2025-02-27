@@ -73,20 +73,20 @@ values <- unique(unlist(arraytype))
 if (length(values) > 1) {
   if ("IlluminaHumanMethylationEPIC" %in% values &&
       "IlluminaHumanMethylationEPICv2" %in% values) {
-    annotationfile <- "/dsk/data1/programs/pipelines/CPACOR-EPIC_pipeline/annotation_files/Methylation_EPICv1_EPICv2/merged_annotationfile_EPICv1v2_for_CPACOR_20240908.csv"
+     annotationfile <- "/dsk/data1/programs/pipelines/CPACOR-EPIC_pipeline/annotation_files/02_QCPipeline_file_EPICv1_EPICv2/merged_annotationfile_EPICv1v2_for_CPACOR_20240908.csv"
     library(FlowSorted.Blood.EPIC)
   }
 } else {
   if (values == "IlluminaHumanMethylationEPIC") {
-    annotationfile <- "/dsk/data1/programs/pipelines/CPACOR-EPIC_pipeline/annotation_files/Methylation_EPICv1/annotationfileB4_2017-09-15.csv"
+    annotationfile <- "/dsk/data1/programs/pipelines/CPACOR-EPIC_pipeline/annotation_files/01_Illumina_annotation/01_Methylation_EPICv1/annotationfileB4_2017-09-15.csv"
     library(FlowSorted.Blood.EPIC)
     
   } else if (values == "IlluminaHumanMethylationEPICv2") {
-    annotationfile <- "/dsk/data1/programs/pipelines/CPACOR-EPIC_pipeline/annotation_files/MethylationEPIC_v2.0_Files/EPIC-8v2-0_A1.csv"
+    annotationfile <- "/dsk/data1/programs/pipelines/CPACOR-EPIC_pipeline/annotation_files/01_Illumina_annotation/02_MethylationEPICv2/EPIC-8v2-0_A1.csv"
     library(FlowSorted.Blood.EPIC)
     
   } else if (values=="IlluminaHumanMethylation450k") {
-    annotationfile="/dsk/data1/programs/pipelines/CPACOR-EPIC_pipeline/annotation_files/HumanMethylation450_15017482_v1-2.csv"
+    annotationfile="/dsk/data1/programs/pipelines/CPACOR-EPIC_pipeline/annotation_files/01_Illumina_annotation/03_Methylation450k/HumanMethylation450_15017482_v1-2.csv"
     library(FlowSorted.Blood.450k)
   } else {
     stop("Unsupported array type: ",arraytype,".\n Supported array types are:\n IlluminaHumanMethylationEPIC versions 1.0 and 2.0 \nand IlluminaHumanMethylation450k.\n Exiting...\n")
