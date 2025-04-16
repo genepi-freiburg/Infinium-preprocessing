@@ -401,3 +401,6 @@ if(exists("additionalBatchVariables")){
 }
 ```
 
+
+```{r child = 'MemoryMethodsCredits.Rmd'}
+```

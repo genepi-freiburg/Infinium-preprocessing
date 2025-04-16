@@ -111,3 +111,7 @@ noCall with filter 3IQR | `r Nprobes.call`  	|`r (Nprobes.call/Nprobes)/100 `\%
  ids <- ids[match(colnames(betaQN.all),ids$Sentrix_Code),]
 
 ```
+
+
+```{r child = 'MemoryMethodsCredits.Rmd'}
+```

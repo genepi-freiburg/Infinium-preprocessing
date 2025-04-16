@@ -1165,3 +1165,6 @@ $`r max(0,length(marker.call[which(marker.call<=0.98)]))`$ of all marker call ra
 
 The results of the sample call rate filter are included in the export file **samples_filtered.csv** which also documents the following control-probe based quality control.
 
+
+```{r child = 'MemoryMethodsCredits.Rmd'}
+```

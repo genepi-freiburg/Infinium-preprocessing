@@ -686,3 +686,6 @@ gc()
 Of the persons from whom samples are processed, `r length(women)` are women and `r length(men)` men have usable sex chromosome data.   
 
 
+
+```{r child = 'MemoryMethodsCredits.Rmd'}
+```
