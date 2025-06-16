@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#SBATCH -n1
+##SBATCH -n1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=100G
 

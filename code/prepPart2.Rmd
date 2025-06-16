@@ -1,3 +1,58 @@
+---
+title: "EPIC Pipeline- PrepPart2"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+params:
+  parameterfile: ""
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    latex_engine: pdflatex
+---
+
+
+```{r, label = declare_remOutlier_function, echo = FALSE}
+gc()
+
+removeOutlier <- function(val1,val2,labels=NULL,xname="val1",yname="val2",title="",filterYout=1, SDrange=4 ,nullOffs=0.0001 ) {
+    # SDrange is  range to define outliers
+    # nullOffs is offset to avoid division by zero, log 0, etc.
+
+    x <- log2(sqrt(val1*val2)+nullOffs)
+    y <- log2((val1+nullOffs)/(val2+nullOffs))
+    x.w <- x[which(x>log2(nullOffs))] # remove extreme values that are zero, i.e. for staining
+    y.w <- y[which(x>log2(nullOffs))] # remove extreme values that are zero, i.e. for staining, remove them also from y (based on x-extremes)
+     x.w <- Winsorize(x.w) # only works with DescTools
+     y.w <- Winsorize(y.w)
+    out <- which(x>mean(x.w)+sd(x.w)*SDrange) # upper X
+    out <- c(out,which(x<mean(x.w)-sd(x.w)*SDrange)) # lower X
+    if (filterYout==2) { out <- c(out,which(y>mean(y.w)+sd(y.w)*SDrange)) } # upper Y 
+    out <- unique(c(out,which(y<mean(y.w)-sd(y.w)*SDrange))) # lower Y
+    
+    plot(x,y,xlab=bquote(log[2](sqrt(.(xname)%*%.(yname)))),ylab=bquote(log[2](.(xname)/.(yname))),main=title,xlim=c(min(x),max(x)+7))
+
+	# Add SD-range rectangle in grey and label SD=5
+	rxright <- mean(x.w) + sd(x.w)* (SDrange + 1)
+	rxleft <- mean(x.w) - sd(x.w)* (SDrange + 1)
+	ryup <- mean(y.w) + sd(y.w)* (SDrange + 1)
+	rybottom <- mean(y.w) - sd(y.w)* (SDrange + 1)
+	rect(rxleft, rybottom, rxright, ryup, border = "grey")
+	text(rxleft, rybottom,label=paste("SD", as.character(SDrange + 1)),col="grey",adj=c(0,0),cex=0.7)
+	
+	# Add dashed line at ryup
+	if (filterYout!=2) {segments(rxleft, ryup, rxright + 2, ryup, lty = "dashed", col = "grey")}
+
+	# mark exclusion samples
+    points(x[out],y[out],col="red")
+    if (length(out)>0) {
+        text(x[out],y[out],label=labels[out],col="red",adj=c(0,0),cex=0.7)
+    }
+
+    ret <- data.frame(sample=labels[out],x=x[out],y=y[out])
+    return(ret)
+}
+```
+
 ## PART 2: Low-Level Quality Control
 
 
@@ -10,7 +65,7 @@ The quality control consists of two parts:
 
 * By conducting a PCA on the control-probe information we obtain controlprobe scores. 
 
-```{r}
+```{r, label = pca_controlprobe, echo=FALSE}
 #PCA of control-probe intensities
 pca <- prcomp(na.omit(ctrl.all))
 ctrlprobes.scores = pca$x
@@ -20,12 +75,14 @@ colnames(ctrlprobes.scores) = paste(colnames(ctrlprobes.scores), '_cp', sep='')
  control.info <- data.frame(control)
 ```
 
-* Then we look at the controls.
-```{r}
+* Then we look at the controls (if FilterOutlierQC == TRUE).
+```{r, label = controlprobe_QC, echo=FALSE}
+if(filterOutlierCtrlQC){
+
 #control probe based QC
 # Details are given in the ILMN HD methylation assay protocol guide (15019519)
 
-# bisulfate conversion: a non-CpG sequence with only one C at the target site will be converter to T by BS conversion. Therefore, converted control probes should be expressed (for each red/green channel) and unconverted not.
+# bisulfate conversion: a non-CpG sequence with only one C at the target site will be converted to T by BS conversion. Therefore, converted control probes should be expressed (for each red/green channel) and unconverted not.
 # BS-I
 cprobes <- control.info[control.info$Type=="BISULFITE CONVERSION I" & (control.info$Color %in% c("Green","LimeGreen","Lime")),"Address"] # select converted green
 controlQC <- data.frame(Cgreen=colMeans(ctrl.complete.Green.all[cprobes,]))
@@ -80,101 +137,118 @@ cprobes <- control.info[grep("DNP (Bkg)",control.info$ExtendedType,value=F,fixed
 controlQC <- cbind(controlQC,data.frame(StainingRedB=ctrl.complete.Red.all[cprobes,]))
 cprobes <- control.info[grep("Biotin (Bkg)",control.info$ExtendedType,value=F,fixed=T),"Address"] # select staining green background
 controlQC <- cbind(controlQC,data.frame(StainingGreenB=ctrl.complete.Green.all[cprobes,]))
-
+}
 ```
 
 The first 3 rows of control probes information from QC contain the following information:
 
-```{r}
-controlQC[1:3,]
+```{r, echo=FALSE}
+if(exists("controlQC")){
+	controlQC[1:3,]
+}
 ```
 
 In the following control probes are checked. For a more detailed description see e.g. the [ILMN HD methylation assay protocol guide (15019519)](https://support.illumina.com/downloads/infinium_hd_methylation_assay_protocol_guide_(15019519_b).html) or the [Illumina BeadArray Controls Reporter Software Guide ](https://support.illumina.com/downloads/beadarray-controls-reporter-software-guide-1000000004009.html),pages 6-8. Probes are evaluated by MA plots. BS-I and BS-II control probes check the DNA bisulfite conversion step.
 
-```{r}
-labels <- rownames(controlQC)
-removeOutlier <- function(val1,val2,labels=NULL,xname="val1",yname="val2",title="",filterYout=1, SDrange=4 ,nullOffs=0.0001 ) {
-    # SDrange is  range to define outliers
-    # nullOffs is offset to avoid division by zero, log 0, etc.
+```{r, label = controlprobeQC_bisulfite, echo=FALSE}
 
-    x <- log2(sqrt(val1*val2)+nullOffs)
-    y <- log2((val1+nullOffs)/(val2+nullOffs))
-    x.w <- x[which(x>log2(nullOffs))] # remove extreme values that are zero, i.e. for staining
-    y.w <- y[which(x>log2(nullOffs))] # remove extreme values that are zero, i.e. for staining, remove them also from y (based on x-extremes)
-    x.w <- Winsorize(x.w)
-    y.w <- Winsorize(y.w)
-    out <- which(x>mean(x.w)+sd(x.w)*SDrange) # upper X
-    out <- c(out,which(x<mean(x.w)-sd(x.w)*SDrange)) # lower X
-    if (filterYout==2) { out <- c(out,which(y>mean(y.w)+sd(y.w)*SDrange)) } # upper Y 
-    out <- unique(c(out,which(y<mean(y.w)-sd(y.w)*SDrange))) # lower Y
-
-    plot(x,y,xlab=bquote(log[2](sqrt(.(xname)%*%.(yname)))),ylab=bquote(log[2](.(xname)/.(yname))),main=title,xlim=c(min(x),max(x)+7))
-
-    points(x[out],y[out],col="red")
-    if (length(out)>0) {
-        text(x[out],y[out],label=labels[out],col="red",adj=c(0,0),cex=0.7)
-    }
-
-    ret <- data.frame(sample=labels[out],x=x[out],y=y[out])
-    return(ret)
+if(exists("controlQC")){
+	labels <- rownames(controlQC)
 }
 
 if(filterOutlierCtrlQC){
 # BS I-C
+pdf("BS_I_C_U_red.pdf")
 bufout <- removeOutlier(controlQC$Cred,controlQC$Ured,labels,"Cred","Ured","BS-I C/U (red)")
+dev.off()
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="BS I-C (red)"))
 
 # BS I-U
+pdf("BS_I_C_U_green.pdf")
 bufout <- removeOutlier(controlQC$Cgreen,controlQC$Ugreen,labels,"Cgreen","Ugreen","BS-I C/U (green)")
+dev.off()
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="BS I-C (green)"))
 
 # BS II
+pdf("BS_II_red_vs_green.pdf")
 bufout <- removeOutlier(controlQC$BSIIred,controlQC$BSIIgreen,labels,"BSIIred","BSIIgreen","BS-II (red vs. green)")
+dev.off()
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="BS II"))
 }
 ```
 
+```{r, echo=FALSE}
+knitr::include_graphics("BS_I_C_U_red.pdf")
+knitr::include_graphics("BS_I_C_U_green.pdf")
+knitr::include_graphics("BS_II_red_vs_green.pdf")
+```
+
+
 We also check the Hybridisation of the amplified DNA to the array:
 
-```{r}
+```{r, label = controlprobeQC_other, echo=FALSE}
+
 if(filterOutlierCtrlQC){
 # Hyb + TR
+pdf("Hybridization_green.pdf")
 bufout <- removeOutlier(controlQC$HybH,controlQC$TR,labels,"HybH","TargetRemoval","Hybridization (green)")
+dev.off()
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="Hyb_TR"))
 
 # SpecI red
+pdf("Specificity_I_red.pdf")
 bufout <- removeOutlier(controlQC$SpecIPMred,controlQC$SpecIMMred,labels,"specific","unspecific","Specificity I (red)")
+dev.off()
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="Specificity I (red)"))
 
 # SpecI green
+pdf("Specificity_I_green.pdf")
 bufout <- removeOutlier(controlQC$SpecIPMgreen,controlQC$SpecIMMgreen,labels,"specific","unspecific","Specificity I (green)")
+dev.off()
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="Specificity I (green)"))
 
 # SpecII
+pdf("Specificity_II.pdf")
 bufout <- removeOutlier(controlQC$SpecIIspec,controlQC$SpecIIunspec,labels,"specific","unspecific","Specificity II")
+dev.off()
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="Specificity II"))
 
 # Extension
+pdf("Extensions.pdf")
 bufout <- removeOutlier(controlQC$ExtCG,controlQC$ExtAT,labels,"ExtCG","ExtAT","Extensions",2) # both on upper and lower Y outlier
+dev.off()
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="Extensions"))
 
 nullOffs=0.0001 # use the same value as defined in removeOutlier() function!
 # Staining Red (do not filter upper left cluster when checking csv file)
+pdf("Staining_red_Upper_left_cluster.pdf")
 bufout <- removeOutlier(controlQC$StainingRedH,controlQC$StainingRedB,labels,"RedH","RedB","Staining (red) - Upper left cluster is OK!")
+dev.off()
+pdf("Staining_Red_cross_check_with_Extension_outliers.pdf")
 bufout <- bufout[which(bufout$x>log2(nullOffs) | bufout$y<=0),] # do not remove upper left cluster
+dev.off()
+graphics.off()
+
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="Staining Red (cross-check with Extension outliers!)"))
 
 # Staining Green (do not filter upper left cluster when checking csv file)
+pdf("Staining_green_Upper_left_cluster.pdf")
 bufout <- removeOutlier(controlQC$StainingGreenH,controlQC$StainingGreenB,labels,"GreenH","GreenB","Staining (green) - Upper left cluster is OK!")
+dev.off()
+
 bufout <- bufout[which(bufout$x>log2(nullOffs) | bufout$y<=0),] # do not remove upper left cluster
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="Staining Green (cross-check with Extension outliers!)"))
 
 # Staining Red vs. Green
+pdf("Staining_red_vs_green.pdf")
 bufout <- removeOutlier(controlQC$StainingRedH,controlQC$StainingGreenH,labels,"RedH","GreenH","Staining (red vs. green)",2) # both on upper and lower Y outlier
+dev.off()
 if (nrow(bufout)>0) samples.filtered <- rbind(samples.filtered,data.frame(bufout,filter="Staining Green_Red (cross-check with Extension outliers!)"))
 
+pdf("cross_check_with_Extension_outliers.pdf")
 plot(1,1,type="n",xaxt="n",yaxt="n",xlab="",ylab="",bty="n")
 text(1,1,label="cross-check with Extension outliers!")
+dev.off()
 # par(mfrow=c(1,1))
 }
 
@@ -183,8 +257,23 @@ if (nrow(samples.filtered)>0) {
     samples.filtered <- merge(samples.filtered,data.frame(callrate=sample.call),all.x=T,by.x="sample",by.y=0)    
     samples.filtered <- samples.filtered[order(samples.filtered$sample,samples.filtered$filter),]
 }
+
 write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
 
+```
+
+
+```{r, echo=FALSE}
+knitr::include_graphics("Hybridization_green.pdf")
+knitr::include_graphics("Specificity_I_red.pdf")
+knitr::include_graphics("Specificity_I_green.pdf")
+knitr::include_graphics("Specificity_II.pdf")
+knitr::include_graphics("Extensions.pdf")
+knitr::include_graphics("Staining_red_Upper_left_cluster.pdf")
+#knitr::include_graphics("Staining_Red_cross_check_with_Extension_outliers.pdf")
+knitr::include_graphics("Staining_green_Upper_left_cluster.pdf")
+knitr::include_graphics("Staining_red_vs_green.pdf")
+knitr::include_graphics("cross_check_with_Extension_outliers.pdf")
 ```
 
 
@@ -192,37 +281,41 @@ The following table lists the detected outliers identified by the quality contro
 in the file **samples-filtered.csv**
  in a slightly expanded version. 
 
-```{r}
+```{r, label = controlprobeQC_report, echo=FALSE}
 if(nrow(samples.filtered) > 0){
-	# remove redundant information
-	posID = match("Sentrix_ID", colnames(samples.filtered))
-	posPos = match("Sentrix_Position", colnames(samples.filtered))
-	reduced.samples.filtered = samples.filtered[,-c(posID, posPos)]
-	# find most interesting columns
-	posName = match("Sample_Name", colnames(reduced.samples.filtered))
-	posFilter = match("filter", colnames(reduced.samples.filtered))
-	# print
-	print(reduced.samples.filtered[,c(posName,posFilter)])
-	print(reduced.samples.filtered[,-c(posName,posFilter)])
-
+# 	# remove redundant information
+# 	posID = match("Sentrix_ID", colnames(samples.filtered))
+# 	posPos = match("Sentrix_Position", colnames(samples.filtered))
+# 	reduced.samples.filtered = samples.filtered[,-c(posID, posPos)]
+# 	# find most interesting columns
+# 	posName = match("Sample_Name", colnames(reduced.samples.filtered))
+# 	posFilter = match("filter", colnames(reduced.samples.filtered))
+# 	# print
+# 	print(reduced.samples.filtered[,c(posName,posFilter)])
+# 	print(reduced.samples.filtered[,-c(posName,posFilter)])
+  
+  pdf("beta_auto_samples_filtered.pdf")
 	plot.beta.densities(beta.raw[,unique(samples.filtered$sample)],"Densities of raw autosomal beta values of excluded samples")
+	dev.off()
 	cat(paste0(length(unique(samples.filtered$sample))," samples were marked for exclusion from the analysis."))
 } else {
 	cat("No samples were marked for exclusion from the analysis.")
 }
 ```
 
+
+```{r, echo=FALSE}
+knitr::include_graphics("beta_auto_samples_filtered.pdf")
+```
+
 ### Sex mismatch
 
-Gamete methylation can be used to check sex mismatches. First, we see the loadings of the PCA on markers in the space of samples. 
-This loadings plot shows the eigenvectors (EV) multiplied with the eigenvalues. 
-The loading indicates the importance of the variables for the PCs.
-
-```{r}
+Gamete methylation can be used to check sex mismatches. 
+```{r, label = sexmismatch, echo=FALSE}
 ############## sex mismatch ##############
 
 # parameters
-sex.mismatch.callrate.threshold <- 0.95 # in case there are too many missing sex probes
+sex.mismatch.callrate.minimum <- 0.001 # in case there are too many missing sex probes # this is basically representing a callrate minimum of zero 
 
 
 # functions
@@ -245,7 +338,8 @@ sex.mismatch.callrate.threshold <- 0.95 # in case there are too many missing sex
 
 
 # Raw betas
-sexprobes <- c(sexchrX,sexchrY) # chr X+Y
+sexprobes <- intersect(rownames(beta.raw.sex), c(sexchrX,sexchrY)) # chr X+Y # this is necessary fro stability if different arrays are involved and e.g. EPICv2 array is only processed on EPIC v1 sites.
+
 
 # EV NA omit
 betaPCA <- beta.raw.sex[sexprobes,]
@@ -257,52 +351,61 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 	colnames(EV)[match("Row.names",colnames(EV))] <- "Sentrix_Code"
 
 	# plot first males, then females: find female outlier
-	idx = which(EV$Gender%in%c(1)) # 1 is female
+	idx = which(EV$Sex_female%in%c(1)) # 1 is female
+	 pdf("find_female_outlier.pdf")
 	plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"]) + 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 	points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
 	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 
+	sex.mismatches = mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "red",EV$Sentrix_Code[-idx])
+	dev.off()
+
+
 	# then plot first females, then males: find male-outlier
+	pdf("find_male_outlier.pdf")
 	plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 	points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
 	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 
-	sex.mismatches = mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "blue", EV$Sentrix_Code[idx])
-	sex.mismatches = c(sex.mismatches, mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "red",EV$Sentrix_Code[-idx]) )
-
+	sex.mismatches = c(sex.mismatches, mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "blue", EV$Sentrix_Code[idx]) )
+	dev.off()
 } else {
 
 	# cat("Sex mismatch evaluation on full data failed.\n")
 
-	countsexna <- apply(betaPCA, 2, function(x){sum(is.na(x))})
+	countsexna <- apply(betaPCA, 2, function(x){sum(!is.na(x))})
 	countsexna.relative <- countsexna/(dim(betaPCA)[1])
-	# exclude samples with sex cpg site callrate lower or equal than 0.95 (0.99 seems to provoke huge losses)
-	betaPCA <- betaPCA[,countsexna.relative < (1 - sex.mismatch.callrate.threshold)] # high callrate means low percentage of missings 
+	names(countsexna.relative) <- colnames(betaPCA)
+	# exclude samples with sex cpg site callrate lower or equal than minimum callrate / at least the sample with the lowest callrate since the data crashes ? 
+	sex.callrate.filtered.samples <- colnames(betaPCA)[countsexna.relative <= sex.mismatch.callrate.minimum]
+	betaPCA <- betaPCA[,countsexna.relative > sex.mismatch.callrate.minimum] # the percentage of non-missing data should be higher than the minimum (which is very low, basically testing for non-zero)
 
 	# add sex callrate filtered samples to samplesfile
-# 	sex.callrate.filtered.samples <- colnames(betaPCA) # maybe with intersect and names() to avoid mistakes?
-#  	bufout.sex.callrate <- datsamples[datsamples$Sentrix_Code %in% sex.callrate.filtered.samples,]
-#  	bufout.sex.callrate$filter <- paste0("sex chromosome callrate <= ", sex.mismatch.callrate.threshold )
-#  	samples.filtered <- merge(samples.filtered,bufout.sex.callrate,all.x=T,by.x="sample",by.y="Sentrix_Code")	
-#  		# report callrates
-# 		countna <- apply(beta.raw, 2, function(x){sum(is.na(x))})
-# 		countna.relative <- countna/(dim(betaPCA)[1])
-# 		countna.all <- as.data.frame(rbind(countsexna, round(countsexna.relative,digits = 3), countna, round(countna.relative,digits = 3)))
-# 	  	countna.all$subset <- c("number.of.missings.sex.specific.cpg.sites","percentage.of.missings.sex.specific.cpg.sites","number.of.missings.all.sites","percentage.of.missings.all.cpg.sites")
-# 	
-# 	### TODO ####
-# 	# this is how to add this 
-# # 	sex.mismatch.df = data.frame(sample = sex.mismatches, filter = "sex mismatch", stringsAsFactors= F)
-# #  	sex.mismatch.df <- merge(sex.mismatch.df,datsamples,all.x=T,by.x="sample",by.y="Sentrix_Code")
-# # 	samples.filtered <- merge(samples.filtered,sex.mismatch.df,all=T)	
-# OLD VERSION
-# 	cat("Overall and sex-specific missings were reported\n in a file named 'count-missing' \n as additional information on call-rates." )
-# 	write.csv(t(countna.all),file = paste0(outputdir,"/count-missing","_",projectname,"-",formatted.time,".csv"),row.names=F)
+  	bufout.sex.callrate <- data.frame(sample = sex.callrate.filtered.samples, filter = paste0("sex chromosome callrate <= ", sex.mismatch.callrate.minimum ), sex.chr.callrate = countsexna.relative[sex.callrate.filtered.samples])
 
+	if (nrow(samples.filtered)>0) {
+	# reduce samples.filtered top bufout information without datsamples and callrate
+		general.columns <- c(colnames(datsamples),"callrate")
+    	samples.filter.list <- samples.filtered[,!colnames(samples.filtered) %in% general.columns]
+	# merge the filter informations
+		samples.filtered <- merge(samples.filter.list, bufout.sex.callrate, all = T)
+	} else {
+		samples.filtered <- bufout.sex.callrate
+	}
+	# remerge the general information on datsamples and callrate 
+	if (nrow(samples.filtered)>0) {
+    	samples.filtered <- merge(samples.filtered,datsamples,all.x=T,by.x="sample",by.y="Sentrix_Code")
+    	samples.filtered <- merge(samples.filtered,data.frame(callrate=sample.call),all.x=T,by.x="sample",by.y=0)    
+    	samples.filtered <- samples.filtered[order(samples.filtered$sample,samples.filtered$filter),]
+	}
+	write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
+
+
+	################# now proceed calculations on filtered data ######################
 
 	if(min(dim(na.omit(betaPCA))) > 0){
 
-	cat("Due to extremely high missingness samples with sex specific callrate <", sex.mismatch.callrate.threshold, "\nwere excluded from sex mismatch analysis.\nWe recommend deliberating about whether to exclude these samples from analysis alltogether.\n")
+	cat("Due to extremely high missingness samples with sex chromosome specific callrate <", sex.mismatch.callrate.minimum, "\nwere excluded from sex mismatch analysis.\nWe recommend deliberating about whether to exclude these samples from analysis alltogether.\n")
 
 	pcaSex <- prcomp(na.omit(betaPCA))
 	EV <- pcaSex$rotation
@@ -310,15 +413,19 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 	colnames(EV)[match("Row.names",colnames(EV))] <- "Sentrix_Code"
 
 	# plot first males, then females: find female outlier
-	idx = which(EV$Gender%in%c(1)) # 1 is female
+	idx = which(EV$Sex_female%in%c(1)) # 1 is female
+	pdf("find_female_outlier_2.pdf")
 	plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"]) + 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 	points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
 	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
+	dev.off()
 
 	# then plot first females, then males: find male-outlier
+		pdf("find_male_outlier_2.pdf")
 	plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("EV1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("EV2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 	points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
 	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
+	dev.off()
 
 	sex.mismatches = mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "blue", EV$Sentrix_Code[idx])
 	sex.mismatches = c(sex.mismatches, mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "red",EV$Sentrix_Code[-idx]) )
@@ -327,23 +434,38 @@ if(min(dim(na.omit(betaPCA))) > 0){ # otherwise code would crash if all cg sites
 
 		if(!exists("sex.mismatches")) sex.mismatches <- NA
 
-		cat("Due to extremely high missingness samples with callrate < ",sex.mismatch.callrate.threshold, "\n were excluded from sex mismatch analysis, but it still failed.\n")
+		cat("Due to extremely high missingness samples with callrate < ",sex.mismatch.callrate.minimum, "\n were excluded from sex mismatch analysis, but it still failed.\n")
 	}
+}
+```
+
+```{r, echo=FALSE}
+if (file.exists("find_female_outlier.pdf")) {
+  knitr::include_graphics("find_female_outlier.pdf")
+}
+if (file.exists("find_male_outlier.pdf")) {
+  knitr::include_graphics("find_male_outlier.pdf")
+}
+if (file.exists("find_female_outlier_2.pdf")) {
+  knitr::include_graphics("find_female_outlier_2.pdf")
+}
+if (file.exists("find_male_outlier_2.pdf")) {
+  knitr::include_graphics("find_male_outlier_2.pdf")
 }
 ```
 
 The samples whose loadings are more than three standard deviations from the mean of the loadings with same assigned sex according to the first two principal components:
 
-````{r}
+```{r, label = printsexmismatch, echo=FALSE}
 print(sex.mismatches)
 rm(sex.mismatches)
 ```
 
-The second plot shows the principle components of the PCA on the samples in the space of samples (a standard PCA plot).
+The plot shows the principle components of the PCA on the samples in the space of samples (a standard PCA plot).
 
-```{r}
+```{r, label = pca_sexmismatch, echo=FALSE}
 if(exists("EV")){
-	resSexCheck <- data.frame(Sentrix_Code=EV$Sentrix_Code, Sex=EV$Gender, EV1=EV[,"PC1"], EV2=EV[,"PC2"])
+	resSexCheck <- data.frame(Sentrix_Code=EV$Sentrix_Code, Sex=EV$Sex_female, EV1=EV[,"PC1"], EV2=EV[,"PC2"])
 } else {
 	resSexCheck <- NULL
 }
@@ -359,18 +481,23 @@ if(min(dim(na.omit(betaPCA))) > 0){
 	colnames(EV)[match("Row.names",colnames(EV))] <- "Sentrix_Code"
 
 	# plot first males, then females: find female outlier
-	idx = which(EV$Gender%in%c(1)) # 1 is female
+	idx = which(EV$Sex_female%in%c(1)) # 1 is female
+	pdf("PCA_find_female_outlier.pdf")
 	plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*( max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 	points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
 	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
+	dev.off()
 
 	# then plot first females, then males: find male-outlier
+	pdf("PCA_find_male_outlier.pdf")
 	plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 	points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
 	legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
+	
 
 	sex.mismatches = mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "blue", EV$Sentrix_Code[idx])
 	 sex.mismatches = c(sex.mismatches, mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "red",EV$Sentrix_Code[-idx]) )
+	 dev.off()
 
 	resSexCheck <- cbind(resSexCheck,data.frame(PC1=EV[,"PC1"],PC2=EV[,"PC2"]))
 	write.csv(resSexCheck,file = paste0(outputdir,"/results-PCAsex_raw","_",projectname,"-",formatted.time,".csv"),row.names=F,quote=F)
@@ -378,12 +505,11 @@ if(min(dim(na.omit(betaPCA))) > 0){
 } else {
 
 	# same data, same filter as above - no second reporting necessary
-	# exclude samples with sex cpg site callrate lower or equal than 0.95 (0.99 seems to provoke huge losses)
-	betaPCA <- betaPCA[,countsexna.relative <= (1 - sex.mismatch.callrate.threshold)] # high callrate means low percentage of missings 
+	betaPCA <- betaPCA[,countsexna.relative > sex.mismatch.callrate.minimum] 
 
 	if(min(dim(na.omit(betaPCA))) > 0){
 
-		cat("Due to extremely high missingness samples with callrate <", sex.mismatch.callrate.threshold, "\nwere excluded from sex mismatch analysis. (Part2)\n")
+		cat("Due to extremely high missingness samples with callrate <", sex.mismatch.callrate.minimum, "\nwere excluded from sex mismatch analysis. (Part2)\n")
 
 		pcaSex <- prcomp(t(na.omit(betaPCA)))
 		EV <- pcaSex$x
@@ -391,18 +517,22 @@ if(min(dim(na.omit(betaPCA))) > 0){
 		colnames(EV)[match("Row.names",colnames(EV))] <- "Sentrix_Code"
 
 		# plot first males, then females: find female outlier
-		idx = which(EV$Gender%in%c(1)) # 1 is female
+		idx = which(EV$Sex_female%in%c(1)) # 1 is female
+		pdf("PCA_find_female_outlier_2.pdf")
 		plot(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for female outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*( max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 		points(EV[idx,"PC1"],EV[idx,"PC2"],col="blue")
 		legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
+		dev.off()
 
 		# then plot first females, then males: find male-outlier
+		pdf("PCA_find_male_outlier_2.pdf")
 		plot(EV[idx,"PC1"],EV[idx,"PC2"],col="blue", main=paste0("number of sex probes: ",nrow(betaPCA)," (RAW NA omitted)"),sub = "check for male outlier", xlab=paste0("PC1 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[1]*100),"%)"),ylab=paste0("PC2 (",sprintf("%1.1f",(pcaSex$sdev^2/sum(pcaSex$sdev^2))[2]*100),"%)"), xlim = c(min(EV[,"PC1"]),max(EV[,"PC1"])+ 0.25*(max(EV[,"PC1"]) - min(EV[,"PC1"])  )), ylim = c(min(EV[,"PC2"]),max(EV[,"PC2"]) ))
 		points(EV[-idx,"PC1"],EV[-idx,"PC2"],col="orange")
 		legend("top", pch = c(1,1), col = c("blue","orange"), legend = c("women","men"))
 
 		sex.mismatches = mark.outliers(EV[idx,"PC1"], EV[idx,"PC2"], "blue", EV$Sentrix_Code[idx])
 		sex.mismatches = c(sex.mismatches, mark.outliers(EV[-idx,"PC1"], EV[-idx,"PC2"], "red",EV$Sentrix_Code[-idx]) )
+		dev.off()
 
 		resSexCheck <- cbind(resSexCheck,data.frame(PC1=EV[,"PC1"],PC2=EV[,"PC2"]))
 		write.csv(resSexCheck,file = paste0(outputdir,"/results-PCAsex_raw","_",projectname,"-",formatted.time,".csv"),row.names=F,quote=F)
@@ -411,24 +541,51 @@ if(min(dim(na.omit(betaPCA))) > 0){
 
 		if(!exists("sex.mismatches")) sex.mismatches <- NA
 
-		cat("Due to extremely high missingness samples with callrate < ",sex.mismatch.callrate.threshold, "\n were excluded from sex mismatch analysis, but it still failed. (Part2)\n")
+		cat("Due to extremely high missingness samples with callrate < ",sex.mismatch.callrate.minimum, "\n were excluded from sex mismatch analysis, but it still failed. (Part2)\n")
 	}
 
 }
 ```
 
+```{r, echo=FALSE}
+#mod
+if (file.exists("PCA_find_female_outlier.pdf")) {
+  knitr::include_graphics("PCA_find_female_outlier.pdf")
+}
+if (file.exists("PCA_find_male_outlier.pdf")) {
+  knitr::include_graphics("PCA_find_male_outlier.pdf")
+}
+if (file.exists("PCA_find_female_outlier_2.pdf")) {
+  knitr::include_graphics("PCA_find_female_outlier_2.pdf")
+}
+if (file.exists("PCA_find_male_outlier_2.pdf")) {
+    knitr::include_graphics("PCA_find_male_outlier_2.pdf")
+}
+```
+
 The samples whose values are more than three standard deviations from the mean of the samples with same assigned sex according to the first two principal components:
 
-````{r}
-if(length(sex.mismatches) > 0 && !is.na(sex.mismatches)){
+```{r, label = report_sexmismatch, echo=FALSE}
+if(length(sex.mismatches) > 0 & all(!is.na(sex.mismatches))){
 	print(sex.mismatches)
-	sex.mismatch.df = data.frame(sample = sex.mismatches, filter = "sex mismatch", stringsAsFactors= F)
+	if(exists("countsexna.relative")){
+		sex.mismatch.df = data.frame(sample = sex.mismatches, filter = "sex mismatch", sex.chr.callrate = countsexna.relative[sex.mismatches], stringsAsFactors= F)	
+	} else {
+		sex.mismatch.df = data.frame(sample = sex.mismatches, filter = "sex mismatch", stringsAsFactors= F)
+ 	}
  	sex.mismatch.df <- merge(sex.mismatch.df,datsamples,all.x=T,by.x="sample",by.y="Sentrix_Code")
-	samples.filtered <- merge(samples.filtered,sex.mismatch.df,all=T)	
+	sex.mismatch.df <- merge(sex.mismatch.df,data.frame(callrate=sample.call),all.x=T,by.x="sample",by.y=0)    
+		if (nrow(samples.filtered)>0) {
+			samples.filtered <- merge(samples.filtered,sex.mismatch.df,all=T)
+			} else { samples.filtered <- sex.mismatch.df }
 } else {
 	cat("\nNo sex mismatches could be detected.\n")
 }
-write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
+
+if (nrow(samples.filtered)>0) {
+	samples.filtered <- samples.filtered[order(samples.filtered$sample,samples.filtered$filter),]
+	write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
+}
 
 
 
@@ -438,3 +595,97 @@ To further investigate possible sex mismatches, it might be useful to compare SN
 
 
 
+### Typewise callrate filter
+
+To ensure correct performance of quantile normalisation samples with a callrate of zero on sex chromosomes or each type of signal on autosomes separately are excluded from QN and reported as samples filtered.
+
+
+
+```{r, label = typewise_callrate.QNfilter_auto, echo=FALSE}
+
+minimum_callrate_QN <- 0
+
+category=auto
+markersII=as.matrix(intersect(rownames(TypeII.Green.All.d), category))
+markersIGreen=intersect(rownames(TypeI.Green.M.All.d), category)
+markersIRed=intersect(rownames(TypeI.Red.M.All.d), category)
+markers.auto <- list(II = markersII, IG = markersIGreen, IR = markersIRed)
+samples.callrate.typewise.auto <- do.call("rbind", lapply(markers.auto, function(m){colSums(!is.na(beta.raw[m,]))/nrow(beta.raw[m,])}))
+
+sample.call.auto = apply(samples.callrate.typewise.auto, 2, min)
+samples.auto.QN <- colnames(samples.callrate.typewise.auto)[sample.call.auto > minimum_callrate_QN]
+
+samples <- unique(samples[samples %in% samples.auto.QN])
+bufout.callrate.typewise.auto <- unique(samples[!samples %in% samples.auto.QN])
+
+# update datsamples information # for sex chromosome QN datsamples is additionally filtered to samples.sex, but not globally
+datsamples <- datsamplesfinal[datsamplesfinal$Sentrix_Code %in% samples,]
+
+if(length(bufout.callrate.typewise.auto) > 0){
+# report QN sample filter to samples.filtered
+cat(length(bufout.callrate.typewise.auto), " samples are excluded and reported due to low callrate on autosomes.\n")
+if(!exists("samples.filtered")){samples.filtered <- NA}
+	QN.filter.auto.df = data.frame(sample = bufout.callrate.typewise.auto, filter = paste0("for Quantile Normalisation: callrate.typewise.autosomes < ", 1 - minimum_callrate_QN), stringsAsFactors= F)
+ 	QN.filter.auto.df <- merge(QN.filter.auto.df,datsamples,all.x=T,by.x="sample",by.y="Sentrix_Code")
+	samples.filtered <- merge(samples.filtered,QN.filter.auto.df,all=T)	
+  	write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
+}
+
+# clean up 
+rm(samples.auto.QN, sample.call.auto, samples.callrate.typewise.auto, markers.auto, markersIRed, markersIGreen, markersII)
+```
+
+`r nrow(datsamples)` samples are included in the analysis, identified by the *samplesfilefinal*, existing sample calls and samplewise minimum callrate `r minimum_callrate_QN`. Callrate filtering is performed on autosomes and for sex chromosome QN additionally on sex chromosomes.
+
+```{r, label = men.women, echo=FALSE}
+
+# sex chromosomes ------------------------------------------------------------------
+women <- datsamples[datsamples$Sex_female==1,"Sentrix_Code"]
+men <- datsamples[datsamples$Sex_female==0,"Sentrix_Code"]
+```
+
+Of the persons from whom samples are processed, `r length(women)` are women and `r length(men)` men according to the samplesfile.   
+
+
+
+```{r, label = QNfilters_sex, echo=FALSE}
+
+category=c(sexchrX,sexchrY)
+
+# minimum callrate filtering on samples
+markersII=as.matrix(intersect(rownames(TypeII.Green.All.d), category))
+markersIGreen=intersect(rownames(TypeI.Green.M.All.d), category)
+markersIRed=intersect(rownames(TypeI.Red.M.All.d), category)
+markers.sex <- list(II = markersII, IG = markersIGreen, IR = markersIRed)
+samples.callrate.typewise.sex <- do.call("rbind", lapply(markers.sex, function(m){colSums(!is.na(beta.raw.sex[m,]))/nrow(beta.raw.sex[m,])}))
+
+sample.call.sex = apply(samples.callrate.typewise.sex, 2, min)
+samples.sex.QN <- colnames(samples.callrate.typewise.sex)[sample.call.sex > minimum_callrate_QN]
+bufout.callrate.typewise.sex <- unique(samples[!samples %in% samples.sex.QN])
+
+if(length(bufout.callrate.typewise.sex) > 0){
+# report QN sample filter to samples.filtered
+cat(length(bufout.callrate.typewise.sex), " samples are excluded and reported due to low callrate on sex chromosomes.\n")
+if(!exists("samples.filtered")){samples.filtered <- NA}
+	QN.filter.sex.df = data.frame(sample = bufout.callrate.typewise.sex, filter = paste0("for Quantile Normalisation: callrate.typewise.sexchromosomes < ", 1 - minimum_callrate_QN), stringsAsFactors= F)
+ 	QN.filter.sex.df <- merge(QN.filter.sex.df,datsamples,all.x=T,by.x="sample",by.y="Sentrix_Code")
+	samples.filtered <- merge(samples.filtered,QN.filter.sex.df,all=T)	
+  	write.csv(samples.filtered,file = paste0(outputdir,"/samples-filtered","_",projectname,"-",formatted.time,".csv"),row.names=F)
+}
+
+
+
+women <- unique(women[women %in% samples.sex.QN])
+men <- unique(men[men %in% samples.sex.QN])
+
+# clean up 
+rm(samples.sex.QN, sample.call.sex, samples.callrate.typewise.sex, markers.sex, markersIRed, markersIGreen, markersII)
+gc()
+```
+
+Of the persons from whom samples are processed, `r length(women)` are women and `r length(men)` men have usable sex chromosome data.   
+
+
+
+```{r child = 'MemoryMethodsCredits.Rmd'}
+```

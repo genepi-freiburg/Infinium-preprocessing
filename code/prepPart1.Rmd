@@ -1,49 +1,15 @@
-## PART 1: Data and parameters
-
-```{r, message = FALSE, echo = FALSE, warning = FALSE}
-#####################
-
- #read data
- cwd<-getwd()
-
- setwd(idatdir)
-#  filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))[1:10]
- filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
-
-length.of.folder = sapply(gregexpr2("/",filenames), max) 
-# can be used to replace the nchar - 18 # TODO
-
-sample_names = sapply(filenames, function(s){substring(s, first = (nchar(s) - 18))})
-# dim(filenames) <- c(1,length(filenames))
-# as list : sample_names = apply(filenames, c(1,2), function(s){substring(s, first = (nchar(s) - 18))})
-
-# read samples
-datsamples <- read.table(file=samplesfile,header=T,as.is=T,sep="\t", colClasses = "character")
-datsamples$Gender = as.numeric(datsamples$Gender)
-# provide a new column with sample identifier
-if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamples))){stop("samplesfile must provide Sentrix_ID and Sentrix_Position.")}
-datsamples$Sentrix_Code = paste(datsamples$Sentrix_ID,datsamples$Sentrix_Position,sep = "_")
-datsamples$MFGender = ifelse(datsamples$Gender == 0, "M","F")
-
-# read final samples
-datsamplesfinal <- read.table(file=samplesfilefinal,header=T,as.is=T,sep="\t", colClasses = "character")
-datsamplesfinal$Gender = as.numeric(datsamplesfinal$Gender)
-# provide a new column with sample identifier
-if(!all(c("Sentrix_ID","Sentrix_Position")%in%colnames(datsamplesfinal))){stop("Final samplesfile must provide Sentrix_ID and Sentrix_Position.")}
-datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$Sentrix_Position,sep = "_")
-# datsamplesfinal$MFGender = ifelse(datsamplesfinal$Gender == 0, "M","F")
-
-
-# filter filenames list with combined samples of samplesfile and samplesfile_final
- filenames_idx <- sapply(union(datsamplesfinal$Sentrix_Code,datsamples$Sentrix_Code), function(x){grep(x,filenames)})
-  
- filenames_final_idx <- sapply(datsamplesfinal$Sentrix_Code, function(x){grep(x,filenames)})
- filenames_final_vector <- filenames[filenames_final_idx]
- 
- filenames = filenames[filenames_idx] # !! this changes filenames object! 
- dim(filenames) <- c(1,length(filenames))
-
-
+---
+title: "EPIC Pipeline- PrepPart1"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+params:
+  parameterfile: ""
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    latex_engine: xelatex
+---
+```{r, label = declare_detP_function, echo = FALSE}
 detectionP.local <- function (rgSet, type = "m+u")
 {
     locusNames <- getManifestInfo(rgSet, "locusNames")
@@ -74,72 +40,445 @@ detectionP.local <- function (rgSet, type = "m+u")
     }
     detP
 }
+```
 
-for(i in 1:nrow(filenames)){ # in code as is needless since i is only 1 and all files are read simultaneously
-# for(i in 1:5){ # test version
-	# print(i)
-	### 1 line here different
-	# RGset <- read.metharray(filenames[i,], verbose=TRUE) # formerly: read.450k()
-	RGset <- read.metharray(paste0(idatdir,"/",filenames[i,]), verbose=TRUE, force=TRUE) #
-	
+```{r, label = estimateWBCs_EPICv2_function, echo = FALSE}
+estimateWBCs_EPICv2 <- function(RGset) { 
+  #Function based on Lucas Salas approach https://github.com/immunomethylomics/FlowSorted.Blood.EPIC/issues/10  
+  #Use function projectCellType_CP (WBCs estimation based on Houseman et al. 2012.) as estimateCellCounts2 function. 
+  MSet <-preprocessNoob(RGset)
+  Betas<-getBeta(MSet)
+  Betas<- sesame::betasCollapseToPfx(Betas) 
+  
+  IDOLOptimizedCpGsBloodv2<- IDOLOptimizedCpGs[which(IDOLOptimizedCpGs%in%rownames(Betas))]
+  identical(rownames(IDOLOptimizedCpGs.compTable[IDOLOptimizedCpGsBloodv2,]), IDOLOptimizedCpGsBloodv2)
+  propEPIC <- projectCellType_CP(
+    Betas[IDOLOptimizedCpGsBloodv2, ],
+    IDOLOptimizedCpGs.compTable[IDOLOptimizedCpGsBloodv2,],
+    contrastWBC = NULL, nonnegative = TRUE,
+    lessThanOne = FALSE)
+  
+  return(propEPIC)
+}
+```
 
-	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
-	
-	# add: make WBC estimation with samples from *final* samplesfile
-	# integrated into for loop 18th of November 2022 FGC
+```{r, label = treatment_ta_problematic_function, echo = FALSE}
+#Create a function to apply to all datasets
+treatment_ta_problematic<- function (ls, anno_v2, cgs, arraytype) {
+  
+  #Work with EPIC V1
+  indx1<-which(arraytype =="IlluminaHumanMethylationEPIC")
+  dfv1<-ls[[indx1]] 
+  dfv1_match <- dfv1[rownames(dfv1) %in% cgs, , drop = FALSE]
+  rm(dfv1)
 
-		WBCok = ifelse(exists("estimateWBCs"), estimateWBCs, FALSE)
-		 if(WBCok%in%TRUE){
-		# if(WBCok%in%TRUE && filenames[i,] %in% filenames_final_vector) { # no this does not work as reduction to final samples; the RGset must be either reduced directly or a RGset_final mst be created as read-in
+  # Create matrix: repeat row according number of coincidences in cg_v2_matches
+  times <- sapply(rownames(dfv1_match), function(x) sum(anno_v2$Name == x))
+  dfv1_exp <- dfv1_match[rep(1:nrow(dfv1_match), times = times), , drop = FALSE]
+  #Rownames
+    cgs_ordered <- unlist(sapply(unique(rownames(dfv1_exp)), function(x) {
+    anno_v2$IlmnID_EPICv2[anno_v2$Name == x]
+  }))
+  rownames(dfv1_exp) <- cgs_ordered
+  #Combine with real EPIC_v1 probes
+  dfv1 <- rbind(dfv1_match, dfv1_exp)
+  
+  #Save rownames vector for next steps
+  dfv1_exp<-rownames(dfv1_exp)
+  dfv1_match<-rownames(dfv1_match)
+  rm(times, cgs_ordered)
+  
+  #Work with EPIC V2 --> Extract specific probes
+  indx2<-which(arraytype =="IlluminaHumanMethylationEPICv2")
+  dfv2<-ls[[indx2]]
+  #Subset data
+  dfv2<-as.data.frame(dfv2[rownames(dfv2) %in% dfv1_exp,])
+  
+  #Subset dfv1 according to the probes present in dfv2
+  cgs_subset<-c(rownames(dfv2), 
+                dfv1_match[dfv1_match%in% unique(sub("_.*", "", rownames(dfv2)))])
+  
+  dfv1<-as.data.frame(dfv1[rownames(dfv1) %in% cgs_subset,])
+  
+  #Merge data in a single df
+  dfv1$ID <- rownames(dfv1)
+  dfv2$ID <- rownames(dfv2)
+  df_ta<-merge(dfv1, dfv2, by="ID", all=TRUE)
+  rownames(df_ta) <- df_ta$ID
+  df_ta$ID <- NULL
+  return(df_ta)
+}
 
-		#  	filenames <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",dir(pattern="\\.idat$",recursive=TRUE),ignore.case=T),ignore.case=T))
-		#  	length.of.folder = max(gregexpr2("/", filenames[1])[[1]]) # we assume the pattern is identical for all measurements
-		#  	length.of.folder = sapply(gregexpr2("/",filenames), max)  # different paths 
-		#  	sample_names = substring(filenames, first = length.of.folder + 1)
-		#  	filenames = filenames[sample_names%in%datsamplesfinal$Sentrix_Code]
- 	
- 		# added 18.04.18 by FGC: minfi WBC estimation based on RGsets only 
- 	
-		#  	RGset <- read.metharray(filenames, verbose=TRUE, force=TRUE) # formerly: read.450k()
-		#  	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction 
- 	
- 		est_wbc <- estimateCellCounts(RGset, compositeCellType = "Blood", cellTypes = c("CD8T","CD4T", "NK","Bcell","Mono","Gran"),
- 				 sex = datsamples$MFGender[match(sample_names,datsamples$Sentrix_Code)]) # , # )
- 	                              # referencePlatform=arraytype)
- 	                              
- 		if(exists("est.wbc.minfi")){ # in code as is needless since i is only 1 and all files are read simultaneously
- 			est.wbc.minfi = rbind(est.wbc.minfi, est_wbc)
- 		} else {
- 			est.wbc.minfi = as.data.frame(est_wbc)
- 		}
-	} # end of WBC estimation
+```
 
-	
-	# refine and create methylation data objects 
-	
-    if(exists("extractSNPs")){
-	if(extractSNPs%in%"TRUE"){
-        	snps <- getSnpBeta(RGset)
-       		 if(exists("snp.extraction")){
-       		     snp.extraction <- cbind(snp.extraction, snps)
-       		 } else {
-       		     snp.extraction <- snps
-       		 }
-	}
+```{r, label = remove_pattern_function, echo = FALSE}
+remove_pattern <- function(df) {
+  if (any(grepl("_", rownames(df)))) {
+    rownames(df) <- sub("_.*", "", rownames(df))
+  }
+  return(df)
+}
+```
+
+```{r, label = harmonize_snps_function, echo = FALSE}
+harmonize_snps <- function(ls, arraytype) {
+  indx1<-which(arraytype =="IlluminaHumanMethylationEPIC")
+  indx2<-which(arraytype =="IlluminaHumanMethylationEPICv2")
+  
+  rownames(ls[[indx2]])<-sub("_.*", "", rownames(ls[[indx2]]))
+  snps<-unique (rownames(ls[[indx2]]) [rownames(ls[[indx2]]) %in% rownames(ls[[indx1]])])  
+  
+  ls[[indx2]]<-ls[[indx2]][!duplicated(rownames(ls[[indx2]])),]
+  
+  for (i in c(indx1,indx2)) {
+  ls[[i]]<-ls[[i]][rownames(ls[[i]]) %in% snps,]
+  ls[[i]] <- ls[[i]][match(snps, rownames(ls[[i]])), , drop = FALSE]
+  }
+  return(ls)
+}
+```
+
+
+```{r, label = combine_data, echo = FALSE}
+combine_data <- function(df_list, anno_v2, arraytype, cgs_ta, cgs_shared, cgs_epicv1, cgs_epicv2) {
+  # STEP 1: Df with the type A problematic probes
+  df_ta<-treatment_ta_problematic(ls=df_list, anno_v2=anno_v2, cgs=cgs_ta, arraytype=arraytype)
+  
+  #STEP 2: Combine same IDs
+  df_shared <- lapply(df_list, remove_pattern) 
+  df_shared <- lapply(df_shared, function(df) {
+    df[rownames(df) %in% cgs_shared, ]
+  }) 
+  df_comb_shared <- Reduce(function(x, y) merge(x, y, by = "row.names", all = FALSE), df_shared)
+  rm(df_shared)
+  rownames(df_comb_shared) <- df_comb_shared$Row.names
+  df_comb_shared <- df_comb_shared[, -1]
+  
+  #STEP 3: Add specific probes
+  indx1<-which(arraytype =="IlluminaHumanMethylationEPIC")
+  indx2<-which(arraytype =="IlluminaHumanMethylationEPICv2")
+
+  df_specific <- lapply(seq_along(df_list), function(i) {
+    if (i == indx1) {
+      df_list[[i]][rownames(df_list[[i]]) %in% cgs_epicv1, ]
+    } else if (i == indx2) {
+      df_list[[i]][rownames(df_list[[i]]) %in% cgs_epicv2, ]
     }
+  })
+  rm(df_list)
+  
+  df_specific <- lapply(df_specific, as.data.frame)
+  df_comb_specific <- bind_rows(df_specific)
+  rm(df_specific)
+  
+  #STEP 4: Merge all types of probes
+  all_cols <- union(union(colnames(df_ta), colnames(df_comb_shared)),
+                    colnames(df_comb_specific))
+  
+  reorder_df <- function(df, all_cols) {
+  df <- df[ , all_cols, drop = FALSE] 
+  return(df)
+  }
+  
+  df_ta <- reorder_df(df_ta, all_cols)
+  df_comb_shared <- reorder_df(df_comb_shared, all_cols)
+  df_comb_specific <- reorder_df(df_comb_specific, all_cols)
+  
+  df_all <- as.matrix(rbind(df_ta, df_comb_shared, df_comb_specific))
+  
+  return(df_all)
+}
+```
+
+```{r, label = call_rate, echo = FALSE}
+calculate_marker_call<- function  (cgs_ta, cgs_shared, cgs_epicv1, cgs_epicv2, 
+                                   anno ,beta_df, sample.name_pathwise, arraytype) {
+  #v1
+  cgs_v1<- unique(c(cgs_ta, cgs_epicv1))
+  #v2
+  cgs_v2<-cgs_epicv2
+  # v1 and 2
+  cgs_epicv12<-unique(c(cgs_ta,cgs_shared))
+  cgs_epicv12_suf<-unique(anno$IlmnID_EPICv2[anno$Name %in% cgs_epicv12])
+  cgs_epicv12<- cgs_epicv12[!cgs_epicv12 %in% cgs_v1]
+  cgs_epicv12<-unique(c(cgs_epicv12, cgs_epicv12_suf))
+  cgs_epicv12<-cgs_epicv12[!cgs_epicv12 %in%cgs_v2]
+  
+  #Create subdata
+  indx1<-which(arraytype =="IlluminaHumanMethylationEPIC")
+  indx2<-which(arraytype =="IlluminaHumanMethylationEPICv2")
+  
+  df_v1<- beta_df [rownames(beta_df) %in% cgs_v1, sample.name_pathwise[[indx1]]]
+  df_v2<- beta_df [rownames(beta_df) %in% cgs_v2, sample.name_pathwise[[indx2]]]
+  df_v12<- beta_df [rownames(beta_df) %in% cgs_epicv12, unlist(sample.name_pathwise)]
+  
+  marker.call <- numeric() 
+  for (df in list(df_v1, df_v2, df_v12)) {
+    marker.call.df<-rowSums(!is.na(df))/ncol(df)
+    marker.call<-c(marker.call.df, marker.call)
+  }
+  
+  return(marker.call)
+                
+}
+
+
+
+calculate_sample_call<- function  (cgs_ta, cgs_shared, cg_shared, cgs_epicv1, cgs_epicv2, 
+                                   anno, beta_df, sample.name_pathwise, arraytype) {
+  #v1
+  cgs_v1<- unique(c(cgs_ta, cgs_epicv1))
+  #v2
+  cgs_v2<-cgs_epicv2
+  # v1 and 2
+  cgs_epicv12<-unique(c(cgs_ta,cgs_shared))
+  cgs_epicv12_suf<-unique(anno$IlmnID_EPICv2[anno$Name %in% cgs_epicv12])
+  cgs_epicv12<- cgs_epicv12[!cgs_epicv12 %in% cgs_v1]
+  cgs_epicv12<-unique(c(cgs_epicv12, cgs_epicv12_suf))
+  cgs_epicv12<-cgs_epicv12[!cgs_epicv12 %in%cgs_v2]
+  
+  #Create subdata
+  indx1<-which(arraytype =="IlluminaHumanMethylationEPIC")
+  indx2<-which(arraytype =="IlluminaHumanMethylationEPICv2")
+  df_v1<- beta_df [rownames(beta_df) %in% c(cgs_v1,cgs_epicv12), 
+                   sample.name_pathwise[[indx1]]]
+  df_v2<- beta_df [rownames(beta_df) %in% c(cgs_v2,cgs_epicv12), 
+                   sample.name_pathwise[[indx2]]]
+  
+  sample.call <- numeric() 
+  for (df in list(df_v1, df_v2)) {
+    sample.call.df<-colSums(!is.na(df))/nrow(df)
+    sample.call<-c(sample.call.df, sample.call)
+  }
+  
+  return(sample.call)
+
+}
+```
+
+## PART 1: Data and parameters
+
+```{r, label='read-in.samples', message = FALSE, echo = FALSE, warning = FALSE}
+
+#Arraytype name
+arraytype_names <- Reduce(function(x, y) paste0(x, " ,", y), arraytype)
+
+##########################################
+# read samples ###########################
+datsamples <- read.table(file=samplesfile,header=T,as.is=T,sep="\t", colClasses = "character")
+
+# check columns
+if("male"%in%colnames(datsamples)&!"Sex_female"%in%colnames(datsamples)){datsamples$Sex_female <- as.numeric(abs(1 - as.numeric(datsamples$male)))}
+if(!all(c("Sentrix_ID","Sentrix_Position","Sex_female")%in%colnames(datsamples))){stop("samplesfile must provide Sex_female, Sentrix_ID and Sentrix_Position.")}
+
+datsamples$Sex_female = as.numeric(datsamples$Sex_female)
+# provide a new column with sample identifier
+datsamples$Sentrix_Code = paste(datsamples$Sentrix_ID,datsamples$Sentrix_Position,sep = "_")
+# datsamples$MFSex_female = ifelse(datsamples$Sex_female == 0, "M","F")
+
+# read final samples #####################
+datsamplesfinal <- read.table(file=samplesfilefinal,header=T,as.is=T,sep="\t", colClasses = "character")
+
+# check columns
+if("male"%in%colnames(datsamplesfinal)&!"Sex_female"%in%colnames(datsamplesfinal)){datsamplesfinal$Sex_female <- as.numeric(abs(1 - as.numeric(datsamplesfinal$male)))}
+if(!all(c("Sentrix_ID","Sentrix_Position","Sex_female")%in%colnames(datsamplesfinal))){stop("Final samplesfile must provide Sex_female, Sentrix_ID and Sentrix_Position.")}
+
+datsamplesfinal$Sex_female = as.numeric(datsamplesfinal$Sex_female)
+# provide a new column with sample identifier
+datsamplesfinal$Sentrix_Code = paste(datsamplesfinal$Sentrix_ID,datsamplesfinal$Sentrix_Position,sep = "_")
+# datsamplesfinal$MFSex_female = ifelse(datsamplesfinal$Sex_female == 0, "M","F")
+##########################################
+
+```
+
+
+```{r, label='read-in.methylation', message = FALSE, echo = FALSE, warning = FALSE}
+
+# read data ###############################
+ 
+cwd<-getwd()
+
+scandata <- unlist(idatdir)
+
+filenames_pathwise <- vector(mode = "list", length = length(scandata))
+names(filenames_pathwise) <- scandata
+
+RGset_pathwise <- vector(mode = "list", length = length(scandata))
+names(RGset_pathwise) <- scandata
+
+sample.name_pathwise <- vector(mode = "list", length = length(scandata))
+names(sample.name_pathwise) <- scandata
+
+sample_names <- NA
+missing_idat <- NA
+samplesheet_combined <- merge(datsamples, datsamplesfinal)
+
+
+
+######## FILENAMES ###################
+
+for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
+	 setwd(path)
+		
+	files_here <- dir(path = path, pattern="\\.idat$",recursive=TRUE, full.names=TRUE) # this path handling ensures correct number of / in path name
+	filenames_pathwise[[path]] <- unique(gsub("_Grn.idat","",gsub("_Red.idat","",files_here,ignore.case=T),ignore.case=T))
+
+	sample_names = c(sample_names, sapply(filenames_pathwise[[path]], function(s){sub(".+/","",s)}))
 	
+	rm(files_here)
+
+	filenames <- filenames_pathwise[[path]]
+
+	# filter filenames list with combined samples of samplesfile and samplesfile_final
+	# look which samples of all are in this path
+ 	 filenames_idx_list <- sapply(union(datsamplesfinal$Sentrix_Code,datsamples$Sentrix_Code), function(x){grep(x,filenames)})
+	 filenames_idx <-  as.integer(filenames_idx_list)
+	 	
+	# need unique NA-free index 
+	 filenames_idx <- filenames_idx[!is.na(filenames_idx)]
+
+ 	filenames = filenames[filenames_idx] # !! this changes filenames object! 
+ 	filenames_pathwise[[path]] <- filenames
+	# filenames <- filenames[1:5] # test version
+
+}
+
+
+
+# make one filenames object to merge 
+	filenames_all <- unlist(filenames_pathwise)
+	samplesheet_combined$filename <- as.character(sapply(samplesheet_combined$Sentrix_Code, function(x){grep(x,filenames_all, value = TRUE)})) 
+
+	 # protocol samples without idat file
+	 filenames_all_idx_list <- sapply(union(datsamplesfinal$Sentrix_Code,datsamples$Sentrix_Code), function(x){grep(x,filenames_all)})
+	 filenames_all_idx <-  as.integer(filenames_all_idx_list)
+	 missing_idat <- names(filenames_all_idx_list[is.na(filenames_all_idx)])
+
+	if(length(missing_idat) > 0){
+		write.table(missing_idat, file = paste0(outputdir,"/missing_idat_files","_",projectname,"-",formatted.time,".tsv"), row.names = FALSE, append = TRUE) 
+	}
+
+
+
+
+####### METHYLATION READ-IN #####################
+for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
+	
+	# restrict the samplesheet to the samples we found in this path 
+  	samplesheet_local <- samplesheet_combined[grep(path, samplesheet_combined$filename),]
+ 	samplesheet_local$Basename <- samplesheet_local$filename
+ 	sample.name_pathwise[[path]]<-samplesheet_local$Sentrix_Code
+	RGset = read.metharray.exp(targets = samplesheet_local, recursive = TRUE, verbose= TRUE, force = TRUE) # need force in EPIC(v1) idats only, not a v1-v2 problem
+		arraytype.r <- RGset@annotation["array"]
+ 			if (arraytype.r == "IlluminaHumanMethylationEPICv2") {
+ 		 annotation(RGset)["array"] = "IlluminaHumanMethylationEPIC"
+ 			}
+	RGset <- bgcorrect.illumina(RGset)  # Illumina background subtraction # doesnt work on minfi 1.50.0 EPIC v2 (yet, 20/08/2024) 
+	RGset@annotation["array"]<-arraytype.r # reset to original arraytype
+	RGset_pathwise[[path]] <- RGset
+	rm(RGset)
+} ######## data read-in 
+
+	 
+	 
+######## WBC and SNP extraction ####################
+WBCok = ifelse(exists("estimateWBCs"), estimateWBCs, FALSE)
+	 
+if(WBCok == TRUE){ 
+  WBCset <- vector(mode = "list", length = length(scandata))
+  names(WBCset) <- scandata
+  
+    for(path in scandata) {
+      RGset <- RGset_pathwise[[path]] 
+      
+      if (RGset@annotation["array"]=="IlluminaHumanMethylationEPIC" | RGset@annotation["array"]=="IlluminaHumanMethylation450k") {
+             est_wbc <- estimateCellCounts2(RGset, 
+                                    compositeCellType = "Blood", 
+                                    cellTypes = c("CD8T","CD4T","NK","Bcell","Mono","Neu"),
+                                    sex = datsamples$MFSex_female[match(sample_names,datsamples$Sentrix_Code)])
+             
+             	WBCset[[path]] <- est_wbc$prop
+
+      }
+      if (RGset@annotation["array"]=="IlluminaHumanMethylationEPICv2") {
+            WBCset[[path]] <- estimateWBCs_EPICv2(RGset)
+      }
+  } 
+  
+  #Merge data
+  est.wbc.minfi <- do.call("rbind", WBCset)
+  rm(WBCset, RGset)
+} 
+  
+
+#### SNP extraction ## 
+if(exists("extractSNPs")){ 
+	if(extractSNPs == "TRUE"){
+	snps_pathwise <- vector(mode = "list", length = length(scandata))
+	names(snps_pathwise) <- scandata
+	 for(path in scandata){ 
+	 	RGset <- RGset_pathwise[[path]] 
+	 	snps_pathwise[[path]] <- getSnpBeta(RGset)
+	 	rm(RGset)
+	 } 
+	
+	if (length(values) > 1) {
+  if ("IlluminaHumanMethylationEPIC" %in% values &&
+      "IlluminaHumanMethylationEPICv2" %in% values) {
+      snps_pathwise<- harmonize_snps (ls=snps_pathwise, arraytype= arraytype)
+  }
+	}
+	
+  snp.extraction<-do.call("cbind", snps_pathwise)
+  	if ("IlluminaHumanMethylationEPICv2" %in% values) {
+	  	  rownames(snp.extraction)<-sub("_.*", "", rownames(snp.extraction))
+	  	  snp.extraction<-snp.extraction[!duplicated(rownames(snp.extraction)),]
+	  }
+  } 
+} 
+	 
+
+########### PROBE INFO & DATA SPLIT ###############################################
+# this is what we need and merge in the end 
+	TypeII.Red_pathwise <- vector(mode = "list", length = length(scandata))
+		names(TypeII.Red_pathwise) <- scandata
+	TypeII.Green_pathwise <- vector(mode = "list", length = length(scandata))
+		names(TypeII.Green_pathwise) <- scandata
+	TypeI.Green.M_pathwise <- vector(mode = "list", length = length(scandata))
+		names(TypeI.Green.M_pathwise) <- scandata
+	TypeI.Green.U_pathwise <- vector(mode = "list", length = length(scandata))
+		names(TypeI.Green.U_pathwise) <- scandata
+	TypeI.Red.U_pathwise <- vector(mode = "list", length = length(scandata))
+		names(TypeI.Red.U_pathwise) <- scandata
+	TypeI.Red.M_pathwise <- vector(mode = "list", length = length(scandata))
+		names(TypeI.Red.M_pathwise) <- scandata
+
+# control probes for lowlevel QC - might be processed seperately or together
+	ctrl_pathwise <- vector(mode = "list", length = length(scandata))
+		names(ctrl_pathwise) <- scandata
+	ctrl.complete.Red_pathwise <- vector(mode = "list", length = length(scandata))
+		names(ctrl.complete.Red_pathwise) <- scandata
+	ctrl.complete.Green_pathwise <- vector(mode = "list", length = length(scandata))
+		names(ctrl.complete.Green_pathwise) <- scandata
+	
+	dp_pathwise <- vector(mode = "list", length = length(scandata))
+		names(dp_pathwise) <- scandata
+
+print("Get probe information")
+for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
+	RGset <- RGset_pathwise[[path]] 
 	# Type II probes
-	TypeII.Name <- getProbeInfo(RGset, type = "II")$Name
-	TypeII.Green <- getGreen(RGset)[getProbeInfo(RGset, type = "II")$AddressA,]
-	TypeII.Red <- getRed(RGset)[getProbeInfo(RGset, type = "II")$AddressA,]
+	TypeII.Name <- getProbeInfo(RGset, type = "II")$Name 
+	TypeII.Green <- getGreen(RGset)[getProbeInfo(RGset, type = "II")$AddressA,] 
+	TypeII.Red <- getRed(RGset)[getProbeInfo(RGset, type = "II")$AddressA,] 
 	rownames(TypeII.Red) <- TypeII.Name
 	colnames(TypeII.Red) <- sampleNames(RGset)
 	rownames(TypeII.Green) <- TypeII.Name
 	colnames(TypeII.Green) <- sampleNames(RGset)
 
 	# Type I probes, split into green and red channels
-	TypeI.Green.Name <- getProbeInfo(RGset, type = "I-Green")$Name
-	TypeI.Green.M <- getGreen(RGset)[getProbeInfo(RGset, type = "I-Green")$AddressB,]
+	TypeI.Green.Name <- getProbeInfo(RGset, type = "I-Green")$Name 
+	TypeI.Green.M <- getGreen(RGset)[getProbeInfo(RGset, type = "I-Green")$AddressB,] 
 	rownames(TypeI.Green.M) <- TypeI.Green.Name
 	colnames(TypeI.Green.M) <- sampleNames(RGset)
 	TypeI.Green.U <- getGreen(RGset)[getProbeInfo(RGset, type = "I-Green")$AddressA,]
@@ -154,7 +493,20 @@ for(i in 1:nrow(filenames)){ # in code as is needless since i is only 1 and all 
 	rownames(TypeI.Red.U) <- TypeI.Red.Name
 	colnames(TypeI.Red.U) <- sampleNames(RGset)
 
-	### until next ### different: control defined 
+	TypeII.Red_pathwise[[path]] <- TypeII.Red 
+	TypeII.Green_pathwise[[path]] <- TypeII.Green 
+	TypeI.Red.M_pathwise[[path]] <- TypeI.Red.M 
+	TypeI.Red.U_pathwise[[path]] <- TypeI.Red.U 
+	TypeI.Green.M_pathwise[[path]] <- TypeI.Green.M 
+	TypeI.Green.U_pathwise[[path]] <- TypeI.Green.U 
+	print(paste0("Complete for: ", path))
+}
+
+print("Get control probe information and P detection")
+for(path in scandata){ # all files in the same path have to have identical array built - they are merged later
+ 
+	RGset <- RGset_pathwise[[path]] 
+
 	control=getProbeInfo(RGset, type = "Control") # needed also for lowlevel QC
 
 	#BSC1 control probes - 450k: 16:18 ### 1:18 sind f??r 45ok die Zeilen control$Type=="BISULFITE CONVERSION I" & (control$Color %in% c("Green","LimeGreen","Lime")) 
@@ -171,7 +523,7 @@ for(i in 1:nrow(filenames)){ # in code as is needless since i is only 1 and all 
         BSCII.Red <- matrix(NA_real_, ncol = ncol(RGset), nrow = length(BSCII.Red.Name), dimnames = list(BSCII.Red.Name, sampleNames(RGset)))
         BSCII.Red[BSCII.Red.Name,] <- getRed(RGset)[control[control$Type=="BISULFITE CONVERSION II",]$Address,]
 	
-	# select control probes green channel by ExtendedType:
+		# select control probes green channel by ExtendedType:
         # STAINING, EXTENSION, HYBRIDISATION, TARGET REMOVAL, Specificity I+II, NON POLYMORPHIC
         extendedTypeGreen=c("Biotin (High)","Extension (C)","Extension (G)","Hyb (High)","Hyb (Medium)","Hyb (Low)","Target Removal 1","Target Removal 2","GT Mismatch 1 (PM)","GT Mismatch 2 (PM)","GT Mismatch 3 (PM)","NP (C)","NP (G)")
         extendedTypeRed=c("DNP (High)","Extension (A)","Extension (T)","GT Mismatch 4 (PM)","GT Mismatch 5 (PM)","GT Mismatch 6 (PM)","Specificity 1","Specificity 2","Specificity 3","NP (A)","NP (T)")
@@ -188,7 +540,7 @@ for(i in 1:nrow(filenames)){ # in code as is needless since i is only 1 and all 
 
 	### the upper selection of information of extended type is in a more condensed form by AT ; normalization has to be added by hand 
 
-	#Normalisation
+	# Normalisation
 	normC.Green.Name=control[control[,2]=='NORM_C',4]
 	normC.Green <- matrix(NA_real_, ncol = ncol(RGset), nrow = length(normC.Green.Name), dimnames = list(normC.Green.Name, sampleNames(RGset)))
 	normC.Green[normC.Green.Name,] <- getGreen(RGset)[control[control[,2]=='NORM_C',1],]
@@ -220,50 +572,164 @@ for(i in 1:nrow(filenames)){ # in code as is needless since i is only 1 and all 
 	
 	#combine ctrl probe intensities ### shorter 
         ctrl = rbind(as.matrix(BSCI.Green), as.matrix(BSCI.Red), as.matrix(BSCII.Red), (ctlext.Red), (ctlext.Green),as.matrix(normC.Green),as.matrix(normG.Green), as.matrix(normA.Red),as.matrix(normT.Red))
+		ctrl <- t(ctrl)
 
 	#detection p-values
-	dp = detectionP.local(RGset, type = "m+u") ### formerly: detectionP(RGset, type = "m+u")
-
+		dp = detectionP.local(RGset, type = "m+u") 
 	
-	#add data for the new samples
-	if(exists("TypeII.Red.All")) {
-	TypeII.Red.All <- cbind(TypeII.Red.All,TypeII.Red)
-	TypeII.Green.All <- cbind(TypeII.Green.All,TypeII.Green)
-	TypeI.Red.M.All <- cbind(TypeI.Red.M.All,TypeI.Red.M)
-	TypeI.Red.U.All <- cbind(TypeI.Red.U.All,TypeI.Red.U)
-	TypeI.Green.M.All <- cbind(TypeI.Green.M.All,TypeI.Green.M)
-	TypeI.Green.U.All <- cbind(TypeI.Green.U.All,TypeI.Green.U)
-	ctrl.all <- rbind(ctrl.all, t(ctrl))
-	## added for lowlevel QC by AT 
-	ctrl.complete.Red.all <- cbind(ctrl.complete.Red.all, ctrl.complete.Red) # added for lowlevel QC
-        ctrl.complete.Green.all <- cbind(ctrl.complete.Green.all, ctrl.complete.Green) # added for lowlevel QC
-	dp.all <- cbind(dp.all, dp)
-	} else {
-	TypeII.Red.All <- TypeII.Red                                                                                                                                  
-	TypeII.Green.All <- TypeII.Green 
-	TypeI.Red.M.All <- TypeI.Red.M 
-	TypeI.Red.U.All <- TypeI.Red.U 
-	TypeI.Green.M.All <- TypeI.Green.M 
-	TypeI.Green.U.All <- TypeI.Green.U     
-	ctrl.all <- t(ctrl)
-	ctrl.complete.Red.all <- ctrl.complete.Red # added for lowlevel QC
-        ctrl.complete.Green.all <- ctrl.complete.Green # added for lowlevel QC
-        dp.all <- dp
-	}
+	# save
+	ctrl_pathwise[[path]] <- ctrl
+	ctrl.complete.Red_pathwise[[path]] <- ctrl.complete.Red
+	ctrl.complete.Green_pathwise[[path]] <- ctrl.complete.Green
+	
+	dp_pathwise[[path]] <- dp
+	
+		print(paste0("Complete for: ", path))
 }
+		
+#### MERGE #####
+#Consider different arrays used: e.g., only EPICv1, only EPICv2, both
+		
+if (length(values) > 1) {
+  if ("IlluminaHumanMethylationEPIC" %in% values &&
+      "IlluminaHumanMethylationEPICv2" %in% values) {
+    #Used fixed pipeline
+print("Merging IlluminaHumanMethylationEPIC and IlluminaHumanMethylationEPICv2 arrays")
 
-	
+    # Read annotation file. There are different aspects to take into account to merge probes 
+anno=read.csv(annotationfile,as.is=TRUE, skip = 7)
+
+#-------------------- Problematic problems: ---------------------------------------------
+# TYPE A) Name" match but not "IlmnID" --> Repeated in EPICv2 
+# TYPE B)"IlmnID" and "Name"  match among EPIC versions but difference in Infinium_Design_Type and Color_Channel
+#--------------------------------------------------------------------------------------------------	
+		
+#For Type A: multiply the EPICv1 measurement with all v2 IDs for the merged dataset	
+name_counts <- table(anno[anno$EPIC_version=="v2" & anno$Type=="Probe" &  anno$Type=="Probe",]$Name)
+cgs_ta <- names(name_counts[name_counts >= 2])
+
+anno_ta_v2<-anno[anno$Name%in%cgs_ta & anno$EPIC_version=="v2" &
+                   !anno$CHR == "0",]
+anno_ta_v1<-anno[anno$EPIC_version=="v1" & anno$Name%in%cgs_ta  ,]
+v2_sp<-unique(anno_ta_v2$Name[!anno_ta_v2$Name %in% anno_ta_v1$Name])
+cgs_ta <- cgs_ta[!cgs_ta%in%v2_sp]
+
+#Probes EPIC-version-specific:
+cgs_epicv1<- as.vector(na.omit(anno$IlmnID_EPICv1[anno$Type=="Probe" & anno$EPIC_version=="v1"]))
+
+cgs_epicv2<- as.vector(na.omit(anno$IlmnID_EPICv2[anno$Type=="Probe" & anno$EPIC_version=="v2" &
+                                           ! anno$Name %in% cgs_ta]))
+
+#Problematics
+  anno_c<-anno[anno$Name %in% cgs_ta & anno$EPIC_version!="v1_v2",]
+  anno_c1<-anno_c[anno_c$EPIC_version=="v1" , ]
+  anno_c2<-anno_c[anno_c$EPIC_version=="v2",  ]
+  
+  anno_merge <- merge(anno_c1, anno_c2, 
+                  by = c("Name", "Infinium_Design_Type", "Color_Channel", "CHR"),
+                  all = TRUE)
+unm_dt <- anno_merge[is.na(anno_merge$IlmnID_EPICv1.x) | is.na(anno_merge$AddressA_ID_EPICv1.x), ]
+unm_dt<-unm_dt [unm_dt$CHR!= "0",] #the problematics
+cgs_epicv2<-c(cgs_epicv2, unm_dt$IlmnID_EPICv2.y)
+
+#Probes shared between EPIC versions no problematics
+cgs_shared<-as.vector(na.omit(anno$Name[anno$Type=="Probe" & anno$EPIC_version=="v1_v2"]))
+
+rm(name_counts,anno_ta_v1, v2_sp, anno_c, anno_c1, anno_c2, anno_merge, unm_dt)
+
+#Combine data		
+TypeII.Red.All <-combine_data(df_list=TypeII.Red_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)
+TypeII.Green.All <- combine_data(df_list=TypeII.Green_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)
+TypeI.Green.M.All <- combine_data(df_list=TypeI.Green.M_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)   
+TypeI.Green.U.All <- combine_data(df_list=TypeI.Green.U_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)
+TypeI.Red.M.All <- combine_data(df_list=TypeI.Red.M_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)  
+TypeI.Red.U.All <- combine_data(df_list=TypeI.Red.U_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)
+
+ctrl.all <- do.call("rbind",ctrl_pathwise) # need to transpose? 
+
+## added for lowlevel QC by AT 
+ctrl.complete.Red.all <- Reduce(function(x, y) merge(x, y, by = "row.names", all = TRUE), ctrl.complete.Red_pathwise)
+rownames(ctrl.complete.Red.all) <- ctrl.complete.Red.all$Row.names
+ctrl.complete.Red.all <- ctrl.complete.Red.all[, -1]
+
+ctrl.complete.Green.all <- Reduce(function(x, y) merge(x, y, by = "row.names", all = TRUE), ctrl.complete.Green_pathwise)
+rownames(ctrl.complete.Green.all) <- ctrl.complete.Green.all$Row.names
+ctrl.complete.Green.all <- ctrl.complete.Green.all[, -1]
+
+
+#dim(TypeII.Red.All)[1]+dim(TypeI.Green.M.All)[1]+dim(TypeI.Red.M.All) #1088435  -- PERFECT
+dp.all <- combine_data(df_list=dp_pathwise, anno_v2=anno_ta_v2, arraytype=arraytype,
+                              cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2)
+x<-c(rownames(TypeII.Red.All), rownames(TypeI.Green.M.All), rownames(TypeI.Red.M.All))
+#Somehow the function repeat the problematic. Remove those files
+# rownames(dp.all)[!rownames(dp.all) %in% x]
+#  [1] "cg15934644_BO111" "cg03254865_BO111" "cg04255549_BO111" "cg08786079_BO111"
+dp.all<-dp.all[rownames(dp.all) %in% x,]
+    
+  }
+} else {
+  TypeII.Red.All <- do.call("cbind",TypeII.Red_pathwise)                                    
+	TypeII.Green.All <- do.call("cbind", TypeII.Green_pathwise) 
+	TypeI.Red.M.All <- do.call("cbind",TypeI.Red.M_pathwise) 
+	TypeI.Red.U.All <- do.call("cbind",TypeI.Red.U_pathwise) 
+	TypeI.Green.M.All <- do.call("cbind",TypeI.Green.M_pathwise)
+	TypeI.Green.U.All <- do.call("cbind",TypeI.Green.U_pathwise)    
+	 
+	ctrl.all <- do.call("rbind",ctrl_pathwise) # need to transpose? 
+	ctrl.complete.Red.all <- ctrl.complete.Red # added for lowlevel QC
+  ctrl.complete.Green.all <- ctrl.complete.Green # added for lowlevel QC
+    
+  dp.all <- dp
+  
+}
+		
+
+# list(ls()) # remove what is not needed anymore - save space 
+# rm( # list=ls(*_pathwise) # )
+rm(BSCI.Green ,BSCI.Red ,BSCII.Red ,ctlext.Red ,ctlext.Green ,normC.Green ,normG.Green ,normA.Red ,normT.Red)
+rm(bufR, bufG, control_ok.Red, control_ok.Green, ctrl.complete.Red, ctrl.complete.Green, TypeII.Red, TypeII.Green, TypeI.Red.M, TypeI.Red.U, TypeI.Green.M, TypeI.Green.U)
+rm(dp, detppre, controlExtRed, controlExtGreen, extendedTypeGreen, extendedTypeRed, filenames_idx_list, filenames_idx, i, rawtypepre)
+rm(BSCI.Green.Name, BSCI.Red.Name, BSCII.Red.Name, ctlext.Red.Name, ctlext.Green.Name, normC.Green.Name, normG.Green.Name, normA.Red.Name, normT.Red.Name)
+rm(detectionP.local)
+rm(RGset)
 
 setwd(cwd)	
 
 # save.image("test_runbyhand.Rdata")
 ```
+```{r, label = data_to_report, echo = FALSE}
+d2r_directory <- data.frame(
+  arraytype = values,
+  directory = unlist(idatdir)
+)
+
+d2r_nfiles <- data.frame(
+  arraytype = unlist(arraytype),
+  num_files = unlist(lapply(filenames_pathwise, length))
+)
+```
 
 ### Read data and parameters
+This is a pipeline for preprocessing EPIC-Methylation data using R. 
 
-We are working with data from directory 
-`r paste(strsplit(idatdir, split = "/")[[1]][-1], collapse = "/ ")` 
-which contains $`r length(filenames) `$ idat files.
+We are working with data from directory:
+```{r, echo=FALSE}
+for (i in 1:nrow(d2r_directory)) {
+  cat("Arraytype:\n")
+  cat(d2r_directory$arraytype[i], "\n")
+  cat(d2r_directory$directory[i], "\n\n")
+}
+```
+
+which contains the following idat files:
+`r knitr::kable(d2r_nfiles, row.names = FALSE)` 
+
 The annotationfile used is 
 `r paste(strsplit(annotationfile, split = "/")[[1]][-1], collapse = "/ ")`
  - if problems occur with annotation, please have a look at [Illumina downloads](https://support.illumina.com/array/downloads.html)    *Infimum Methylation EPIC Product files*. 
@@ -277,7 +743,7 @@ As given in *parameterfile.R*, the following parameters were used:
 
 parameter                     | value
 ------------------------------|-------------------------------------
-arraytype                     | `r arraytype`
+arraytype                     | `r arraytype_names`
 detPthreshold                 | $`r detPthreshold`$
 callrate.thres                | $`r callrate.thres`$
 filterOutlierCtrlQC           | `r filterOutlierCtrlQC`
@@ -286,9 +752,15 @@ InterQuartileRangeCalculation | `r InterQuartileRangeCalculation`
 estimateWBCs                  | `r ifelse(exists("estimateWBCs"),estimateWBCs, "not provided, assumed FALSE")`
 extractSNPs                   |  `r ifelse(exists("extractSNPs"),extractSNPs, "not provided, assumed FALSE")`
 
-Further we interpret the values for the gender in the samplesfile as **1=female** and **0=male**. 
+Further we interpret the values for the Sex_female in the samplesfile as **1=female** and **0=male**. 
 
-```{r}
+InterQuartileRange calculation depends on QuantileNormalisation, therefore Quantile Normalize is set to TRUE, if InterQuartileRangeCalculation is requested. 
+
+```{r, echo=FALSE}
+if(InterQuartileRangeCalculation == TRUE){
+	QuantileNormalize <- TRUE
+}
+
 if(QuantileNormalize == TRUE && length(samplesfilefinal)==0){
 	cat("In order to run Part 3: Quantile normalization and IQ-filter a final samplefile is needed.\n The samplesfile of the first and second part will be used instead.")
 	samplesfilefinal <- samplesfile
@@ -313,7 +785,7 @@ If the switch estimateWBCs is set to TRUE in the parameterfile, white blood cell
 The estimation of White Blood Cells results in a data.frame est.wbc.minfi for further use as part of the phenodata.\newline
 *Notice*: Dependencies of the results on the sample selection is possible. To avoid that the WBC estimation of fine runs is disturbed by problematic measurements, the estimation is based on samples from the final sample file only.
 
-```{r} 
+```{r, echo=FALSE} 
 if(exists("est.wbc.minfi")){
      head(est.wbc.minfi)
 }
@@ -327,15 +799,15 @@ This information can be used to detect mismatches in labeling of samples and oft
 Homozygotes should have values around $0$ and $1$, whereas heterozygotes have values close to $0.5$. 
 Please consider this when comparing to the genotyping from other sources which may be coded $0$ - $1$ - $2$. 
 
-```{r} 
+```{r, echo=FALSE} 
 if(exists("extractSNPs") && extractSNPs%in%"TRUE"){
     if(exists("snp.extraction")){
         write.csv(snp.extraction, file = paste0(outputdir,"/extracted-snps","_",projectname,"-",formatted.time,".csv"),row.names=T)
     } else {
-        cat("\nAn error occurres during SNP extraction. No results are exported.\n")
+        cat("\nAn error occurs during SNP extraction. No results are exported.\n")
     }
 }
-# rm(RGset, snp.extraction)
+
 ```
 
 
@@ -344,9 +816,64 @@ if(exists("extractSNPs") && extractSNPs%in%"TRUE"){
 The probes are divided by chromosome type: autosomal probes, chromosome X probes and chromosome Y probes.
 For this step we need the annotationfile.
 
-```{r}
-anno=read.csv(annotationfile,as.is=TRUE, skip = 7) 
- anno=anno[,c('Infinium_Design_Type','Color_Channel', 'CHR', 'MAPINFO', 'Name')]
+```{r, label = 'annotation', echo=FALSE}
+anno=read.csv(annotationfile,as.is=TRUE, skip = 7)
+
+if (length(values) > 1) {
+  if ("IlluminaHumanMethylationEPIC" %in% values &&
+      "IlluminaHumanMethylationEPICv2" %in% values) {
+  anno<-anno[anno$CHR %in% c(1:22, "X", "Y", "M"),]
+
+ # get autosomal probes
+ cas=anno[substr(anno$Name, 1,3)=='ch.' & (anno$CHR %in% c(as.character(1:22),"M")),] # M is mitochondrial
+ cgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% c(as.character(1:22),"M")),]
+ auto = c(unique(c(cgs$IlmnID_EPICv1, cgs$IlmnID_EPICv2, cas$IlmnID_EPICv1, cas$IlmnID_EPICv1)))
+ auto=as.matrix(auto)
+
+ # get chrX probes 
+ xcas=anno[substr(anno$Name, 1,3)=='ch.' & (anno$CHR %in% c("X")) & 
+             anno$EPIC_version == 'v1_v2',]
+ xcgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% c("X")) & 
+             anno$EPIC_version == 'v1_v2',]
+ sexchrX = c(unique(c(xcgs$IlmnID_EPICv1, xcgs$IlmnID_EPICv2, xcas$IlmnID_EPICv1, xcas$IlmnID_EPICv2)))
+ sexchrX=as.matrix(sexchrX)
+
+ # get chrY probes
+ ycas=anno[substr(anno$Name, 1,3)=='ch.' & (anno$CHR %in% c("Y")) & 
+             anno$EPIC_version == 'v1_v2',]
+ ycgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% c("Y")) & 
+             anno$EPIC_version == 'v1_v2',]
+ sexchrY = c(unique(c(ycgs$IlmnID_EPICv1, ycgs$IlmnID_EPICv2, ycas$IlmnID_EPICv1, ycas$IlmnID_EPICv2)))
+ sexchrY=as.matrix(sexchrY)
+  }
+} else {
+  
+  if ("IlluminaHumanMethylationEPICv2" %in% values) {
+  anno=anno[,c('IlmnID','Color_Channel', 'CHR', 'MAPINFO', 'Name')]
+  anno$CHR <- gsub("chr", "", anno$CHR)
+  anno<-anno[anno$CHR %in% c(1:22, "X", "Y", "M"),]
+  
+# get autosomal probes
+ cas=anno[substr(anno$IlmnID, 1,3)=='ch.' & !(anno$CHR %in% c('X','Y')),]
+ cgs=anno[substr(anno$IlmnID, 1,2)=='cg'& !(anno$CHR %in% c('X','Y')),]
+ auto = c(cgs$IlmnID, cas$IlmnID)
+ auto=as.matrix(auto)
+
+# get chrX probes
+ xcas=anno[substr(anno$IlmnID, 1,3)=='ch.' & (anno$CHR %in% c('X')),]
+ xcgs=anno[substr(anno$IlmnID, 1,2)=='cg'& (anno$CHR %in% c('X')),]
+ sexchrX = c(xcgs$IlmnID, xcas$IlmnID)
+ sexchrX=as.matrix(sexchrX)
+
+ # get chrY probes
+ ycas=anno[substr(anno$IlmnID, 1,3)=='ch.' & (anno$CHR %in% c('Y')),]
+ ycgs=anno[substr(anno$IlmnID, 1,2)=='cg'& (anno$CHR %in% c('Y')),]
+ sexchrY = c(ycgs$IlmnID, ycas$IlmnID)
+ sexchrY=as.matrix(sexchrY)  
+ 
+ } else {
+  anno<-anno[anno$CHR %in% c(1:22, "X", "Y", "M"),]
+  anno=anno[,c('Infinium_Design_Type','Color_Channel', 'CHR', 'MAPINFO', 'Name')]
 # get autosomal probes
  cas=anno[substr(anno$Name, 1,3)=='ch.' & !(anno$CHR %in% c('X','Y')),]
  cgs=anno[substr(anno$Name, 1,2)=='cg'& !(anno$CHR %in% c('X','Y')),]
@@ -363,38 +890,51 @@ anno=read.csv(annotationfile,as.is=TRUE, skip = 7)
  ycas=anno[substr(anno$Name, 1,3)=='ch.' & (anno$CHR %in% c('Y')),]
  ycgs=anno[substr(anno$Name, 1,2)=='cg'& (anno$CHR %in% c('Y')),]
  sexchrY = c(ycgs$Name, ycas$Name)
- sexchrY=as.matrix(sexchrY)
+ sexchrY=as.matrix(sexchrY)  
+ 
+}
+  
+}
+ 
 ```
 
 ### High-level quality control
 
 
-High level quality control includes detection p-value filter, restriction the the samples listed in the samplesfile and call rate filtering.
+High level quality control includes detection p-value filter, restriction to the samples listed in the samplesfile and call rate filtering.
 
 We calculate raw beta values for both autosomal and sex chromosome data.
 In our further calculations beta value data always is processed separately for autosomes and gametes. 
 
 * Detection p-values are illustrated in the following plots. Low p-values indicate that the signal is unlikely to be background noise. 
 
-```{r}
-# test
-dpvec <- dp.all
-dim(dpvec) <- c(nrow(dp.all)*ncol(dp.all),1)
+```{r, label='detection_p-values', echo=FALSE} 
+dpvec <- as.vector(t(dp.all))
+# dpvec <- dp.all
+# dim(dpvec) <- c(nrow(dp.all)*ncol(dp.all),1)
+dpvec<- dpvec[!is.na(dpvec)]
 
 # plot detection P
 dpvecplot <- dpvec
 dpvecplot[which(dpvecplot==0)] <- 1E-20
 if(sum(dpvec>0)>0){
+  pdf("dpvec_histogram.pdf")
 	hist(-log10(dpvec[!dpvec%in%0]),breaks=30, main = "detection p-values: only positive values")
+	dev.off()
 }
+graphics.off()  
 ```
 
-
-
-```{r}
-hist(-log10(dpvecplot),breaks=30, main = "detection p-values: zero values set to 1E-20")
+```{r, label='detection_p-values_zero', echo=FALSE}
+#hist(-log10(dpvecplot),breaks=30, main = "detection p-values: zero values set to 1E-20")
 rm(dpvecplot)
+gc()
 ```
+
+```{r, echo=FALSE}
+knitr::include_graphics("dpvec_histogram.pdf")
+```
+
 \pagebreak
 
 
@@ -407,7 +947,7 @@ $`r detPthreshold `$ | $`r length(which(dpvec<detPthreshold))`$    | $`r length(
 
 $`r sum(is.na(dpvec))`$ detection p-values are missing.
 
-```{r}
+```{r, echo=FALSE}
 #set detection p-value threshold
 thres=detPthreshold
 d=dp.all[rownames(TypeII.Green.All),colnames(TypeII.Green.All)]
@@ -419,16 +959,18 @@ TypeI.Green.U.All.d = ifelse(d<thres,TypeI.Green.U.All,NA)
 d=dp.all[rownames(TypeI.Red.M.All),colnames(TypeI.Red.M.All)]
 TypeI.Red.M.All.d = ifelse(d<thres,TypeI.Red.M.All,NA)
 TypeI.Red.U.All.d = ifelse(d<thres,TypeI.Red.U.All,NA)
-#rm(dp.all,d)
 
-samples=colnames(TypeI.Red.M.All)
+rm(d)
+rm(TypeII.Red.All, TypeII.Green.All, TypeI.Red.M.All, TypeI.Red.U.All, TypeI.Green.M.All, TypeI.Green.U.All) 
+
+samples=colnames(TypeI.Red.M.All.d)
 ```
 
 $`r length(which(dpvec>detPthreshold))`$   ($`r round(length(which(dpvec>detPthreshold))/length(dpvec), digits = 3)*100`$ \%)   measurements are excluded because their detection p-value is bigger than $`r detPthreshold`$. Only values with a detection p-value strictly smaller the threshold are kept.
 To skip this filtering, set the parameter *detPthreshold* to a value **strictly** bigger than 1 in the *parameterfile.R*.
 
 
-```{r}
+```{r, echo=FALSE}
 
 #autosomes ------------------------------------------------------------------
  category=auto
@@ -468,10 +1010,30 @@ TypeI.Green.betas = TypeI.Green.M/(TypeI.Green.M+TypeI.Green.U+100)
 TypeI.Red.betas = TypeI.Red.M/(TypeI.Red.M+TypeI.Red.U+100)
 beta.raw.sex = as.matrix(rbind(TypeII.betas,TypeI.Green.betas,TypeI.Red.betas))
  
+rm(TypeII.Red, TypeII.Green, TypeI.Red.M, TypeI.Red.U, TypeI.Green.M, TypeI.Green.U) 
+ 
 ```
 
 
-```{r}
+```{r, label = 'samplecall.markercall', echo=FALSE}
+
+if (length(values) > 1) {
+  if ("IlluminaHumanMethylationEPIC" %in% values &&
+      "IlluminaHumanMethylationEPICv2" %in% values) {
+# calculate sample and marker calls without filter -- used for sample filter 
+sample.call<-calculate_sample_call(cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2, anno=anno, beta_df=beta.raw, sample.name_pathwise=sample.name_pathwise, arraytype=arraytype)
+
+marker.call<-calculate_marker_call(cgs_ta=cgs_ta, cgs_shared=cgs_shared, cgs_epicv1=cgs_epicv1, cgs_epicv2=cgs_epicv2,  anno=anno, beta_df=beta.raw, sample.name_pathwise=sample.name_pathwise, arraytype=arraytype)
+
+# remove samples not in samplesfile
+samplesinclude <- intersect(names(sample.call),datsamples$Sentrix_Code)
+sample.call <- sample.call[samplesinclude]
+ctrl.complete.Green.all <- as.matrix(ctrl.complete.Green.all[,samplesinclude])
+ctrl.complete.Red.all <- as.matrix(ctrl.complete.Red.all[,samplesinclude])
+beta.raw.sex <- beta.raw.sex[,samplesinclude]
+beta.raw <- beta.raw[,samplesinclude]
+  }
+} else {
 # calculate sample and marker calls without filter -- used for sample filter 
 sample.call=colSums(!is.na(beta.raw))/nrow(beta.raw)
 marker.call=rowSums(!is.na(beta.raw))/ncol(beta.raw)
@@ -483,6 +1045,9 @@ ctrl.complete.Green.all <- ctrl.complete.Green.all[,samplesinclude]
 ctrl.complete.Red.all <- ctrl.complete.Red.all[,samplesinclude]
 beta.raw.sex <- beta.raw.sex[,samplesinclude]
 beta.raw <- beta.raw[,samplesinclude]
+}
+
+# save.image("test_runbyhand.Rdata")
 ```
 
 * Identified by the samplefile, $`r length(samplesinclude)`$ samples are included in the analysis.
@@ -492,7 +1057,7 @@ beta values:   | autosomes           |  sex chromosomes
 ---------------|---------------------|----------------------------
 dimension:     | $`r dim(beta.raw)`$ | $`r dim(beta.raw.sex)`$
 
-````{r}
+```{r, label='beta-densities', echo=FALSE}
 if(length(samplesinclude)<101){
 	cat("\nThe sample names of the included samples:\n")
 	datsamples$Sample_Name[datsamples$Sentrix_Code %in%samplesinclude]
@@ -514,12 +1079,18 @@ plot.beta.densities = function(beta, title){
     plot(density(beta, na.rm = TRUE), main = title)
   }
 }
+pdf("beta_densities_plot.pdf")
 plot.beta.densities(beta.raw,"Densities of raw autosomal beta values per sample")
+dev.off()
+graphics.off()
+gc()
 ```
 
+```{r, echo=FALSE}
+knitr::include_graphics("beta_densities_plot.pdf")
+```
 
-
-```{r}
+```{r, echo=FALSE}
 # call-rate filtering
 
 samples.filtered <- data.frame()
@@ -532,19 +1103,35 @@ if (length(bufout)>0) samples.filtered <- data.frame(sample=bufout,x=NA,y=NA,fil
 * $`r length(bufout)`$ samples were tagged for exclusion because the call-rate was below the threshold $`r callrate.thres`$.
 
 
-```{r}
+```{r, label = 'sample_call', echo=FALSE}
 # plot sample call rates
+pdf("sample_call.pdf")
 hist(sample.call,breaks=100, main = "sample call rates")
+dev.off()
+graphics.off()
+gc()
 ```
 
-```{r}
-# plot sample call rates
-hist(sample.call,breaks=100, main = "sample call rates zoomed x-axis", xlim = c(0.85,1), sub = "zoomed x-axis is fixed to 0.85 to 1")
+```{r, echo=FALSE}
+knitr::include_graphics("sample_call.pdf")
 ```
 
-```{r}
+```{r, label = sample_call_zoom, echo=FALSE}
 # plot sample call rates
-hist(sample.call,breaks=100, main = "sample call rates zoomed y-axis", ylim = c(0,30), sub = "zoomed y axis is fixed to 0 to 30")
+pdf("sample_call_zoom.pdf")
+hist(sample.call,breaks=100, main = "sample call rates zoomed axis", xlim = c(0.85,1), ylim = c(0,30), sub = "zoomed x- and y-axis is fixed to 0.85 to 1 and 0 to 30, respectively")
+dev.off()
+graphics.off()
+gc()
+```
+
+```{r, echo=FALSE}
+knitr::include_graphics("sample_call_zoom.pdf")
+```
+
+```{r, label = sample_call_zoomy, echo=FALSE}
+# plot sample call rates
+# hist(sample.call,breaks=100, main = "sample call rates zoomed y-axis", ylim = c(0,30), sub = "zoomed y axis is fixed to 0 to 30")
 ```
 
 $`r max(0,length(sample.call[which(sample.call<=0.98)]))`$ of all sample call rates are lower than 0.98,  
@@ -554,14 +1141,23 @@ $`r max(0,length(sample.call[which(sample.call<=0.98)]))`$ of all sample call ra
 We have a look at the marker call rates as well:
 
 
-```{r}
-hist(marker.call,breaks=100, main = "marker call rates")
+```{r, label = marker_call, echo=FALSE}
+#hist(marker.call,breaks=100, main = "marker call rates")
 ```
 
 
-```{r}
+```{r, label = marker_call_zoom, echo=FALSE}
+pdf("marker_call_zoom.pdf")
 hist(marker.call,breaks=100, main = "marker call rates zoomed y-axis", ylim = c(0,500), sub = "zoomed y axis is fixed to 0 to 500")
+dev.off()
+graphics.off()
+gc()
+rm(dpvec, detectionP.local, estimateWBCs_EPICv2, treatment_ta_problematic, remove_pattern, harmonize_snps, combine_data, calculate_marker_call, calculate_sample_call, RGset_pathwise, dp_pathwise, TypeII.Green_pathwise, TypeII.Red_pathwise, TypeI.Red.M_pathwise, TypeI.Red.U_pathwise, TypeI.Green.M_pathwise, TypeI.Green.U_pathwise, ctrl_pathwise, anno, cgs,TypeII.Name, cgs_shared, cgs_epicv2, cgs_epicv1, xcgs, TypeI.Red.Name, TypeI.Green.Name, ctrl, samplesheet_combined, category, anno_ta_v2,filenames_pathwise)
 ```  
+
+```{r, echo=FALSE}
+knitr::include_graphics("marker_call_zoom.pdf")
+```
 
 $`r max(0,length(marker.call[which(marker.call<=0.98)]))`$ of all marker call rates are lower than 0.98,  
  and $`r length(marker.call[which(marker.call<=0.95)])`$ are lower than the threshold 0.95.
@@ -570,3 +1166,5 @@ $`r max(0,length(marker.call[which(marker.call<=0.98)]))`$ of all marker call ra
 The results of the sample call rate filter are included in the export file **samples_filtered.csv** which also documents the following control-probe based quality control.
 
 
+```{r child = 'MemoryMethodsCredits.Rmd'}
+```

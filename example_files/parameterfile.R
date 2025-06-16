@@ -1,9 +1,5 @@
 # for using this pipeline, please install all packages listed in the code file "prepPart0.R"
 
-arraytype<-"IlluminaHumanMethylationEPIC"
-# SELECT  between "IlluminaHumanMethylation450k" and "IlluminaHumanMethylationEPIC"
-# (see minfi array names)
-
 ##################################
 # define files and directories ###
 
@@ -12,7 +8,12 @@ projectname="CHANGE"
 # CHANGE: any string; date and time are appended in the code to prevent overwriting
 
 idatdir="idats"
-# CHANGE: directory containing all idat files, absolute path, no / at the end
+# CHANGE: directory containing all idat files, absolute path, no / at the end, for several idat directories concatenate them by ";" like "a;b"
+# in one directory all files must be of same array built e.g. same EPIC version
+
+arraytype<-"IlluminaHumanMethylationEPIC"
+# SELECT  between "IlluminaHumanMethylation450k" and "IlluminaHumanMethylationEPIC" and "IlluminaHumanMethylationEPICv2"
+# (see minfi array names)
 
 outputdir="output"
 # CHANGE: output directory for RData files, absolute path, no / at the end
@@ -31,13 +32,15 @@ samplesfilefinal="samplesfile_example_postQC"
 
 # Format: tab-delimited text, columns: Gender (0-males, 1-females), Sample_ID (array/idat name)
 # example samplesfile:
-#Sample_Name    Sample_Well    Sample_Plate    Sample_Group    Pool_ID    Sentrix_ID    Sentrix_Position    Sample_ID    Gender
+#Sample_Name    Sample_Well    Sample_Plate    Sample_Group    Pool_ID    Sentrix_ID    Sentrix_Position    Sample_ID    Sex_female
 #4342    A01    1    RS3_pilot_450K        5723654049    R01C01    5723654049_R01C01    1
 #9797    B01    1    RS3_pilot_450K        5723654049    R02C01    5723654049_R02C01    0
 
 ############################
 # Only needed if there are more batch variables then Sample_Plate and Sample_Well that should be tested for batch effects. 
 BatchVariablesFile="additionalBatchVariables.tsv"
+# CHANGE: Mandatory to provide full absolute path. 
+
 
 ############################
 # threshold parameters ###
